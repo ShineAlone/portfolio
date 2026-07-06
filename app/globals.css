@@ -140,7 +140,9 @@ button {
   font-family: var(--font-root);
   font-weight: 500;
   font-size: 24px;
-  white-space: nowrap;
+  /* переносит только по \n в тексте, остальные чипы остаются однострочными */
+  white-space: pre-line;
+  text-align: center;
 }
 
 /* ---------- микрокнопка-шеврон ---------- */

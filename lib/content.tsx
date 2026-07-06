@@ -71,7 +71,7 @@ export const WORK: WorkItem[] = [
     ],
   },
   {
-    period: "2023–2025",
+    period: "2023\n– 2025",
     company: "Service Soft",
     role: "Продуктовый / UX-дизайнер",
     description:
