@@ -44,7 +44,7 @@ body {
   font-family: var(--font-root);
   font-size: 16px;
   color: var(--color-black);
-  background: #ffffff;
+  background: var(--color-photo-bg);
 }
 
 img,
@@ -176,37 +176,40 @@ button {
 /* ---------- hero ---------- */
 
 .hero {
-  display: flex;
-  gap: 20px;
-  align-items: stretch;
-  justify-content: space-between;
-  padding-top: 94px;
+  position: relative;
+  padding-top: 98px;
+  min-height: 470px;
 }
 
 .hero__text {
+  position: relative;
+  z-index: 1;
   width: 470px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding-top: 0;
 }
 
-.hero__intro {
+.hero__title {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  font-family: var(--font-root);
+  font-weight: 700;
+  line-height: normal;
 }
 
-.hero__intro p + p {
-  margin-top: 6px;
+.hero__hello {
+  font-size: 36px;
+}
+
+.hero__name {
+  font-size: clamp(40px, 5.5vw, 64px);
 }
 
 .hero__bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-top: auto;
+  gap: 12px;
 }
 
 .hero__status {
@@ -235,10 +238,12 @@ button {
 }
 
 .hero__photo {
-  position: relative;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 0;
   width: 470px;
   height: 470px;
-  flex-shrink: 0;
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -250,36 +255,46 @@ button {
   object-position: bottom;
 }
 
-/* Rectangle 34625435 из макета: растворяет низ фото */
+/* Rectangle 34625435 из макета: растворяет низ фото (269/470) */
 .hero__photo::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 169px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 5%, #ffffff 100%);
+  height: 57%;
+  background: linear-gradient(to bottom, rgba(245, 245, 245, 0) 5%, #f5f5f5 100%);
 }
 
 /* ---------- статистика ---------- */
 
 .stats {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 8px;
-  margin-top: 64px;
+  margin-top: 24px;
   flex-wrap: wrap;
 }
 
 .stats__item {
-  background: var(--color-black);
-  color: #fff;
-  border-radius: var(--radius);
   padding: 10px 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-grow: 1;
+}
+
+.hero-bio {
+  margin-top: 24px;
+  background: #ffffff;
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.hero-bio p + p {
+  margin-top: 6px;
 }
 
 .stats__value {
@@ -466,7 +481,7 @@ button {
 }
 
 .media-card {
-  border: 1px solid var(--color-black);
+  background: #ffffff;
   border-radius: var(--radius);
   padding: 20px;
   display: flex;
@@ -700,9 +715,8 @@ button {
   }
 
   .hero {
-    flex-direction: column-reverse;
-    align-items: flex-start;
-    padding-top: 48px;
+    padding-top: 24px;
+    min-height: 0;
   }
 
   .hero__text {
@@ -710,10 +724,12 @@ button {
   }
 
   .hero__photo {
+    position: static;
     width: 100%;
     max-width: 470px;
     height: auto;
     aspect-ratio: 1;
+    margin-bottom: 24px;
   }
 
   .edu-tools {
@@ -774,15 +790,15 @@ button {
     font-size: 20px;
   }
 
-  .stats {
-    margin-top: 40px;
-  }
-
   .stats__item {
     min-width: calc(50% - 8px);
   }
 
   .stats__value {
+    font-size: 28px;
+  }
+
+  .hero__hello {
     font-size: 28px;
   }
 

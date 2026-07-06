@@ -33,40 +33,37 @@ export default function Home() {
       <ScrollSpinner />
       {/* Hero */}
       <section className="hero">
+        <div className="hero__photo">
+          <img src="/images/photo.png" alt="Арсений Кононов" />
+        </div>
         <div className="hero__text">
-          <div className="hero__intro">
-            <h1 className="h-36">
-              {HERO.title[0]}
-              <br />
-              {HERO.title[1]}
-            </h1>
-            <div>
-              {HERO.paragraphs.map((p) => (
-                <p key={p.slice(0, 20)} className="body-16">
-                  {p}
-                </p>
-              ))}
-            </div>
-          </div>
+          <h1 className="hero__title">
+            <span className="hero__hello">{HERO.title[0]}</span>
+            <span className="hero__name">{HERO.title[1]}</span>
+          </h1>
           <div className="hero__bottom">
             <TgButton label={HERO.contactLabel} />
             <Status label={HERO.statusLabel} />
           </div>
         </div>
-        <div className="hero__photo">
-          <img src="/images/photo.png" alt="Кононов Арсений" />
+        <div className="stats" aria-label="Цифры">
+          {STATS.map((s) => (
+            <div key={s.label} className="stats__item">
+              <span className="stats__value">{s.value}</span>
+              <span className="stats__label">{s.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Статистика */}
-      <section className="stats" aria-label="Цифры">
-        {STATS.map((s) => (
-          <div key={s.label} className="stats__item">
-            <span className="stats__value">{s.value}</span>
-            <span className="stats__label">{s.label}</span>
-          </div>
+      {/* Био */}
+      <div className="hero-bio">
+        {HERO.paragraphs.map((p) => (
+          <p key={p.slice(0, 20)} className="body-16">
+            {p}
+          </p>
         ))}
-      </section>
+      </div>
 
       {/* Образование и инструменты */}
       <section className="edu-tools">
