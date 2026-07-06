@@ -3,8 +3,8 @@
 import { useEffect, useRef } from "react";
 
 // Видео начинает грузиться и играть только при приближении к вьюпорту,
-// вне экрана — ставится на паузу.
-export function LazyVideo({ src }: { src: string }) {
+// вне экрана — ставится на паузу. До загрузки показывается постер.
+export function LazyVideo({ src, poster }: { src: string; poster?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -25,5 +25,5 @@ export function LazyVideo({ src }: { src: string }) {
     return () => io.disconnect();
   }, [src]);
 
-  return <video ref={ref} muted loop playsInline preload="none" />;
+  return <video ref={ref} muted loop playsInline preload="none" poster={poster} />;
 }

@@ -5,3 +5,5 @@ _materials/
 *.tsbuildinfo
 next-env.d.ts
 .claude/settings.local.json
+
+.vercel

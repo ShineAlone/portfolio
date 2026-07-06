@@ -9,7 +9,10 @@ export function MediaCard({ card }: { card: MediaCardType }) {
         <div
           className={`media-card__media${card.zoomVideo ? " media-card__media--zoom" : ""}`}
         >
-          <LazyVideo src={card.video} />
+          <LazyVideo
+            src={card.video}
+            poster={card.video.replace("/videos/", "/images/posters/").replace(".mp4", ".jpg")}
+          />
         </div>
       )}
       {card.image && (
