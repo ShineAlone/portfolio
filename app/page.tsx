@@ -10,6 +10,7 @@ import {
   WALLPAPERS,
   WORK,
 } from "@/lib/content";
+import { Gallery } from "@/components/Gallery";
 import { MediaCard } from "@/components/MediaCard";
 import { ScrollSpinner } from "@/components/ScrollSpinner";
 import { Section } from "@/components/Section";
@@ -123,16 +124,16 @@ export default function Home() {
         subtitle={SOCIAL.subtitle}
         description={SOCIAL.description}
       >
-        <div className="tile-grid">
+        <Gallery className="tile-grid">
           {SOCIAL.rows.flat().map((src) => (
             <img key={src} src={src} alt="Пост для социальных сетей" loading="lazy" />
           ))}
-        </div>
+        </Gallery>
       </Section>
 
       {/* Обои */}
       <Section title={WALLPAPERS.title} description={WALLPAPERS.description}>
-        <div className="wp-mosaic">
+        <Gallery className="wp-mosaic">
           {WALLPAPERS.rows.map((row) => (
             <div
               key={row.images[0]}
@@ -148,7 +149,7 @@ export default function Home() {
               ))}
             </div>
           ))}
-        </div>
+        </Gallery>
       </Section>
 
       {/* Презентации */}
@@ -162,15 +163,17 @@ export default function Home() {
             <MediaCard key={card.text} card={card} />
           ))}
         </div>
-        <div style={{ marginTop: 20 }}>
-          {PRESENTATIONS.slideGroups.map((group) => (
-            <div key={group[0]} className="slides-grid">
-              {group.map((src) => (
-                <img key={src} src={src} alt="Слайд презентации" loading="lazy" />
-              ))}
-            </div>
-          ))}
-        </div>
+        <Gallery>
+          <div style={{ marginTop: 20 }}>
+            {PRESENTATIONS.slideGroups.map((group) => (
+              <div key={group[0]} className="slides-grid">
+                {group.map((src) => (
+                  <img key={src} src={src} alt="Слайд презентации" loading="lazy" />
+                ))}
+              </div>
+            ))}
+          </div>
+        </Gallery>
       </Section>
 
       {/* Проекты */}
@@ -179,7 +182,7 @@ export default function Home() {
         subtitle={PROJECTS.subtitle}
         description={PROJECTS.description}
       >
-        <div className="projects-collage">
+        <Gallery className="projects-collage">
           <div className="projects-grid-3">
             {PROJECTS.coffeeGrid.map((src) => (
               <img key={src} src={src} alt="Проект — кофейня" loading="lazy" />
@@ -229,7 +232,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
+        </Gallery>
       </Section>
 
       {/* Футер */}

@@ -681,6 +681,95 @@ button {
   }
 }
 
+/* ---------- лайтбокс ---------- */
+
+.gallery img {
+  cursor: zoom-in;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox__img {
+  max-width: min(90vw, 1400px);
+  max-height: 90vh;
+  border-radius: 12px;
+  cursor: default;
+}
+
+.lightbox__arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lightbox__arrow img {
+  width: 18px;
+  height: 18px;
+}
+
+.lightbox__arrow--prev {
+  left: 24px;
+}
+
+.lightbox__arrow--prev img {
+  transform: rotate(90deg);
+}
+
+.lightbox__arrow--next {
+  right: 24px;
+}
+
+.lightbox__arrow--next img {
+  transform: rotate(-90deg);
+}
+
+.lightbox__close {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .lightbox__arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .lightbox__arrow--prev {
+    left: 10px;
+  }
+
+  .lightbox__arrow--next {
+    right: 10px;
+  }
+
+  .lightbox__img {
+    max-width: 96vw;
+  }
+}
+
 /* ---------- футер ---------- */
 
 .footer {
