@@ -1793,6 +1793,161 @@
   object-fit: cover;
 }
 
+/* ---------- экипаж первой презентации ---------- */
+
+.st-crew {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* окно прилегает к краю экрана и обрезает персонажа ровно по нему — будто он за блоком */
+.st-crew__window {
+  position: absolute;
+  overflow: hidden;
+}
+
+.st-crew__window.is-left,
+.st-crew__window.is-right {
+  top: calc(var(--at) * (100% - 270px));
+  width: 560px;
+  height: 270px;
+}
+
+.st-crew__window.is-left {
+  right: 100%;
+}
+
+.st-crew__window.is-right {
+  left: 100%;
+}
+
+.st-crew__window.is-bottom {
+  top: 100%;
+  left: calc(var(--at) * (100% - 260px) - 340px);
+  width: 940px;
+  height: 270px;
+}
+
+.st-crew__mate {
+  position: absolute;
+  bottom: 0;
+  height: 250px;
+  transform-origin: 50% 100%;
+  animation: 5.2s cubic-bezier(0.45, 0, 0.3, 1) both;
+}
+
+.st-crew__mate img {
+  display: block;
+  height: 100%;
+  width: auto;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 14px 10px rgba(0, 0, 0, 0.25));
+  /* когда персонаж пошёл — покачивается на ходу */
+  animation: st-crew-bob 0.42s 2.7s ease-in-out infinite alternate both;
+}
+
+.is-left .st-crew__mate {
+  right: 0;
+  animation-name: st-crew-left;
+}
+
+.is-right .st-crew__mate {
+  left: 0;
+  animation-name: st-crew-right;
+}
+
+.is-bottom .st-crew__mate {
+  top: 0;
+  bottom: auto;
+  left: 340px;
+  animation-name: st-crew-drop;
+}
+
+@keyframes st-crew-left {
+  0% {
+    transform: translateX(105%);
+  }
+  14%,
+  38% {
+    transform: translateX(52%) rotate(-11deg);
+  }
+  26% {
+    transform: translateX(52%) rotate(-5deg);
+  }
+  50% {
+    transform: translateX(0) rotate(0);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-380px);
+    opacity: 0;
+  }
+}
+
+@keyframes st-crew-right {
+  0% {
+    transform: translateX(-105%);
+  }
+  14%,
+  38% {
+    transform: translateX(-52%) rotate(11deg);
+  }
+  26% {
+    transform: translateX(-52%) rotate(5deg);
+  }
+  50% {
+    transform: translateX(0) rotate(0);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(380px);
+    opacity: 0;
+  }
+}
+
+/* снизу персонаж выпадает из-за экрана, приземляется, пружинит и уходит в сторону */
+@keyframes st-crew-drop {
+  0% {
+    transform: translateY(-104%);
+  }
+  16% {
+    transform: translateY(4%);
+  }
+  22% {
+    transform: translateY(0) scale(1.08, 0.88);
+  }
+  30% {
+    transform: translateY(-6%) scale(0.96, 1.05);
+  }
+  36%,
+  52% {
+    transform: none;
+  }
+  44% {
+    transform: rotate(-6deg);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(var(--dir) * 340px));
+    opacity: 0;
+  }
+}
+
+@keyframes st-crew-bob {
+  from {
+    transform: rotate(-5deg);
+  }
+  to {
+    transform: translateY(-8px) rotate(5deg);
+  }
+}
+
 /* ---------- проекты ---------- */
 
 .st-win {
@@ -3152,12 +3307,18 @@
   display: none !important;
 }
 
-/* развалины на месте блока: пунктирный контур, штриховка и кнопка «Собрать» */
+/*
+ * Развалины на месте блока: пунктирный контур, штриховка и кнопка «Собрать».
+ * Кнопка живёт в масштабе холста, а её размер считается от размера самого блока (cqmin):
+ * при отдалении она уменьшается вместе с блоком и никогда не вылезает за его границы,
+ * поэтому кнопки соседних развалин не наслаиваются друг на друга.
+ */
 .st-ruin {
   position: absolute;
   z-index: 2;
   display: grid;
   place-items: center;
+  container-type: size;
   border-radius: var(--r);
   border: calc(3px / var(--z)) dashed rgba(17, 17, 17, 0.45);
   background: repeating-linear-gradient(-45deg, rgba(17, 17, 17, 0.06) 0 18px, transparent 18px 36px);
@@ -3173,41 +3334,43 @@
 .st-ruin__btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 22px 10px 10px;
-  border-radius: 24px;
+  gap: 0.6em;
+  max-width: 88cqw;
+  padding: 0.5em 1.1em 0.5em 0.5em;
+  border-radius: 1.4em;
   background: #fefe78 !important;
-  border: 2px solid #111 !important;
-  box-shadow: 4px 4px 0 #111;
+  border: 0.12em solid #111 !important;
+  box-shadow: 0.22em 0.22em 0 #111;
   color: #111;
   text-align: left;
+  font-size: clamp(16px, 7cqmin, 44px);
   cursor: pointer;
-  transform: scale(calc(1 / var(--z)));
   transition: box-shadow 0.2s, translate 0.2s;
   animation: st-ruin-btn 0.6s 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .st-ruin__btn:hover {
-  translate: -2px -2px;
-  box-shadow: 6px 6px 0 #111;
+  translate: -0.1em -0.1em;
+  box-shadow: 0.32em 0.32em 0 #111;
 }
 
 @keyframes st-ruin-btn {
   from {
     opacity: 0;
-    translate: 0 20px;
+    translate: 0 1em;
   }
 }
 
 .st-ruin__icon {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  flex: none;
+  width: 2.2em;
+  height: 2.2em;
   border-radius: 50%;
   background: #111;
   color: #fefe78;
-  font-size: 22px;
+  font-size: 1.15em;
   font-weight: 700;
 }
 
@@ -3221,22 +3384,25 @@
   }
 }
 
+.st-ruin__btn > span:last-child {
+  min-width: 0;
+}
+
 .st-ruin__btn b {
   display: block;
   font-family: var(--display);
-  font-size: 16px;
+  font-size: 1em;
+  white-space: nowrap;
 }
 
 .st-ruin__btn small {
   display: block;
-  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 0.72em;
   opacity: 0.65;
 }
-
 /* обёртка трещин повторяет форму объекта и обрезает всё, что вылезло бы за край */
 .st-crack-clip {
   position: absolute;
@@ -3467,13 +3633,10 @@
 }
 
 /*
- * Во время езды экономим кадры: орбита стоит, размытие под шапкой выключено.
+ * Во время езды экономим кадры: размытие под шапкой выключено (орбита телефонов продолжает крутиться).
  * will-change на холсте здесь нельзя: браузер растрирует слой в одном масштабе, и при отъезде
  * камеры огромный город вместе с работами не помещается в память — элементы начинают мигать.
  */
-.is-driving .st-phone {
-  animation-play-state: paused;
-}
 
 .is-driving .st-chips {
   backdrop-filter: none;

@@ -1104,6 +1104,7 @@ export function StudioApp() {
             driving={driving}
             onPickCar={setCarId}
             onDrive={startDrive}
+            presView={activeIsland === "pres" && !driving}
           />
 
           {broken.length > 0 && (
