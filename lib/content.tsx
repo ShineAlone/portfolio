@@ -115,6 +115,8 @@ export type MediaCard = {
   title: string;
   text: string;
   figmaButton?: boolean;
+  /** ссылка на опубликованный плагин или сервис */
+  link?: string;
 };
 
 export const AUTOMATION = {
@@ -154,10 +156,12 @@ export const AUTOMATION = {
       text: "Генерация паттернов в обновлённом фирменном стиле компании",
     },
     {
+      image: "/images/plugins/droptochat.jpg",
       tag: "Оптимизация времени и места на диске",
       tagColor: "#ffb6e1",
-      title: "Экспорт из Figma в Telegram",
-      text: "Экспорт фреймов из Figma сразу в нужный чат. Убирает рутину «экспорт → сохранить → найти чат → прикрепить» при каждом согласовании макета",
+      title: "DropToChat — фреймы в Telegram и Discord",
+      text: "Выделил фреймы, выбрал чат, нажал «Отправить» — макеты в Telegram или Discord за секунды. Без скачиваний и выхода из Figma",
+      link: "https://www.figma.com/community/plugin/1677051070525805022/droptochat-send-frames-to-messengers-in-one-click",
     },
     {
       tag: "Еженедельный поток презентаций",

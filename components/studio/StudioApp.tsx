@@ -8,6 +8,8 @@ import {
   DECKS,
   FRAMES,
   ISLANDS,
+  SECRET_DISCOUNT,
+  SECRET_WORD,
   WORLD,
   frameById,
   islandById,
@@ -15,7 +17,7 @@ import {
   type Rect,
 } from "./data";
 import { Glyph } from "./glyphs";
-import { CHAT, NAME_CHARS, World } from "./World";
+import { CHAT, NAME_CHARS, SpinFigure, World } from "./World";
 
 const BASE_BG = "#ECEAE4";
 const STORAGE_KEY = "ak-achievements";
@@ -35,23 +37,10 @@ function ZoomLabel({ camera }: { camera: CameraStore }) {
   return <b>{z}%</b>;
 }
 
-// Награда за все достижения: та самая крутящаяся фигура из кадров.
-function SpinFigure() {
-  const [f, setF] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setF((v) => (v + 1) % 16), 75);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img className="st-win-figure" src={`/images/scroll/frame-${String(f + 1).padStart(2, "0")}.png`} alt="" />
-  );
-}
-
 function Confetti() {
   const pieces = useMemo(
     () =>
-      Array.from({ length: 70 }, (_, i) => ({
+      Array.from({ length: 140 }, (_, i) => ({
         left: Math.random() * 100,
         color: ["#FEFE78", "#86DDFF", "#FFB6E1", "#ACF9A2", "#C791FF", "#FFC7B6"][i % 6],
         delay: Math.random() * 0.6,
@@ -215,7 +204,11 @@ export function StudioApp() {
   /* ---------- достижения ---------- */
 
   useEffect(() => {
+    // ?win — сразу показать награду, ?reset — сбросить прогресс (для проверки)
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("win")) setTimeout(() => setCelebrate(true), 1200);
     try {
+      if (params.has("reset")) localStorage.removeItem(STORAGE_KEY);
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const ids = (JSON.parse(raw) as string[]).filter((id): id is AchievementId =>
@@ -364,6 +357,7 @@ export function StudioApp() {
       { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
       { rect: islandById("pres"), text: "Презентации — листай стрелками, по порядку" },
       { rect: islandById("proj"), text: "Лендинги целиком и айдентика «Кофе Культ»" },
+      { rect: frameById("contact"), text: "А здесь можно написать мне. Буду рад твоей задаче!" },
     ],
     []
   );
@@ -681,7 +675,7 @@ export function StudioApp() {
           <button
             key={i.id}
             type="button"
-            className={activeIsland === i.id ? "is-active" : ""}
+            className={`${activeIsland === i.id ? "is-active" : ""}${i.dark ? " is-dark" : ""}`}
             style={{ "--c": i.color } as React.CSSProperties}
             onClick={() => {
               stopTour();
@@ -709,7 +703,7 @@ export function StudioApp() {
             <button
               key={i.id}
               type="button"
-              className={`st-map__isl${activeIsland === i.id ? " is-active" : ""}`}
+              className={`st-map__isl${activeIsland === i.id ? " is-active" : ""}${i.dark ? " is-dark" : ""}`}
               style={
                 {
                   left: i.x * mapS,
@@ -780,14 +774,31 @@ export function StudioApp() {
       {celebrate && (
         <>
           <Confetti />
-          <div className="st-pop st-pop--win">
-            <SpinFigure />
-            <b>Все шесть достижений!</b>
-            <p>Ты посмотрел всё, что здесь есть. Самое время написать мне — обсудим твой проект.</p>
+          <div className="st-win-backdrop" onClick={() => setCelebrate(false)} />
+          <div className="st-pop st-pop--win" role="dialog" aria-modal="true">
+            <SpinFigure className="st-win-figure" />
+            <small className="st-win__kicker">
+              {ACHIEVEMENTS.length} из {ACHIEVEMENTS.length} достижений
+            </small>
+            <b>Ты открыл все достижения!</b>
+            <p>
+              Раз ты задержался здесь так надолго — похоже, тебе нравятся мои работы. За это у меня есть
+              подарок: секретное слово. Напиши его мне в Telegram — и получишь скидку {SECRET_DISCOUNT} на
+              проект.
+            </p>
+            <div className="st-win__word">{SECRET_WORD}</div>
             <div className="st-pop__row">
-              <a className="st-btn st-btn--small" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
-                Написать в Telegram
-              </a>
+              <button
+                type="button"
+                className="st-btn st-btn--small"
+                onClick={() => {
+                  navigator.clipboard?.writeText(SECRET_WORD).catch(() => {});
+                  window.open(LINKS.telegram, "_blank", "noopener,noreferrer");
+                  showToast({ text: "Слово скопировано — вставь его в чат" });
+                }}
+              >
+                Скопировать и написать
+              </button>
               <button type="button" className="st-btn st-btn--ghost" onClick={() => setCelebrate(false)}>
                 Закрыть
               </button>

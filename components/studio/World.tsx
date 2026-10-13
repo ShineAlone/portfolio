@@ -5,10 +5,12 @@ import { AUTOMATION, EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, ST
 import {
   DECKS,
   ISLANDS,
+  PLUGIN_SLOTS,
   SITE_FRAMES,
   frameById,
   islandById,
   narrowWallpapers,
+  pluginSlot,
   poster,
   wideWallpapers,
   type FrameMeta,
@@ -301,6 +303,13 @@ function History({ selected }: { selected: boolean }) {
               </div>
             </li>
           ))}
+          <li className="stv__next">
+            <span className="stv__ver">v{WORK.length + 1}.0 · скоро</span>
+            <div className="stv__company">Твой проект?</div>
+            <a data-ui className="st-btn st-btn--small" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
+              Обсудить в Telegram ↗
+            </a>
+          </li>
         </ol>
       </div>
     </Frame>
@@ -316,7 +325,13 @@ function PluginCard({ index, selected }: { index: number; selected: boolean }) {
     <Frame meta={meta} selected={selected} className="st-card">
       <div className="stp" style={{ "--tc": card.tagColor } as React.CSSProperties}>
         <div className="stp__media">
-          {card.video ? <HoverVideo video={card.video} /> : <div className="stp__art">{card.title}</div>}
+          {card.video ? (
+            <HoverVideo video={card.video} />
+          ) : card.image ? (
+            <img src={card.image} alt="" loading="lazy" draggable={false} />
+          ) : (
+            <div className="stp__art">{card.title}</div>
+          )}
         </div>
         <span className="stp__tag">{card.tag}</span>
         <div className="stp__name">{card.title}</div>
@@ -369,9 +384,10 @@ function SocialPile({ spread, selected }: { spread: boolean; selected: boolean }
   );
 }
 
-/* ---------- Обои: телефоны по орбите вокруг монитора ---------- */
+/* ---------- Обои: телефоны вращаются по часовой вокруг монитора ---------- */
 
 const ORBIT_N = 10;
+const ORBIT_SECONDS = 70;
 
 function OrbitPhone({ images, delay, style, onPick }: { images: string[]; delay: number; style: React.CSSProperties; onPick: () => void }) {
   const [i, setI] = useState(0);
@@ -422,22 +438,25 @@ function Orbit({ selected, onPhone }: { selected: boolean; onPhone: () => void }
   const meta = frameById("wall");
   const cx = meta.w / 2;
   const cy = meta.h / 2 + 20;
+  const rx = 520;
+  const ry = 480;
+  // Эллипс от верхней точки; флаг sweep=1 — движение по часовой стрелке.
+  const path = `path('M ${cx} ${cy - ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy + ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy - ry}')`;
   return (
     <Frame meta={meta} selected={selected} className="st-free st-orbit">
-      {Array.from({ length: ORBIT_N }, (_, k) => {
-        const a = ((-90 + k * (360 / ORBIT_N)) * Math.PI) / 180;
-        const left = Math.round(cx + Math.cos(a) * 520 - 65);
-        const top = Math.round(cy + Math.sin(a) * 480 - 130);
-        return (
-          <OrbitPhone
-            key={k}
-            images={narrowWallpapers.filter((_, n) => n % ORBIT_N === k)}
-            delay={k * 360}
-            onPick={onPhone}
-            style={{ left, top, "--d": `${-k * 0.5}s` } as React.CSSProperties}
-          />
-        );
-      })}
+      {Array.from({ length: ORBIT_N }, (_, k) => (
+        <OrbitPhone
+          key={k}
+          images={narrowWallpapers.filter((_, n) => n % ORBIT_N === k)}
+          delay={k * 360}
+          onPick={onPhone}
+          style={{
+            offsetPath: path,
+            animationDelay: `${(-k * ORBIT_SECONDS) / ORBIT_N}s, ${-k * 0.5}s`,
+            animationDuration: `${ORBIT_SECONDS}s, 5s`,
+          }}
+        />
+      ))}
       <div className="st-monitor" style={{ left: cx - 332, top: cy - 230 }}>
         <Monitor />
         <div className="st-monitor__neck" />
@@ -449,6 +468,21 @@ function Orbit({ selected, onPhone }: { selected: boolean; onPhone: () => void }
 }
 
 /* ---------- Презентации: просмотрщик по порядку ---------- */
+
+// SVG вместо символа «→»: у шрифтовой стрелки метрики смещают её от центра кнопки.
+function ArrowIcon({ dir }: { dir: "prev" | "next" }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d={dir === "next" ? "M4 12h15M13 6l6 6-6 6" : "M20 12H5M11 6l-6 6 6 6"}
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function Presenter({
   selected,
@@ -486,13 +520,13 @@ function Presenter({
         </div>
         <div className="stpr__stage">
           <button type="button" data-ui className="stpr__arrow" onClick={() => onSlide(-1)} aria-label="Предыдущий слайд">
-            ←
+            <ArrowIcon dir="prev" />
           </button>
           <div className="stpr__screen">
             <img key={`${deck}-${slide}`} src={d.slides[slide]} alt="" draggable={false} className={`is-${dir}`} />
           </div>
           <button type="button" data-ui className="stpr__arrow" onClick={() => onSlide(1)} aria-label="Следующий слайд">
-            →
+            <ArrowIcon dir="next" />
           </button>
         </div>
         <div className="stpr__strip">
@@ -633,12 +667,57 @@ function Projects({ selected }: { selected: string | null }) {
           <div
             key={src}
             className="st-print"
-            style={{ left: 10 + i * 242, "--rot": `${(i % 2 ? 1 : -1) * (4 + i * 1.5)}deg` } as React.CSSProperties}
+            style={{ left: 10 + i * 268, "--rot": `${(i % 2 ? 1 : -1) * (4 + i * 1.5)}deg` } as React.CSSProperties}
           >
             <img src={src} alt="" loading="lazy" draggable={false} />
           </div>
         ))}
       </Frame>
+    </>
+  );
+}
+
+/* ---------- Контакты: финальная точка маршрута ---------- */
+
+// Та самая крутящаяся фигура из 16 кадров.
+export function SpinFigure({ className, ms = 75 }: { className?: string; ms?: number }) {
+  const [f, setF] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setF((v) => (v + 1) % 16), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+  return (
+    <img
+      className={className}
+      src={`/images/scroll/frame-${String(f + 1).padStart(2, "0")}.png`}
+      alt=""
+      draggable={false}
+    />
+  );
+}
+
+function Contact({ selected }: { selected: boolean }) {
+  const isl = islandById("contact");
+  return (
+    <>
+      <Frame meta={frameById("contact")} selected={selected} className="stx">
+        <span className="stx__status">
+          <i />
+          {HERO.statusLabel}
+        </span>
+        <b className="stx__title">Есть задача?</b>
+        <p>Напиши мне в Telegram — расскажи о проекте, обсудим сроки и формат работы.</p>
+        <a data-ui className="st-btn stx__btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
+          Написать в Telegram ↗
+        </a>
+      </Frame>
+      <div className="st-deco stx__spin" style={{ left: isl.x + 100, top: isl.y + 860 }}>
+        <SpinFigure ms={110} />
+        <span>кручусь, пока ты решаешься</span>
+      </div>
+      <div className="st-deco stx__vertical" style={{ left: isl.x + isl.w / 2 - 70, top: isl.y + 1330 }}>
+        напиши мне
+      </div>
     </>
   );
 }
@@ -651,7 +730,7 @@ function Islands({ spread, onToggleSpread }: { spread: boolean; onToggleSpread: 
       {ISLANDS.map((isl) => (
         <div
           key={isl.id}
-          className="st-island"
+          className={`st-island${isl.dark ? " is-dark" : ""}`}
           style={
             {
               left: isl.x,
@@ -708,18 +787,17 @@ export const World = memo(function World(p: WorldProps) {
       {AUTOMATION.cards.map((_, i) => (
         <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} />
       ))}
-      {[6, 7].map((i) => (
-        <div
-          key={i}
-          className="st-slot"
-          style={{ left: 2460 + (i % 4) * 480, top: 150 + Math.floor(i / 4) * 540, width: 440, height: 500 }}
-        >
-          <span>+</span>
-          Скоро тут будет
-          <br />
-          новый плагин
-        </div>
-      ))}
+      {Array.from({ length: PLUGIN_SLOTS - AUTOMATION.cards.length }, (_, k) => {
+        const s = pluginSlot(AUTOMATION.cards.length + k);
+        return (
+          <div key={k} className="st-slot" style={{ left: s.x, top: s.y, width: s.w, height: s.h }}>
+            <span>+</span>
+            Скоро тут будет
+            <br />
+            новый плагин
+          </div>
+        );
+      })}
       <SocialPile spread={p.spread} selected={p.selected === "social"} />
       <Orbit selected={p.selected === "wall"} onPhone={p.onPhone} />
       <Presentations
@@ -731,6 +809,7 @@ export const World = memo(function World(p: WorldProps) {
         onSlide={p.onSlide}
       />
       <Projects selected={p.selected} />
+      <Contact selected={p.selected === "contact"} />
     </>
   );
 });

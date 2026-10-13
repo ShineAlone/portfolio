@@ -673,22 +673,28 @@
   place-items: center;
 }
 
+/* у SVG иконки Figma preserveAspectRatio="none", поэтому задаём обе стороны в пропорции логотипа */
 .stchat__tools .is-boxed img {
-  width: 17px;
-  height: auto;
+  width: 18px;
+  height: 27px;
 }
 
 /* ---------- история версий ---------- */
 
+/* «История версий» растягивается на всю высоту колонки и делит её поровну между версиями */
 .stv {
-  padding: 48px;
+  position: absolute;
+  inset: 0;
+  padding: 52px 52px 56px;
+  display: flex;
+  flex-direction: column;
 }
 
 .stv__head span {
   display: block;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 40px;
+  font-size: 44px;
 }
 
 .stv__head small {
@@ -699,14 +705,30 @@
 }
 
 .stv ol {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   list-style: none;
-  margin-top: 14px;
+  margin-top: 24px;
+}
+
+/* одна линия времени от первой версии до «следующей» */
+.stv ol::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 14px;
+  bottom: 102px;
+  width: 2px;
+  background: #111;
+  opacity: 0.15;
 }
 
 .stv li {
   position: relative;
-  padding-left: 36px;
-  margin-top: 30px;
+  padding-left: 44px;
 }
 
 .stv li::before {
@@ -714,22 +736,25 @@
   position: absolute;
   left: 0;
   top: 2px;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--c);
   box-shadow: 0 0 0 3px #111;
 }
 
-.stv li:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  left: 8px;
-  top: 30px;
-  bottom: -26px;
-  width: 2px;
-  background: #111;
-  opacity: 0.15;
+.stv li.stv__next {
+  height: 116px;
+}
+
+.stv li.stv__next::before {
+  background: #fff;
+  box-shadow: none;
+  border: 3px dashed #111;
+}
+
+.stv__next .stv__company {
+  margin-bottom: 12px;
 }
 
 .stv__ver {
@@ -753,22 +778,26 @@
 .stv__company {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 30px;
   margin-top: 6px;
 }
 
 .stv__role {
-  font-size: 17px;
-  margin-top: 2px;
+  font-size: 19px;
+  margin-top: 4px;
 }
 
 .stv p {
   font-family: var(--font-open-sans);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 16px;
+  line-height: 1.5;
   color: #333;
   white-space: pre-line;
-  margin: 8px 0 10px;
+  margin: 8px 0 12px;
+}
+
+.stv .st-tags span {
+  font-size: 14px;
 }
 
 /* ---------- плагины ---------- */
@@ -782,11 +811,16 @@
 }
 
 .stp__media {
-  height: 236px;
+  height: 300px;
   flex-shrink: 0;
   border-radius: 20px;
   overflow: hidden;
   background: var(--tc);
+}
+
+.stp__media > img {
+  height: 100%;
+  object-fit: cover;
 }
 
 .stp__art {
@@ -927,8 +961,11 @@
 
 /* ---------- обои: орбита ---------- */
 
+/* Телефоны едут по эллипсу (offset-path задаётся из компонента) и остаются вертикальными */
 .st-phone {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 130px;
   height: 260px;
   padding: 0;
@@ -937,9 +974,26 @@
   overflow: hidden;
   background: #111 !important;
   box-shadow: 0 30px 40px -24px rgba(0, 0, 0, 0.5);
-  animation: st-float 5s ease-in-out infinite;
-  animation-delay: var(--d);
+  offset-anchor: center;
+  offset-rotate: 0deg;
+  animation-name: st-orbit, st-float;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
   transition: scale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes st-orbit {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+/* чтобы по телефону было легко попасть, орбита замирает под курсором */
+.st-orbit:hover .st-phone {
+  animation-play-state: paused;
 }
 
 .st-phone::before {
@@ -1141,6 +1195,9 @@
   width: 56px;
   height: 56px;
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border-radius: 50%;
   background: #fff !important;
   color: #111 !important;
@@ -1364,6 +1421,110 @@
   object-fit: cover;
 }
 
+/* ---------- тёмный остров «Контакты» ---------- */
+
+.st-island.is-dark {
+  background: #1e1e1e;
+}
+
+.st-island.is-dark .st-island__label {
+  background: #1e1e1e;
+  color: #fff;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.st-island.is-dark .st-island__title {
+  color: #fff;
+}
+
+.stx {
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  background: #fefe78;
+  box-shadow: 0 40px 70px -30px rgba(0, 0, 0, 0.6);
+}
+
+.stx__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.stx__status i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1fbf4b;
+  animation: st-blink 1.6s ease-in-out infinite;
+}
+
+.stx__title {
+  margin-top: 40px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 54px;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+.stx p {
+  margin-top: 20px;
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.stx__btn {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+.st-deco {
+  position: absolute;
+  pointer-events: none;
+  transition: opacity 0.45s;
+}
+
+.is-far .st-deco,
+.is-intro .st-deco {
+  opacity: 0.16;
+}
+
+.stx__spin {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stx__spin img {
+  width: 400px;
+  height: 400px;
+  filter: drop-shadow(0 30px 30px rgba(0, 0, 0, 0.45));
+}
+
+.stx__spin span {
+  margin-top: -20px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 17px;
+  transform: rotate(-3deg);
+}
+
+.stx__vertical {
+  writing-mode: vertical-rl;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 140px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.35);
+}
+
 /* ---------- подпись к выделенной работе ---------- */
 
 .st-callout {
@@ -1551,6 +1712,15 @@
   background: var(--c);
 }
 
+.st-chips button.is-dark:hover {
+  background: #ddd;
+}
+
+.st-chips button.is-dark.is-active {
+  background: #1e1e1e;
+  color: #fff;
+}
+
 .st-contact {
   position: fixed;
   right: 16px;
@@ -1627,6 +1797,11 @@
 
 .st-map__isl.is-active {
   box-shadow: 0 0 0 2px #fff;
+}
+
+.st-map__isl.is-dark {
+  background: #444 !important;
+  color: #fff;
 }
 
 .st-map__view {
@@ -1885,33 +2060,85 @@
   margin-top: 14px;
 }
 
-.st-pop--win {
+/* окно награды за все достижения — по центру экрана, поверх затемнения */
+.st-win-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 33;
+  background: rgba(17, 17, 17, 0.45);
+  backdrop-filter: blur(4px);
+  animation: st-fade 0.4s ease-out;
+}
+
+@keyframes st-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.st-pop.st-pop--win {
+  top: 50%;
+  bottom: auto;
+  z-index: 34;
+  width: 440px;
+  padding: 0 28px 26px;
   text-align: center;
-  padding-top: 0;
+  transform: translate(-50%, -50%);
+  animation: st-win-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes st-win-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.8) rotate(-4deg);
+  }
 }
 
 .st-pop--win .st-pop__row {
   justify-content: center;
 }
 
+.st-win__kicker {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: #acf9a2;
+  font-size: 13px;
+}
+
 .st-pop--win > b {
   display: block;
+  margin-top: 10px;
   font-family: var(--display);
-  font-size: 22px;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.st-win__word {
+  margin: 16px auto 0;
+  padding: 14px 18px;
+  border: 3px dashed #111;
+  border-radius: 18px;
+  background: #fefe78;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 38px;
+  letter-spacing: 0.08em;
+  user-select: all;
 }
 
 .st-win-figure {
   display: block;
-  width: 150px;
-  height: 150px;
-  margin: -70px auto 6px;
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.25));
+  width: 180px;
+  height: 180px;
+  margin: -96px auto 4px;
+  filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.3));
 }
 
 .st-confetti {
   position: fixed;
   inset: 0;
-  z-index: 29;
+  z-index: 35;
   pointer-events: none;
   overflow: hidden;
 }

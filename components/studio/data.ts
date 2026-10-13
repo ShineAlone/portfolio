@@ -2,19 +2,33 @@ import { AUTOMATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, WALLPAPERS } 
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
-export type Island = Rect & { id: string; name: string; color: string };
+export type Island = Rect & { id: string; name: string; color: string; dark?: boolean };
 
-// Острова: у каждой темы свой цвет из палитры тегов сайта. Высоты разные — так живее.
+/*
+ * Модульная сетка: 6 колонок по 600 с промежутком 200 (ширина 4600).
+ * Острова занимают целое число колонок, высоты в одном ряду равны,
+ * между рядами тот же промежуток 200 — на общем плане всё выровнено.
+ */
+const COL = 600;
+const GAP = 200;
+const colX = (i: number) => i * (COL + GAP);
+const span = (n: number) => n * COL + (n - 1) * GAP;
+
+const ROW1 = { y: 0, h: 1840 };
+const ROW2 = { y: ROW1.y + ROW1.h + GAP, h: 1420 };
+const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 2500 };
+
 export const ISLANDS: Island[] = [
-  { id: "about", name: "Обо мне", color: "#FEFE78", x: 0, y: 0, w: 2200, h: 1700 },
-  { id: "plugins", name: "Плагины", color: "#86DDFF", x: 2400, y: 0, w: 2000, h: 1400 },
-  { id: "social", name: "Соцсети", color: "#FFB6E1", x: 0, y: 1900, w: 1400, h: 1420 },
-  { id: "wall", name: "Обои", color: "#ACF9A2", x: 1600, y: 1900, w: 1300, h: 1420 },
-  { id: "pres", name: "Презентации", color: "#C791FF", x: 3100, y: 1900, w: 1300, h: 1420 },
-  { id: "proj", name: "Проекты", color: "#FFC7B6", x: 0, y: 3520, w: 3380, h: 2500 },
+  { id: "about", name: "Обо мне", color: "#FEFE78", x: colX(0), y: ROW1.y, w: span(3), h: ROW1.h },
+  { id: "plugins", name: "Плагины", color: "#86DDFF", x: colX(3), y: ROW1.y, w: span(3), h: ROW1.h },
+  { id: "social", name: "Соцсети", color: "#FFB6E1", x: colX(0), y: ROW2.y, w: span(2), h: ROW2.h },
+  { id: "wall", name: "Обои", color: "#ACF9A2", x: colX(2), y: ROW2.y, w: span(2), h: ROW2.h },
+  { id: "pres", name: "Презентации", color: "#C791FF", x: colX(4), y: ROW2.y, w: span(2), h: ROW2.h },
+  { id: "proj", name: "Проекты", color: "#FFC7B6", x: colX(0), y: ROW3.y, w: span(5), h: ROW3.h },
+  { id: "contact", name: "Контакты", color: "#1E1E1E", dark: true, x: colX(5), y: ROW3.y, w: span(1), h: ROW3.h },
 ];
 
-export const WORLD: Rect = { x: 0, y: 0, w: 4400, h: 6020 };
+export const WORLD: Rect = { x: 0, y: 0, w: span(6), h: ROW3.y + ROW3.h };
 
 export const islandById = (id: string) => ISLANDS.find((i) => i.id === id)!;
 
@@ -44,18 +58,34 @@ const SITES: [id: string, name: string, src: string, h: number][] = [
   ["site-4", "Service Soft II", PROJECTS.sites.serviceSoft2, 1107],
 ];
 
+// Окна в «Проектах» расставлены с равным шагом по ширине острова.
+const SITE_STEP = 580;
+
 export const SITE_FRAMES = SITES.map(([id, name, src, h], i) => ({
   src,
   meta: {
     id,
     name,
-    ...rel("proj", 60 + i * 510, 170),
+    ...rel("proj", 60 + i * SITE_STEP, 170),
     w: 470,
     h: h + 40,
     r: 18,
     text: PROJECTS.description,
   } as FrameMeta,
 }));
+
+// Плагины: сетка 3×3, карточки по центру острова.
+const PLUGIN_W = 640;
+const PLUGIN_H = 520;
+const PLUGIN_GAP = 40;
+const PLUGIN_X0 = (span(3) - (PLUGIN_W * 3 + PLUGIN_GAP * 2)) / 2;
+export const PLUGIN_SLOTS = 9;
+export const pluginSlot = (i: number) => ({
+  x: islandById("plugins").x + PLUGIN_X0 + (i % 3) * (PLUGIN_W + PLUGIN_GAP),
+  y: islandById("plugins").y + 140 + Math.floor(i / 3) * (PLUGIN_H + PLUGIN_GAP),
+  w: PLUGIN_W,
+  h: PLUGIN_H,
+});
 
 export const FRAMES: FrameMeta[] = [
   {
@@ -72,33 +102,33 @@ export const FRAMES: FrameMeta[] = [
     name: "Обо мне",
     ...rel("about", 60, 960),
     w: 1280,
-    h: 700,
+    h: 800,
     r: 40,
     text: HERO.paragraphs[1],
   },
   {
     id: "history",
     name: "История версий",
-    ...rel("about", 1400, 150),
-    w: 720,
-    h: 1180,
+    ...rel("about", 1400, 120),
+    w: 740,
+    h: 1640,
     r: 40,
     text: "Опыт работы: от фриланса и собственного стартапа до федерального ведомства.",
   },
-  ...AUTOMATION.cards.map(
-    (card, i): FrameMeta => ({
+  ...AUTOMATION.cards.map((card, i): FrameMeta => {
+    const href = card.figmaButton ? LINKS.figmaPlugin : card.link;
+    return {
       id: `plugin-${i}`,
       name: card.title,
-      ...rel("plugins", 60 + (i % 4) * 480, 150 + Math.floor(i / 4) * 540),
-      w: 440,
-      h: 500,
+      island: "plugins",
+      ...pluginSlot(i),
       r: 32,
       text: card.text,
       tags: [card.tag],
       tagColor: card.tagColor,
-      link: card.figmaButton ? { href: LINKS.figmaPlugin, label: "Открыть в Figma" } : undefined,
-    })
-  ),
+      link: href ? { href, label: "Открыть в Figma" } : undefined,
+    };
+  }),
   {
     id: "social",
     name: "Посты для соцсетей",
@@ -112,7 +142,7 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "wall",
     name: "Обои для телефонов и ПК",
-    ...rel("wall", 40, 120),
+    ...rel("wall", 90, 120),
     w: 1220,
     h: 1260,
     r: 0,
@@ -122,7 +152,7 @@ export const FRAMES: FrameMeta[] = [
     (card, i): FrameMeta => ({
       id: `pres-${i}`,
       name: i === 0 ? "Хакатон: ИИ для стройки" : "Кудач — мой стартап",
-      ...rel("pres", 60 + i * 620, 130),
+      ...rel("pres", 110 + i * 620, 130),
       w: 560,
       h: 440,
       r: 28,
@@ -134,7 +164,7 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "deck",
     name: "Слайды",
-    ...rel("pres", 60, 620),
+    ...rel("pres", 110, 620),
     w: 1180,
     h: 740,
     r: 32,
@@ -145,7 +175,7 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "site-5",
     name: "Вне рамок",
-    ...rel("proj", 2610, 170),
+    ...rel("proj", 60 + 5 * SITE_STEP, 170),
     w: 470,
     h: 1996,
     r: 18,
@@ -154,7 +184,7 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "site-6",
     name: "Вне рамок — мобильная",
-    ...rel("proj", 3120, 170),
+    ...rel("proj", 60 + 6 * SITE_STEP, 170),
     w: 200,
     h: 2252,
     r: 30,
@@ -174,11 +204,20 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "merch",
     name: "Мерч",
-    ...rel("proj", 1590, 1400),
-    w: 980,
+    ...rel("proj", 60 + 3 * SITE_STEP, 1400),
+    w: 1050,
     h: 400,
     r: 0,
     text: PROJECTS.description,
+  },
+  {
+    id: "contact",
+    name: "Связаться",
+    ...rel("contact", 60, 170),
+    w: 480,
+    h: 620,
+    r: 36,
+    text: "Пиши в Telegram — расскажи о задаче, обсудим сроки и формат работы.",
   },
 ];
 
@@ -213,3 +252,7 @@ export const ACHIEVEMENTS: {
   { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов в «Презентациях»", island: "pres", color: "#C791FF" },
   { id: "zoom", name: "Под лупой", hint: "Приблизь любой лендинг в «Проектах» до 100%", island: "proj", color: "#FFC7B6" },
 ];
+
+// Секретное слово за все достижения: посетитель пишет его в Telegram и получает скидку.
+export const SECRET_WORD = "ОРБИТА";
+export const SECRET_DISCOUNT = "10%";
