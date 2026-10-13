@@ -89,47 +89,72 @@ export function drawFx(
 }
 
 /*
- * Трещина: лучи расходятся от точки удара вглубь блока (вдоль +x, потом поворот на angle),
- * у каждого луча — изломы и редкие ответвления. Через несколько секунд трещина «зарастает».
+ * Трещина: короткие изломанные лучи расходятся от точки удара вглубь объекта
+ * (вдоль +x, потом поворот на angle) и «бегут» за доли секунды. Лежит в обёртке,
+ * обрезанной по форме объекта, — за его края не вылезает. Через несколько секунд тает.
  */
-export function makeCrack(x: number, y: number, angle: number, power: number) {
-  const S = 320;
+export function makeCrack(
+  host: HTMLElement,
+  x: number,
+  y: number,
+  angle: number,
+  power: number,
+  maxLen: number,
+  radius: string
+) {
+  let clip = host.querySelector<HTMLElement>(":scope > .st-crack-clip");
+  if (!clip) {
+    clip = document.createElement("div");
+    clip.className = "st-crack-clip";
+    clip.style.borderRadius = radius;
+    host.appendChild(clip);
+  }
+  const S = 260;
   const c = S / 2;
-  const rays = 4 + Math.round(power * 4);
-  let d = "";
+  const rays = 3 + Math.round(power * 4);
+  const reach = Math.min(maxLen, 30 + power * 80);
+  const paths: string[] = [];
   for (let i = 0; i < rays; i++) {
-    let a = (i / (rays - 1) - 0.5) * 2.4 + (Math.random() - 0.5) * 0.4;
-    const len = (40 + Math.random() * 60) * (0.55 + power * 0.9);
-    const segs = 3 + Math.floor(Math.random() * 3);
+    let a = (i / Math.max(1, rays - 1) - 0.5) * 2.2 + (Math.random() - 0.5) * 0.5;
+    const len = reach * (0.45 + Math.random() * 0.55);
+    const segs = 3 + Math.floor(Math.random() * 2);
     let px = c;
     let py = c;
-    d += `M${c} ${c}`;
-    let branches = "";
+    let d = `M${c} ${c}`;
     for (let s = 0; s < segs; s++) {
-      a += (Math.random() - 0.5) * 0.8;
+      a += (Math.random() - 0.5) * 0.9;
       const l = (len / segs) * (0.7 + Math.random() * 0.6);
       px += Math.cos(a) * l;
       py += Math.sin(a) * l;
       d += `L${px.toFixed(1)} ${py.toFixed(1)}`;
-      if (s > 0 && Math.random() < 0.45) {
-        const ba = a + (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.5);
-        const bl = l * (0.5 + Math.random() * 0.6);
-        branches += `M${px.toFixed(1)} ${py.toFixed(1)}L${(px + Math.cos(ba) * bl).toFixed(1)} ${(py + Math.sin(ba) * bl).toFixed(1)}`;
-      }
     }
-    d += branches;
+    paths.push(d);
+    // редкая веточка от середины луча
+    if (Math.random() < 0.4) {
+      const ba = a + (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.random() * 0.5);
+      const bl = len * 0.3;
+      paths.push(`M${px.toFixed(1)} ${py.toFixed(1)}l${(Math.cos(ba) * bl).toFixed(1)} ${(Math.sin(ba) * bl).toFixed(1)}`);
+    }
   }
+  const lines = (stroke: string, w: number, dx: number) =>
+    paths
+      .map(
+        (d, i) =>
+          `<path d="${d}" pathLength="1" transform="translate(${dx} ${dx})" stroke="${stroke}" stroke-width="${w}" style="animation-delay:${(i * 0.02).toFixed(2)}s"/>`
+      )
+      .join("");
   const el = document.createElement("div");
   el.className = "st-crack";
   el.style.left = `${x}px`;
   el.style.top = `${y}px`;
   el.style.transform = `translate(-50%, -50%) rotate(${angle}rad)`;
+  // светлая грань со сдвигом на пиксель и тёмная щель — трещина выглядит вдавленной, а не нарисованной сверху
   el.innerHTML =
     `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
-    `<circle cx="${c}" cy="${c}" r="${(7 + power * 9).toFixed(1)}" fill="rgba(0,0,0,.16)" stroke="none"/>` +
-    `<path d="${d}" stroke="rgba(255,255,255,.85)" stroke-width="4.5"/>` +
-    `<path d="${d}" stroke="#1E1E1E" stroke-width="1.8"/>` +
+    `<circle cx="${c}" cy="${c}" r="${(6 + power * 8).toFixed(1)}" fill="rgba(0,0,0,.12)" stroke="none"/>` +
+    lines("rgba(255,255,255,.55)", 1.4, 1.2) +
+    lines("rgba(20,20,20,.7)", 1.6, 0) +
     `</svg>`;
+  clip.appendChild(el);
   setTimeout(() => el.remove(), 5200);
-  return el;
 }

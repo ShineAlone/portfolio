@@ -1,11 +1,12 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
-import { AUTOMATION, EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
+import { EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
   DECKS,
   ISLANDS,
+  LAB_CARDS,
   SITE_FRAMES,
   SOCIAL_LAYOUT,
   frameById,
@@ -232,7 +233,7 @@ export const CHAT: ChatMsg[] = [
   { q: true, text: "Привет! Чем занимаешься?", time: "12:01" },
   { q: false, kind: "intro", color: "#FEFE78", time: "12:01", react: "🔥 3" },
   { q: true, text: "А как ты работаешь?", time: "12:02" },
-  { q: false, kind: "how", color: "#86DDFF", time: "12:02", react: "👍 5" },
+  { q: false, kind: "how", color: "#1E1E1E", time: "12:02", react: "👍 5" },
   { q: true, text: "Где учился и в чём работаешь?", time: "12:03" },
   { q: false, kind: "edu", color: "#ACF9A2", time: "12:03", react: "😍 2" },
 ];
@@ -246,10 +247,10 @@ const AREAS: [string, string][] = [
   ["Реклама", "#FFFFFF"],
 ];
 
-const HOW: [string, string][] = [
-  ["❓", "Задаю вопросы"],
-  ["💡", "Предлагаю идеи"],
-  ["⏱️", "Слежу за деталями и сроками"],
+const HOW: { icon: string; title: string; hint: string; color: string }[] = [
+  { icon: "❓", title: "Задаю вопросы", hint: "чтобы понять задачу, а не угадывать её", color: "#FEFE78" },
+  { icon: "💡", title: "Предлагаю идеи", hint: "приношу варианты, а не один «как просили»", color: "#FFB6E1" },
+  { icon: "⏱️", title: "Слежу за деталями и сроками", hint: "сдаю вовремя и без мелких огрехов", color: "#ACF9A2" },
 ];
 
 const EDU_YEARS = `${EDUCATION.years[0]}–${EDUCATION.years[1].replace(/^[–-]\s*/, "")}`;
@@ -259,12 +260,15 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
     return (
       <>
         <p>
-          С 2021 года занимаюсь дизайном и помогаю проектам становиться <mark>понятнее</mark>,{" "}
-          <mark>аккуратнее</mark> и <mark>визуально сильнее</mark>. Работаю с:
+          С 2021 года занимаюсь дизайном и помогаю проектам становиться <b>понятнее</b>, <b>аккуратнее</b> и{" "}
+          <b>визуально сильнее</b>. Работаю с:
         </p>
         <div className="stchat__chips">
           {AREAS.map(([t, c], i) => (
-            <span key={t} style={{ background: c, rotate: `${i % 2 ? 2 : -2}deg` }}>
+            <span
+              key={t}
+              style={{ background: c, "--rot": `${i % 2 ? 2 : -2}deg`, "--i": i } as React.CSSProperties}
+            >
               {t}
             </span>
           ))}
@@ -275,17 +279,21 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
   if (kind === "how") {
     return (
       <>
-        <p>Мне важно не просто выполнить задачу, а разобраться в её смысле:</p>
+        <p>
+          Мне важно не просто выполнить задачу, а <b>разобраться в её смысле</b>:
+        </p>
         <div className="stchat__how">
-          {HOW.map(([icon, t]) => (
-            <div key={t}>
-              <span>{icon}</span>
-              {t}
+          {HOW.map((s, i) => (
+            <div key={s.title} className="stchat__step" style={{ "--c": s.color, "--i": i } as React.CSSProperties}>
+              <em>0{i + 1}</em>
+              <span className="stchat__icon">{s.icon}</span>
+              <b>{s.title}</b>
+              <small>{s.hint}</small>
             </div>
           ))}
         </div>
         <p className="stchat__small">
-          Опыт собственного стартапа и участия в грантовых конкурсах помогает смотреть на дизайн шире — как на
+          Опыт <b>собственного стартапа</b> и <b>грантовых конкурсов</b> помогает смотреть на дизайн шире — как на
           часть продукта, коммуникации и пользовательского опыта.
         </p>
       </>
@@ -303,8 +311,8 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
         <em>{EDU_YEARS}</em>
       </div>
       <div className="stchat__tools">
-        {TOOLS.icons.map((t) => (
-          <span key={t.src} className="stchat__tool">
+        {TOOLS.icons.map((t, i) => (
+          <span key={t.src} className="stchat__tool" style={{ "--i": i } as React.CSSProperties}>
             <i className={t.boxed ? "is-boxed" : ""}>
               <img src={t.src} alt="" draggable={false} />
             </i>
@@ -318,6 +326,8 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
 
 function Chat({ step, selected }: { step: number; selected: boolean }) {
   const typing = step < CHAT.length && step > 0 && !CHAT[step].q;
+  // реакции можно «докинуть» кликом — счётчик растёт, эмодзи подпрыгивает
+  const [bumps, setBumps] = useState<Record<number, number>>({});
   return (
     <Frame meta={frameById("chat")} selected={selected} className="st-card stchat">
       <div className="stchat__head">
@@ -333,7 +343,7 @@ function Chat({ step, selected }: { step: number; selected: boolean }) {
         {CHAT.slice(0, step).map((m, i) => (
           <div key={i} className={`stchat__row ${m.q ? "is-q" : "is-a"}`}>
             <div
-              className={`stchat__msg ${m.q ? "is-q" : "is-a"}`}
+              className={`stchat__msg ${m.q ? "is-q" : `is-a is-${m.kind}`}`}
               style={m.q ? undefined : ({ "--c": m.color } as React.CSSProperties)}
             >
               {m.q ? m.text : <Answer kind={m.kind} />}
@@ -342,7 +352,20 @@ function Chat({ step, selected }: { step: number; selected: boolean }) {
                 {m.q && " ✓✓"}
               </span>
             </div>
-            {!m.q && m.react && <span className="stchat__react">{m.react}</span>}
+            {!m.q && m.react && (
+              <button
+                type="button"
+                data-ui
+                className={`stchat__react${bumps[i] ? " is-mine" : ""}`}
+                onClick={() => setBumps((b) => ({ ...b, [i]: (b[i] ?? 0) + 1 }))}
+                aria-label="Поставить реакцию"
+              >
+                <span key={bumps[i] ?? 0} className="stchat__emoji">
+                  {m.react.split(" ")[0]}
+                </span>
+                {Number(m.react.split(" ")[1]) + (bumps[i] ?? 0)}
+              </button>
+            )}
           </div>
         ))}
         {typing && (
@@ -398,7 +421,7 @@ function History({ selected }: { selected: boolean }) {
 /* ---------- Плагины ---------- */
 
 function PluginCard({ index, selected }: { index: number; selected: boolean }) {
-  const card = AUTOMATION.cards[index];
+  const card = LAB_CARDS[index];
   const meta = frameById(`plugin-${index}`);
   return (
     <Frame meta={meta} selected={selected} className="st-card">
@@ -967,8 +990,22 @@ function Islands({ spread, onToggleSpread }: { spread: boolean; onToggleSpread: 
           </div>
           {isl.id === "social" && (
             <div className="st-island__action">
-              <button type="button" data-ui onClick={onToggleSpread}>
-                {spread ? "Собрать в стопку" : "Разложить посты"}
+              <button
+                type="button"
+                data-ui
+                className={`st-spread${spread ? " is-open" : ""}`}
+                onClick={onToggleSpread}
+              >
+                {/* мини-колода: под курсором веером показывает, что произойдёт */}
+                <span className="st-spread__deck" aria-hidden>
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span className="st-spread__text">
+                  <b>{spread ? "Собрать в стопку" : "Разложить посты"}</b>
+                  <small>{spread ? "вернуть как было" : `${SOCIAL_LAYOUT.posts.length} постов в стопке`}</small>
+                </span>
               </button>
             </div>
           )}
@@ -1006,7 +1043,7 @@ export const World = memo(function World(p: WorldProps) {
       <Chat step={p.chatStep} selected={p.selected === "chat"} />
       <History selected={p.selected === "history"} />
       <LabIntro selected={p.selected === "lab-intro"} />
-      {AUTOMATION.cards.map((_, i) => (
+      {LAB_CARDS.map((_, i) => (
         <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} />
       ))}
       <Garage

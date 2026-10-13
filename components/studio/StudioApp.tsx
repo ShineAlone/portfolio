@@ -29,6 +29,9 @@ const DRIVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDow
 const STORAGE_KEY = "ak-achievements";
 const MAP_W = 172;
 // фары и стоп-сигналы стоят там, где они нарисованы у каждой машинки (доли ширины и высоты)
+const DRIVE_Z = 0.6;
+const DRIVE_MIN_Z = 0.15;
+const DRIVE_MAX_Z = 1.4;
 const LAMPS: Record<string, [number, number]> = { sport: [0.26, 0.11], pickup: [0.23, 0.08], bug: [0.36, 0.1] };
 
 type Solid = Rect & { id: string; frame: boolean };
@@ -116,6 +119,9 @@ export function StudioApp() {
   const drivingRef = useRef(driving);
   drivingRef.current = driving;
   const [cityOn, setCityOn] = useState(false);
+  // масштаб камеры за рулём: колесо и +/− меняют его, не выходя из машины
+  const driveZRef = useRef(0.6);
+  const zoomTouched = useRef(false);
   const [cityNotice, setCityNotice] = useState(false);
   const carElRef = useRef<HTMLDivElement>(null);
   const speedRef = useRef<HTMLSpanElement>(null);
@@ -221,6 +227,11 @@ export function StudioApp() {
 
   const zoomCenter = useCallback(
     (nz: number) => {
+      if (drivingRef.current) {
+        driveZRef.current = clamp(nz, DRIVE_MIN_Z, DRIVE_MAX_Z);
+        zoomTouched.current = true;
+        return;
+      }
       const { w, h } = vpSize();
       const c = camera.get();
       const z = clamp(nz, MIN_Z, MAX_Z);
@@ -393,6 +404,13 @@ export function StudioApp() {
     return () => clearInterval(id);
   }, [intro]);
 
+  // Город собирается заранее, пока он скрыт: иначе тысячи элементов создавались бы в момент старта и давали рывок.
+  useEffect(() => {
+    if (!introDone) return;
+    const t = setTimeout(() => setCityOn(true), 2500);
+    return () => clearTimeout(t);
+  }, [introDone]);
+
   // Переписка в «Обо мне» оживает после интро: вопросы приходят быстро, ответы — после «печатает…».
   useEffect(() => {
     if (!introDone || chatStep >= CHAT.length) return;
@@ -487,6 +505,8 @@ export function StudioApp() {
     cancelAnimationFrame(animRef.current);
     setCityOn(true);
     setCityNotice(true);
+    driveZRef.current = DRIVE_Z;
+    zoomTouched.current = false;
     clearTimeout(noticeTimer.current);
     noticeTimer.current = setTimeout(() => setCityNotice(false), 4200);
     setDriving(true);
@@ -503,11 +523,21 @@ export function StudioApp() {
         el.classList.remove("is-hit");
         void el.offsetWidth;
         el.classList.add("is-hit");
-        if (power > 0.12) el.appendChild(makeCrack(px - s.x, py - s.y, angle, power));
+        if (power > 0.12) makeCrack(el, px - s.x, py - s.y, angle, power, Math.min(s.w, s.h) * 0.5, "var(--r)");
       }
     } else if (power > 0.12 && cityFxRef.current) {
-      const b = getCity().bounds;
-      cityFxRef.current.appendChild(makeCrack(px - b.x, py - b.y, angle, power));
+      // у дома своя подложка по его контуру — трещина не вылезет на тротуар
+      const fx = cityFxRef.current;
+      let host = fx.querySelector<HTMLElement>(`[data-b="${s.id}"]`);
+      if (!host) {
+        const b = getCity().bounds;
+        host = document.createElement("div");
+        host.dataset.b = s.id;
+        host.className = "st-city__host";
+        Object.assign(host.style, { left: `${s.x - b.x}px`, top: `${s.y - b.y}px`, width: `${s.w}px`, height: `${s.h}px` });
+        fx.appendChild(host);
+      }
+      makeCrack(host, px - s.x, py - s.y, angle, power, Math.min(s.w, s.h) * 0.5, "10px");
     }
     earnRef.current("drive");
     return true;
@@ -551,7 +581,6 @@ export function StudioApp() {
     let lastDust = 0;
     let braking = false;
     const ZOOM_OUT = 0.3;
-    const DRIVE_Z = 0.6;
     const rnd = (a: number) => (Math.random() - 0.5) * a;
 
     const toWorld = (lx: number, ly: number) => {
@@ -742,9 +771,10 @@ export function StudioApp() {
       // Камера: сначала отъезжает, чтобы показать выросший город, потом возвращается к машинке
       const cam = camera.get();
       const { w, h } = vpSize();
-      const reveal = now - t0 < 2600;
-      const target = reveal ? ZOOM_OUT : DRIVE_Z;
-      const kz = 1 - Math.exp(-dt * (reveal ? 2.6 : 2.2));
+      // если игрок сам покрутил масштаб — облёт города прерывается
+      const reveal = now - t0 < 2600 && !zoomTouched.current;
+      const target = reveal ? ZOOM_OUT : driveZRef.current;
+      const kz = 1 - Math.exp(-dt * (reveal ? 2.6 : zoomTouched.current ? 7 : 2.2));
       // доводим масштаб точно до цели, иначе --z менялся бы на каждом кадре и пересчитывал стили
       const z = Math.abs(target - cam.z) < 0.002 ? target : cam.z + (target - cam.z) * kz;
       const kf = 1 - Math.exp(-dt * 16);
@@ -793,11 +823,16 @@ export function StudioApp() {
     const v = viewportRef.current!;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      // за рулём камера привязана к машинке
-      if (drivingRef.current) return;
+      const k = e.deltaMode === 1 ? 16 : 1;
+      // за рулём камера привязана к машинке, колесо только отдаляет и приближает
+      if (drivingRef.current) {
+        const d = clamp(e.deltaY * k, -60, 60);
+        driveZRef.current = clamp(driveZRef.current * Math.exp(-d * (e.ctrlKey ? 0.012 : 0.004)), DRIVE_MIN_Z, DRIVE_MAX_Z);
+        zoomTouched.current = true;
+        return;
+      }
       cancelAnimationFrame(animRef.current);
       stopTour();
-      const k = e.deltaMode === 1 ? 16 : 1;
       const r = v.getBoundingClientRect();
       if (e.ctrlKey || e.metaKey) {
         const d = clamp(e.deltaY * k, -60, 60);
@@ -1263,7 +1298,7 @@ export function StudioApp() {
             <span ref={speedRef}>0</span> км/ч
           </b>
           <span ref={surfRef} className="st-hud__surf" />
-          <span className="st-hud__keys">W/S — газ и тормоз · A/D — поворот, хоть на месте · Esc — выйти</span>
+          <span className="st-hud__keys">W/S — газ · A/D — поворот · колесо — масштаб · Esc — выйти</span>
           <button type="button" onClick={stopDrive}>
             Выйти из машины
           </button>

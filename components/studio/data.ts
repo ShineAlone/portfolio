@@ -98,7 +98,10 @@ export const SOCIAL_LAYOUT = (() => {
   return { posts, w: 6 * POST_W + 5 * POST_GAP, h: y - POST_GAP };
 })();
 
-// Лаборатория: сетка 3×3, карточки по центру острова.
+// Лаборатория: сетка 3×3, карточки по центру острова, гараж — во весь нижний ряд.
+// «Чек-лист презентаций» в новой версии не показываем.
+export const LAB_CARDS = AUTOMATION.cards.filter((c) => !c.title.startsWith("Чек-лист"));
+
 const SLOT_W = 640;
 const SLOT_H = 520;
 const SLOT_GAP = 40;
@@ -151,7 +154,7 @@ export const FRAMES: FrameMeta[] = [
     r: 32,
     text: "Генерирую идеи и довожу их до работающего продукта с помощью вайб-кодинга: Figma-плагины, небольшие сервисы и сайты.",
   },
-  ...AUTOMATION.cards.map((card, i): FrameMeta => {
+  ...LAB_CARDS.map((card, i): FrameMeta => {
     const href = card.figmaButton ? LINKS.figmaPlugin : card.link;
     return {
       id: `plugin-${i}`,
@@ -169,7 +172,7 @@ export const FRAMES: FrameMeta[] = [
     id: "garage",
     name: "Гараж",
     island: "plugins",
-    ...labSlot(7, 2),
+    ...labSlot(6, 3),
     r: 32,
     text: "Мини-игра внутри портфолио: выбери машинку и прокатись по сайту на WASD. Физика, столкновения и камера — тоже вайб-код.",
   },

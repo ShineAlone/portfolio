@@ -119,12 +119,138 @@
   transition: opacity 0.4s;
 }
 
-.st-island__action button {
-  background: #111;
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 22px;
-  font-size: 14px;
+/* кнопка-колода у соцсетей */
+.st-spread {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 20px 8px 10px;
+  border-radius: 24px;
+  background: #fff !important;
+  border: 2px solid #111 !important;
+  box-shadow: 4px 4px 0 #111;
+  text-align: left;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
+  animation: st-nudge 3.2s 2s ease-in-out infinite;
+}
+
+.st-spread:hover {
+  transform: translate(-2px, -2px) rotate(-1.5deg);
+  box-shadow: 6px 6px 0 #ffb6e1, 6px 6px 0 2px #111;
+  animation: none;
+}
+
+.st-spread:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #111;
+}
+
+.st-spread.is-open {
+  animation: none;
+  background: #ffb6e1 !important;
+}
+
+/* пока посты в стопке, кнопка изредка «подмигивает» */
+@keyframes st-nudge {
+  0%,
+  86%,
+  100% {
+    transform: none;
+  }
+  90% {
+    transform: rotate(-3deg) scale(1.04);
+  }
+  95% {
+    transform: rotate(3deg) scale(1.04);
+  }
+}
+
+.st-spread__deck {
+  position: relative;
+  width: 58px;
+  height: 46px;
+  flex: none;
+}
+
+.st-spread__deck i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 34px;
+  margin: -17px 0 0 -13px;
+  border-radius: 6px;
+  border: 2px solid #111;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.st-spread__deck i:nth-child(1) {
+  background: #86ddff;
+  transform: translate(-7px, 2px) rotate(-14deg);
+}
+
+.st-spread__deck i:nth-child(2) {
+  background: #fefe78;
+  transform: translate(7px, 1px) rotate(12deg);
+}
+
+.st-spread__deck i:nth-child(3) {
+  background: #ffb6e1;
+  transform: rotate(-2deg);
+}
+
+/* наведение на закрытую колоду — веер */
+.st-spread:not(.is-open):hover .st-spread__deck i:nth-child(1) {
+  transform: translate(-16px, 4px) rotate(-22deg);
+}
+
+.st-spread:not(.is-open):hover .st-spread__deck i:nth-child(2) {
+  transform: translate(16px, 4px) rotate(22deg);
+}
+
+.st-spread:not(.is-open):hover .st-spread__deck i:nth-child(3) {
+  transform: translateY(-4px);
+}
+
+/* разложено — три карточки рядом; наведение собирает их обратно */
+.st-spread.is-open .st-spread__deck i {
+  width: 16px;
+  height: 22px;
+  margin: -11px 0 0 -8px;
+  background: #fff;
+}
+
+.st-spread.is-open .st-spread__deck i:nth-child(1) {
+  transform: translate(-19px, -6px);
+}
+
+.st-spread.is-open .st-spread__deck i:nth-child(2) {
+  transform: translate(19px, -6px);
+}
+
+.st-spread.is-open .st-spread__deck i:nth-child(3) {
+  transform: translate(0, 10px);
+}
+
+.st-spread.is-open:hover .st-spread__deck i {
+  transform: rotate(-4deg);
+}
+
+.st-spread__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  color: #111;
+}
+
+.st-spread__text b {
+  font-family: var(--display);
+  font-size: 15px;
+}
+
+.st-spread__text small {
+  font-size: 12px;
+  opacity: 0.6;
 }
 
 /* Дальний план: работы приглушаются, над островами всплывают огромные названия */
@@ -616,7 +742,7 @@
   max-width: 78%;
   padding: 14px 18px 22px;
   border-radius: 24px;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.45;
   animation: st-msg-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transform-origin: 0 100%;
@@ -631,11 +757,16 @@
   padding-bottom: 14px;
 }
 
+/* ответы крупнее вопросов и шире: в них главное */
 .stchat__msg.is-a {
+  max-width: 88%;
+  padding: 20px 24px 28px;
   background: var(--c, #f1f1f1);
   border: 2px solid #111;
   border-bottom-left-radius: 6px;
   box-shadow: 4px 4px 0 #111;
+  font-size: 23px;
+  line-height: 1.4;
 }
 
 .stchat__meta {
@@ -646,68 +777,185 @@
   opacity: 0.55;
 }
 
+/* реакция — кнопка: клик добавляет свою, эмодзи подпрыгивает */
 .stchat__react {
   position: absolute;
   left: 22px;
-  bottom: -14px;
-  padding: 2px 10px;
-  border-radius: 14px;
-  background: #fff;
-  border: 2px solid #111;
-  font-size: 14px;
+  bottom: -16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 3px 8px !important;
+  border-radius: 16px;
+  background: #fff !important;
+  border: 2px solid #111 !important;
+  font-size: 16px !important;
+  font-weight: 600;
   animation: st-msg-in 0.4s 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s;
 }
 
-.stchat__msg mark {
-  background: #fff;
-  padding: 0 6px;
-  border-radius: 6px;
-  box-shadow: inset 0 -3px 0 #111;
+.stchat__react:hover {
+  transform: scale(1.12) rotate(-4deg);
+}
+
+.stchat__react.is-mine {
+  background: #fefe78 !important;
+}
+
+.stchat__emoji {
+  display: inline-block;
+  animation: st-react 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes st-react {
+  0% {
+    transform: scale(0.4) rotate(-30deg);
+  }
+  50% {
+    transform: scale(1.7) translateY(-8px) rotate(12deg);
+  }
+}
+
+.stchat__msg b {
+  font-weight: 700;
 }
 
 .stchat__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 14px;
 }
 
+/* чипы выскакивают по очереди и подпрыгивают под курсором */
 .stchat__chips span {
-  padding: 5px 12px;
+  padding: 7px 16px;
   border: 2px solid #111;
-  border-radius: 16px;
-  font-size: 15px;
-  font-weight: 500;
+  border-radius: 18px;
+  font-size: 18px;
+  font-weight: 600;
+  rotate: var(--rot);
+  box-shadow: 0 0 0 #111;
+  animation: st-chip-in 0.5s calc(0.25s + var(--i) * 0.08s) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s, rotate 0.25s;
+}
+
+.stchat__chips span:hover {
+  transform: translateY(-6px) scale(1.06);
+  rotate: calc(var(--rot) * -2);
+  box-shadow: 3px 5px 0 #111;
+}
+
+@keyframes st-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.5);
+  }
+}
+
+/* «Как я работаю»: тёмный пузырь и три шага-наклейки, связанные пунктиром */
+.stchat__msg.is-how {
+  color: #fff;
+  border-color: #111;
+  box-shadow: 4px 4px 0 #86ddff;
+}
+
+.stchat__msg.is-how .stchat__meta {
+  color: #fff;
 }
 
 .stchat__how {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin: 10px 0;
+  gap: 22px;
+  margin: 18px 0 16px;
 }
 
-.stchat__how div {
+/* пунктир «маршрута» за карточками */
+.stchat__how::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  border-top: 3px dashed rgba(255, 255, 255, 0.35);
+}
+
+.stchat__step {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 12px;
-  border-radius: 16px;
-  background: #fff;
+  padding: 16px 16px 18px;
+  border-radius: 20px;
+  background: var(--c);
+  color: #111;
   border: 2px solid #111;
-  font-size: 15px;
-  font-weight: 500;
   line-height: 1.25;
+  rotate: calc((var(--i) - 1) * 1.5deg);
+  animation: st-chip-in 0.55s calc(0.3s + var(--i) * 0.15s) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), rotate 0.3s, box-shadow 0.3s;
 }
 
-.stchat__how span {
+.stchat__step:hover {
+  transform: translateY(-10px) scale(1.04);
+  rotate: calc((var(--i) - 1) * -2deg);
+  box-shadow: 0 16px 0 -6px rgba(255, 255, 255, 0.25);
+}
+
+.stchat__step em {
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  font-style: normal;
+  font-family: var(--display);
+  font-weight: 800;
   font-size: 26px;
+  opacity: 0.25;
+}
+
+.stchat__icon {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 34px;
   line-height: 1;
+  animation: st-bob 2.4s calc(var(--i) * 0.4s) ease-in-out infinite;
+}
+
+.stchat__step:hover .stchat__icon {
+  animation: st-wiggle 0.5s ease-in-out infinite;
+}
+
+@keyframes st-bob {
+  50% {
+    transform: translateY(-5px) rotate(-6deg);
+  }
+}
+
+@keyframes st-wiggle {
+  25% {
+    transform: rotate(-14deg) scale(1.15);
+  }
+  75% {
+    transform: rotate(14deg) scale(1.15);
+  }
+}
+
+.stchat__step b {
+  font-family: var(--display);
+  font-size: 19px;
+}
+
+.stchat__step small {
+  font-size: 15px;
+  opacity: 0.7;
 }
 
 .stchat__small {
-  font-size: 15px;
-  opacity: 0.8;
+  font-size: 18px;
+  opacity: 0.85;
 }
 
 .stchat__edu {
@@ -735,15 +983,15 @@
 
 .stchat__diploma b {
   font-family: var(--display);
-  font-size: 18px;
+  font-size: 24px;
 }
 
 .stchat__diploma span {
-  font-size: 15px;
+  font-size: 18px;
 }
 
 .stchat__diploma small {
-  font-size: 13px;
+  font-size: 15px;
   opacity: 0.65;
 }
 
@@ -815,13 +1063,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 14px;
+  animation: st-chip-in 0.5s calc(0.3s + var(--i) * 0.07s) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stchat__tool:hover {
+  transform: translateY(-8px) rotate(-6deg) scale(1.1);
+}
+
+/* шапочка подбрасывается, как на выпускном */
+.stchat__diploma {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stchat__diploma:hover {
+  transform: rotate(-1deg) scale(1.02);
+}
+
+.stchat__diploma:hover .stchat__cap {
+  animation: st-toss 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes st-toss {
+  40% {
+    transform: translateY(-34px) rotate(200deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
 }
 
 .stchat__tool i {
-  width: 46px;
-  height: 46px;
+  width: 56px;
+  height: 56px;
   display: block;
 }
 
@@ -839,8 +1115,8 @@
 
 /* у SVG иконки Figma preserveAspectRatio="none", поэтому задаём обе стороны в пропорции логотипа */
 .stchat__tools .is-boxed img {
-  width: 18px;
-  height: 27px;
+  width: 22px;
+  height: 33px;
 }
 
 /* ---------- история версий ---------- */
@@ -2775,33 +3051,43 @@
   display: block;
 }
 
-/* трещина в месте удара: появляется рывком и через несколько секунд «зарастает» */
+/* обёртка трещин повторяет форму объекта и обрезает всё, что вылезло бы за край */
+.st-crack-clip {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* трещина «бежит» от точки удара и через несколько секунд затягивается */
 .st-crack {
   position: absolute;
-  z-index: 60;
-  width: 320px;
-  height: 320px;
+  width: 260px;
+  height: 260px;
   pointer-events: none;
-  animation: st-crack 5s ease-out forwards;
+  animation: st-crack 5s ease-in forwards;
 }
 
 .st-crack svg {
   display: block;
 }
 
+.st-crack path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: st-crack-run 0.22s ease-out forwards;
+}
+
+@keyframes st-crack-run {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @keyframes st-crack {
-  0% {
-    opacity: 0;
-    scale: 0.3;
-  }
-  5% {
-    opacity: 1;
-    scale: 1.06;
-  }
-  10% {
-    scale: 1;
-  }
-  65% {
+  0%,
+  70% {
     opacity: 1;
   }
   100% {
@@ -2829,14 +3115,26 @@
   display: block;
 }
 
+.st-city__base {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
 .st-city__fx {
   position: absolute;
   inset: 0;
 }
 
+.st-city__host {
+  position: absolute;
+}
+
+/* каждый квартал — отдельный слой: его появление не заставляет перерисовывать весь холст */
 .st-city__block {
-  transform-box: fill-box;
-  transform-origin: center;
+  position: absolute;
+  contain: layout paint;
+  pointer-events: none;
 }
 
 /* кварталы вырастают волной от островов наружу */
@@ -2982,11 +3280,11 @@
   }
 }
 
-/* Во время езды экономим кадры: холст — отдельный слой, орбита стоит, размытие под шапкой выключено */
-.is-driving .st-world {
-  will-change: transform;
-}
-
+/*
+ * Во время езды экономим кадры: орбита стоит, размытие под шапкой выключено.
+ * will-change на холсте здесь нельзя: браузер растрирует слой в одном масштабе, и при отъезде
+ * камеры огромный город вместе с работами не помещается в память — элементы начинают мигать.
+ */
 .is-driving .st-phone {
   animation-play-state: paused;
 }
