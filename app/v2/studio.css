@@ -72,12 +72,13 @@
   background: color-mix(in srgb, var(--c) 34%, transparent);
 }
 
+/* Подпись стоит над островом, в промежутке между рядами, — так она не накрывает работы и рамки */
 .st-island__label {
   position: absolute;
   left: 0;
-  top: 0;
-  transform-origin: 0 0;
-  transform: scale(calc(1 / var(--z))) translate(22px, 22px);
+  bottom: 100%;
+  transform-origin: 0 100%;
+  transform: scale(calc(1 / var(--z))) translate(8px, -14px);
   background: var(--c);
   padding: 8px 16px;
   border-radius: 22px;
@@ -111,9 +112,9 @@
 .st-island__action {
   position: absolute;
   right: 0;
-  top: 0;
-  transform-origin: 100% 0;
-  transform: scale(calc(1 / var(--z))) translate(-22px, 22px);
+  bottom: 100%;
+  transform-origin: 100% 100%;
+  transform: scale(calc(1 / var(--z))) translate(-8px, -10px);
   z-index: 5;
   transition: opacity 0.4s;
 }
@@ -585,13 +586,27 @@
 .stchat__body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 24px 32px;
+  gap: 14px;
+  padding: 22px 32px;
+}
+
+.stchat__row {
+  position: relative;
+  display: flex;
+}
+
+.stchat__row.is-q {
+  justify-content: flex-end;
+}
+
+.stchat__row.is-a {
+  margin-bottom: 8px;
 }
 
 .stchat__msg {
-  max-width: 76%;
-  padding: 14px 18px;
+  position: relative;
+  max-width: 78%;
+  padding: 14px 18px 22px;
   border-radius: 24px;
   font-size: 18px;
   line-height: 1.45;
@@ -600,17 +615,150 @@
 }
 
 .stchat__msg.is-q {
-  align-self: flex-end;
   background: #111;
   color: #fff;
   border-bottom-right-radius: 6px;
   transform-origin: 100% 100%;
+  padding-right: 74px;
+  padding-bottom: 14px;
 }
 
 .stchat__msg.is-a {
-  align-self: flex-start;
   background: var(--c, #f1f1f1);
+  border: 2px solid #111;
   border-bottom-left-radius: 6px;
+  box-shadow: 4px 4px 0 #111;
+}
+
+.stchat__meta {
+  position: absolute;
+  right: 14px;
+  bottom: 6px;
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.stchat__react {
+  position: absolute;
+  left: 22px;
+  bottom: -14px;
+  padding: 2px 10px;
+  border-radius: 14px;
+  background: #fff;
+  border: 2px solid #111;
+  font-size: 14px;
+  animation: st-msg-in 0.4s 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.stchat__msg mark {
+  background: #fff;
+  padding: 0 6px;
+  border-radius: 6px;
+  box-shadow: inset 0 -3px 0 #111;
+}
+
+.stchat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.stchat__chips span {
+  padding: 5px 12px;
+  border: 2px solid #111;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.stchat__how {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.stchat__how div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #fff;
+  border: 2px solid #111;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.stchat__how span {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.stchat__small {
+  font-size: 15px;
+  opacity: 0.8;
+}
+
+.stchat__edu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stchat__diploma {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 2px dashed #111;
+}
+
+.stchat__diploma div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  line-height: 1.25;
+}
+
+.stchat__diploma b {
+  font-family: var(--display);
+  font-size: 18px;
+}
+
+.stchat__diploma span {
+  font-size: 15px;
+}
+
+.stchat__diploma small {
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.stchat__diploma em {
+  font-style: normal;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.stchat__cap {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #acf9a2;
+  border: 2px solid #111;
+  font-size: 26px;
+  flex-shrink: 0;
 }
 
 @keyframes st-msg-in {
@@ -652,13 +800,21 @@
 
 .stchat__tools {
   display: flex;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 12px;
 }
 
-.stchat__tools span {
-  width: 44px;
-  height: 44px;
+.stchat__tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.stchat__tool i {
+  width: 46px;
+  height: 46px;
+  display: block;
 }
 
 .stchat__tools img {
@@ -1095,74 +1251,81 @@
   background: var(--c);
 }
 
-.st-presenter {
+/* Вкладки — крупные наклейки над тёмным экраном, в том же стиле, что цифры у фото */
+.stpr__tabs {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 80px;
+  display: flex;
+  gap: 18px;
+}
+
+.stpr__tabs button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 80px;
+  padding: 0 14px 0 28px;
+  border-radius: 40px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 24px;
+  background: #fff !important;
+  border: 3px solid #111 !important;
+  box-shadow: 6px 6px 0 #111;
+  rotate: var(--tilt);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s, rotate 0.25s;
+}
+
+.stpr__tabs button:hover {
+  background: var(--c) !important;
+  transform: translateY(-3px);
+  rotate: 0deg;
+}
+
+.stpr__tabs button small {
+  min-width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 26px;
+  background: #111;
+  color: #fff;
+  font-size: 18px;
+}
+
+.stpr__tabs button.is-active {
+  background: var(--c) !important;
+  transform: translate(4px, 4px);
+  box-shadow: 2px 2px 0 #111;
+  rotate: 0deg;
+}
+
+.stpr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 104px;
+  bottom: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-radius: var(--r);
   background: #111;
   color: #fff;
   box-shadow: 0 40px 70px -40px rgba(0, 0, 0, 0.5);
 }
 
-.stpr {
-  position: absolute;
-  inset: 0;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.stpr__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.stpr__tabs {
-  display: flex;
-  gap: 10px;
-}
-
-.stpr__tabs button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 56px;
-  padding: 0 10px 0 22px;
-  border-radius: 28px;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 18px;
-  background: transparent !important;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
-  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
-}
-
-.stpr__tabs button:hover {
-  box-shadow: inset 0 0 0 2px #c791ff;
-  transform: translateY(-2px);
-}
-
-.stpr__tabs button small {
-  min-width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.12);
-  font-size: 14px;
-}
-
-.stpr__tabs button.is-active {
-  background: #c791ff !important;
-  color: #111;
-  box-shadow: 0 0 0 4px rgba(199, 145, 255, 0.35);
-}
-
-.stpr__tabs button.is-active small {
-  background: #111;
-  color: #fff;
-}
-
 .stpr__count {
+  position: absolute;
+  right: 24px;
+  top: 16px;
+  z-index: 2;
   font-family: var(--display);
   font-size: 22px;
 }
@@ -1350,8 +1513,13 @@
   font-size: 110px;
   line-height: 1.12;
   white-space: nowrap;
-  color: transparent;
-  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.12);
+  /*
+   * Не -webkit-text-stroke: в вариативном шрифте контуры букв пересекаются и обводка рисует лишние треугольники.
+   * Заливка цветом фона + тени во все стороны дают цельный контур каждой буквы.
+   */
+  color: #ffd400;
+  text-shadow: 2px 0 #e0bb00, -2px 0 #e0bb00, 0 2px #e0bb00, 0 -2px #e0bb00, 1.4px 1.4px #e0bb00,
+    -1.4px 1.4px #e0bb00, 1.4px -1.4px #e0bb00, -1.4px -1.4px #e0bb00;
   pointer-events: none;
 }
 
@@ -1531,15 +1699,23 @@
 }
 
 .stx__vertical {
-  writing-mode: vertical-rl;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 24px;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 140px;
+  font-size: 130px;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
-  color: transparent;
-  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.35);
+  /* та же техника цельного контура, что и в «Кофе Культ» */
+  color: #1e1e1e;
+  text-shadow: 2px 0 #5a5a5a, -2px 0 #5a5a5a, 0 2px #5a5a5a, 0 -2px #5a5a5a, 1.4px 1.4px #5a5a5a,
+    -1.4px 1.4px #5a5a5a, 1.4px -1.4px #5a5a5a, -1.4px -1.4px #5a5a5a;
+}
+
+.stx__vertical span {
+  writing-mode: vertical-rl;
 }
 
 /* ---------- подпись к выделенной работе ---------- */
@@ -2260,6 +2436,317 @@
 .st-cursor.is-on-frame .st-cursor__label {
   color: #111;
   box-shadow: 0 0 0 1.5px #111;
+}
+
+.stchat__msg.is-typing {
+  align-self: flex-start;
+}
+
+/* ---------- лаборатория ---------- */
+
+.stl {
+  display: flex;
+  flex-direction: column;
+  padding: 36px;
+  background: #111;
+  color: #fff;
+  box-shadow: 0 40px 70px -40px rgba(0, 0, 0, 0.5);
+}
+
+.stl__kicker {
+  align-self: flex-start;
+  padding: 5px 12px;
+  border-radius: 14px;
+  background: #86ddff;
+  color: #111;
+  font-size: 14px;
+}
+
+.stl__title {
+  margin-top: 18px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.stl p {
+  margin-top: 16px;
+  font-size: 18px;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+.stl__flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  font-size: 22px;
+}
+
+.stl__flow span {
+  padding: 8px 14px;
+  border-radius: 18px;
+  border: 2px solid #fff;
+  font-size: 16px;
+}
+
+.stl__flow span:last-child {
+  background: #86ddff;
+  border-color: #86ddff;
+  color: #111;
+}
+
+.stl__note {
+  font-size: 15px !important;
+  opacity: 0.6 !important;
+}
+
+/* гараж */
+.stg {
+  display: flex;
+  gap: 32px;
+  padding: 36px;
+  background: #2b2b2b;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 40px 70px -40px rgba(0, 0, 0, 0.5);
+}
+
+.stg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.4px) 0 0 / 14px 14px;
+  pointer-events: none;
+}
+
+.stg__info {
+  position: relative;
+  width: 420px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stg__info p {
+  margin-top: 14px;
+  font-size: 18px;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+.stg__keys {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+.stg__wasd {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  grid-template-areas: ". w ." "a s d";
+  gap: 4px;
+}
+
+.stg__wasd kbd:nth-child(1) {
+  grid-area: w;
+}
+
+.stg__wasd kbd:nth-child(2) {
+  grid-area: a;
+}
+
+.stg__wasd kbd:nth-child(3) {
+  grid-area: s;
+}
+
+.stg__wasd kbd:nth-child(4) {
+  grid-area: d;
+}
+
+.stg kbd {
+  height: 34px;
+  min-width: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-family: var(--display);
+  font-size: 14px;
+  box-shadow: 0 3px 0 #999;
+}
+
+.stg kbd.is-wide {
+  padding: 0 10px;
+  margin-left: 10px;
+}
+
+.stg__go {
+  margin-top: auto;
+  align-self: flex-start;
+  background: #86ddff !important;
+  color: #111 !important;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 20px;
+  padding: 16px 28px;
+  border: 3px solid #111;
+  box-shadow: 5px 5px 0 #000;
+}
+
+.stg__lot {
+  position: relative;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stg__spot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border-radius: 20px;
+  border: 3px dashed rgba(255, 255, 255, 0.35) !important;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.stg__spot:hover {
+  border-color: var(--c) !important;
+}
+
+.stg__spot.is-picked {
+  border: 3px solid var(--c) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.stg__car {
+  height: 230px;
+  display: grid;
+  place-items: center;
+}
+
+.stg__car svg {
+  width: auto;
+  height: 100%;
+  max-width: 130px;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stg__spot:hover .stg__car svg,
+.stg__spot.is-picked .stg__car svg {
+  transform: translateY(-8px) rotate(-4deg);
+}
+
+.stg__name {
+  padding: 5px 14px;
+  border-radius: 14px;
+  background: var(--c);
+  color: #111;
+  font-family: var(--display);
+  font-size: 15px;
+}
+
+/* машинка на холсте */
+.st-car {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 80;
+  display: none;
+  transform-origin: center;
+  pointer-events: none;
+  filter: drop-shadow(0 14px 10px rgba(0, 0, 0, 0.35));
+}
+
+.st-car.is-on {
+  display: block;
+}
+
+.st-car svg {
+  display: block;
+}
+
+/* блок «вздрагивает» от удара машинкой */
+.st-frame.is-hit {
+  animation: st-hit 0.42s ease-out;
+}
+
+@keyframes st-hit {
+  15% {
+    translate: 10px -4px;
+    rotate: 0.8deg;
+  }
+  35% {
+    translate: -8px 3px;
+    rotate: -0.6deg;
+  }
+  60% {
+    translate: 5px -2px;
+    rotate: 0.3deg;
+  }
+  80% {
+    translate: -2px 1px;
+    rotate: 0deg;
+  }
+}
+
+/* приборная панель во время езды */
+.st-hud {
+  position: fixed;
+  left: 50%;
+  top: 72px;
+  z-index: 32;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 8px;
+  border-radius: 26px;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  transform: translateX(-50%);
+  box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.55);
+  animation: st-pop-up 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.st-hud__car {
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: var(--c);
+  color: #111;
+  font-family: var(--display);
+}
+
+.st-hud b {
+  font-family: var(--display);
+  font-size: 18px;
+  min-width: 96px;
+}
+
+.st-hud__keys {
+  opacity: 0.6;
+}
+
+.st-hud button {
+  padding: 8px 14px;
+  border-radius: 18px;
+  background: #fff !important;
+  color: #111 !important;
+  cursor: pointer;
 }
 
 /* ---------- мобильные ---------- */

@@ -3,17 +3,17 @@
 import { memo, useEffect, useState } from "react";
 import { AUTOMATION, EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
+  CARS,
   DECKS,
   ISLANDS,
-  PLUGIN_SLOTS,
   SITE_FRAMES,
   SOCIAL_LAYOUT,
   frameById,
   islandById,
   narrowWallpapers,
-  pluginSlot,
   poster,
   wideWallpapers,
+  type CarSpec,
   type FrameMeta,
 } from "./data";
 
@@ -224,16 +224,97 @@ function Greeting({
 
 /* ---------- Обо мне: переписка ---------- */
 
-const EDU_TEXT = `${EDUCATION.lines[0]} — ${EDUCATION.lines[1].toLowerCase()}, ${EDUCATION.years[0]}–${EDUCATION.years[1].replace(/^[–-]\s*/, "")}. Работаю в этих инструментах:`;
+type ChatMsg =
+  | { q: true; text: string; time: string }
+  | { q: false; kind: "intro" | "how" | "edu"; color: string; time: string; react?: string };
 
-export const CHAT: { q: boolean; text: string; color?: string; tools?: boolean }[] = [
-  { q: true, text: "Привет! Чем занимаешься?" },
-  { q: false, text: HERO.paragraphs[0], color: "#FEFE78" },
-  { q: true, text: "А как ты работаешь?" },
-  { q: false, text: HERO.paragraphs[1], color: "#86DDFF" },
-  { q: true, text: "Где учился и в чём работаешь?" },
-  { q: false, text: EDU_TEXT, color: "#ACF9A2", tools: true },
+export const CHAT: ChatMsg[] = [
+  { q: true, text: "Привет! Чем занимаешься?", time: "12:01" },
+  { q: false, kind: "intro", color: "#FEFE78", time: "12:01", react: "🔥 3" },
+  { q: true, text: "А как ты работаешь?", time: "12:02" },
+  { q: false, kind: "how", color: "#86DDFF", time: "12:02", react: "👍 5" },
+  { q: true, text: "Где учился и в чём работаешь?", time: "12:03" },
+  { q: false, kind: "edu", color: "#ACF9A2", time: "12:03", react: "😍 2" },
 ];
+
+const AREAS: [string, string][] = [
+  ["Интерфейсы", "#86DDFF"],
+  ["Сайты", "#FFB6E1"],
+  ["Презентации", "#C791FF"],
+  ["Соцсети", "#ACF9A2"],
+  ["Брендинг мероприятий", "#FFC7B6"],
+  ["Реклама", "#FFFFFF"],
+];
+
+const HOW: [string, string][] = [
+  ["❓", "Задаю вопросы"],
+  ["💡", "Предлагаю идеи"],
+  ["⏱️", "Слежу за деталями и сроками"],
+];
+
+const EDU_YEARS = `${EDUCATION.years[0]}–${EDUCATION.years[1].replace(/^[–-]\s*/, "")}`;
+
+function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
+  if (kind === "intro") {
+    return (
+      <>
+        <p>
+          С 2021 года занимаюсь дизайном и помогаю проектам становиться <mark>понятнее</mark>,{" "}
+          <mark>аккуратнее</mark> и <mark>визуально сильнее</mark>. Работаю с:
+        </p>
+        <div className="stchat__chips">
+          {AREAS.map(([t, c], i) => (
+            <span key={t} style={{ background: c, rotate: `${i % 2 ? 2 : -2}deg` }}>
+              {t}
+            </span>
+          ))}
+        </div>
+      </>
+    );
+  }
+  if (kind === "how") {
+    return (
+      <>
+        <p>Мне важно не просто выполнить задачу, а разобраться в её смысле:</p>
+        <div className="stchat__how">
+          {HOW.map(([icon, t]) => (
+            <div key={t}>
+              <span>{icon}</span>
+              {t}
+            </div>
+          ))}
+        </div>
+        <p className="stchat__small">
+          Опыт собственного стартапа и участия в грантовых конкурсах помогает смотреть на дизайн шире — как на
+          часть продукта, коммуникации и пользовательского опыта.
+        </p>
+      </>
+    );
+  }
+  return (
+    <div className="stchat__edu">
+      <div className="stchat__diploma">
+        <span className="stchat__cap">🎓</span>
+        <div>
+          <b>Бакалавр</b>
+          <span>{EDUCATION.lines[0].replace(/^Бакалавр,\s*/, "")}</span>
+          <small>{EDUCATION.lines[1]}</small>
+        </div>
+        <em>{EDU_YEARS}</em>
+      </div>
+      <div className="stchat__tools">
+        {TOOLS.icons.map((t) => (
+          <span key={t.src} className="stchat__tool">
+            <i className={t.boxed ? "is-boxed" : ""}>
+              <img src={t.src} alt="" draggable={false} />
+            </i>
+            {t.alt}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Chat({ step, selected }: { step: number; selected: boolean }) {
   const typing = step < CHAT.length && step > 0 && !CHAT[step].q;
@@ -250,21 +331,18 @@ function Chat({ step, selected }: { step: number; selected: boolean }) {
       </div>
       <div className="stchat__body">
         {CHAT.slice(0, step).map((m, i) => (
-          <div
-            key={i}
-            className={`stchat__msg ${m.q ? "is-q" : "is-a"}`}
-            style={m.color ? ({ "--c": m.color } as React.CSSProperties) : undefined}
-          >
-            {m.text}
-            {m.tools && (
-              <div className="stchat__tools">
-                {TOOLS.icons.map((t) => (
-                  <span key={t.src} className={t.boxed ? "is-boxed" : ""} title={t.alt}>
-                    <img src={t.src} alt={t.alt} draggable={false} />
-                  </span>
-                ))}
-              </div>
-            )}
+          <div key={i} className={`stchat__row ${m.q ? "is-q" : "is-a"}`}>
+            <div
+              className={`stchat__msg ${m.q ? "is-q" : "is-a"}`}
+              style={m.q ? undefined : ({ "--c": m.color } as React.CSSProperties)}
+            >
+              {m.q ? m.text : <Answer kind={m.kind} />}
+              <span className="stchat__meta">
+                {m.time}
+                {m.q && " ✓✓"}
+              </span>
+            </div>
+            {!m.q && m.react && <span className="stchat__react">{m.react}</span>}
           </div>
         ))}
         {typing && (
@@ -342,6 +420,133 @@ function PluginCard({ index, selected }: { index: number; selected: boolean }) {
             {meta.link.label} ↗
           </a>
         )}
+      </div>
+    </Frame>
+  );
+}
+
+/* ---------- Лаборатория: идеи, вайб-код и гараж ---------- */
+
+function LabIntro({ selected }: { selected: boolean }) {
+  return (
+    <Frame meta={frameById("lab-intro")} selected={selected} className="stl">
+      <span className="stl__kicker">не только дизайн</span>
+      <b className="stl__title">Придумываю и собираю сам</b>
+      <p>
+        Генерирую идеи и довожу их до работающего продукта с помощью вайб-кодинга: Figma-плагины, небольшие
+        сервисы и сайты.
+      </p>
+      <div className="stl__flow">
+        <span>Идея</span>→<span>Прототип</span>→<span>Продукт</span>
+      </div>
+      <p className="stl__note">Этот сайт и гараж с машинками — тоже мой вайб-код ↓</p>
+    </Frame>
+  );
+}
+
+// Машинки нарисованы сверху, носом вверх.
+export function CarSvg({ car }: { car: CarSpec }) {
+  const wheels = (w: number, h: number, ys: number[]) =>
+    ys.flatMap((y) => [
+      <rect key={`l${y}`} x={0} y={y} width={12} height={24} rx={4} fill="#111" />,
+      <rect key={`r${y}`} x={w - 12} y={y} width={12} height={24} rx={4} fill="#111" />,
+    ]);
+  if (car.id === "pickup") {
+    return (
+      <svg viewBox="0 0 78 132" width={car.w} height={car.h} aria-hidden>
+        {wheels(78, 132, [18, 96])}
+        <rect x="7" y="4" width="64" height="124" rx="12" fill={car.color} stroke="#111" strokeWidth="3" />
+        <rect x="15" y="26" width="48" height="16" rx="5" fill="#2a2a2a" />
+        <rect x="15" y="44" width="48" height="16" rx="4" fill="#fff" stroke="#111" strokeWidth="2" />
+        <rect x="14" y="68" width="50" height="52" rx="5" fill="none" stroke="#111" strokeWidth="2.5" />
+        <path d="M14 82h50M14 94h50M14 106h50" stroke="#111" strokeWidth="2" />
+        <circle cx="18" cy="11" r="4" fill="#fff" stroke="#111" strokeWidth="1.5" />
+        <circle cx="60" cy="11" r="4" fill="#fff" stroke="#111" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  if (car.id === "bug") {
+    return (
+      <svg viewBox="0 0 72 100" width={car.w} height={car.h} aria-hidden>
+        {wheels(72, 100, [14, 64])}
+        <ellipse cx="36" cy="50" rx="30" ry="47" fill={car.color} stroke="#111" strokeWidth="3" />
+        <ellipse cx="36" cy="34" rx="20" ry="9" fill="#2a2a2a" />
+        <ellipse cx="36" cy="74" rx="15" ry="6" fill="#2a2a2a" />
+        <circle cx="22" cy="54" r="4" fill="#fff" />
+        <circle cx="50" cy="56" r="5" fill="#fff" />
+        <circle cx="36" cy="58" r="3" fill="#fff" />
+        <circle cx="26" cy="10" r="4" fill="#fff" stroke="#111" strokeWidth="1.5" />
+        <circle cx="46" cy="10" r="4" fill="#fff" stroke="#111" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 70 124" width={car.w} height={car.h} aria-hidden>
+      {wheels(70, 124, [18, 88])}
+      <path
+        d="M14 10Q35 0 56 10L62 42V112Q62 121 53 121H17Q8 121 8 112V42Z"
+        fill={car.color}
+        stroke="#111"
+        strokeWidth="3"
+      />
+      <rect x="28" y="4" width="5" height="116" fill="#111" opacity="0.85" />
+      <rect x="37" y="4" width="5" height="116" fill="#111" opacity="0.85" />
+      <path d="M16 46Q35 38 54 46L52 62H18Z" fill="#2a2a2a" />
+      <rect x="19" y="94" width="32" height="10" rx="3" fill="#2a2a2a" />
+      <circle cx="18" cy="14" r="4" fill="#fff" stroke="#111" strokeWidth="1.5" />
+      <circle cx="52" cy="14" r="4" fill="#fff" stroke="#111" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function Garage({
+  selected,
+  carId,
+  driving,
+  onPick,
+  onDrive,
+}: {
+  selected: boolean;
+  carId: number;
+  driving: boolean;
+  onPick: (i: number) => void;
+  onDrive: () => void;
+}) {
+  return (
+    <Frame meta={frameById("garage")} selected={selected} className="stg">
+      <div className="stg__info">
+        <span className="stl__kicker">мини-игра</span>
+        <b className="stl__title">Гараж</b>
+        <p>Выбери машинку и прокатись по всему сайту. Врезайся в блоки — им не больно.</p>
+        <div className="stg__keys">
+          <span className="stg__wasd">
+            <kbd>W</kbd>
+            <kbd>A</kbd>
+            <kbd>S</kbd>
+            <kbd>D</kbd>
+          </span>
+          руль и газ
+          <kbd className="is-wide">Esc</kbd>
+          выйти
+        </div>
+        <button type="button" data-ui className="st-btn stg__go" onClick={onDrive}>
+          {driving ? "Выйти из машины" : "Поехали!"}
+        </button>
+      </div>
+      <div className="stg__lot">
+        {CARS.map((c, i) => (
+          <button
+            key={c.id}
+            type="button"
+            data-ui
+            className={`stg__spot${i === carId ? " is-picked" : ""}`}
+            style={{ "--c": c.color } as React.CSSProperties}
+            onClick={() => onPick(i)}
+          >
+            <span className="stg__car">{!(driving && i === carId) && <CarSvg car={c} />}</span>
+            <span className="stg__name">{c.name}</span>
+          </button>
+        ))}
       </div>
     </Frame>
   );
@@ -503,21 +708,26 @@ function Presenter({
   const n = d.slides.length;
   const start = Math.max(0, Math.min(slide - 4, n - 9));
   return (
-    <Frame meta={frameById("deck")} selected={selected} className="st-presenter">
+    <Frame meta={frameById("deck")} selected={selected} className="st-free st-deck">
+      <div className="stpr__tabs">
+        {DECKS.map((x, i) => (
+          <button
+            key={x.name}
+            type="button"
+            data-ui
+            className={i === deck ? "is-active" : ""}
+            style={{ "--c": x.color, "--tilt": `${[-2, 1.5, -1][i % 3]}deg` } as React.CSSProperties}
+            onClick={() => onDeck(i)}
+          >
+            {x.name}
+            <small>{x.slides.length}</small>
+          </button>
+        ))}
+      </div>
       <div className="stpr">
-        <div className="stpr__top">
-          <div className="stpr__tabs">
-            {DECKS.map((x, i) => (
-              <button key={x.name} type="button" data-ui className={i === deck ? "is-active" : ""} onClick={() => onDeck(i)}>
-                {x.name}
-                <small>{x.slides.length}</small>
-              </button>
-            ))}
-          </div>
-          <span className="stpr__count">
-            {slide + 1} / {n}
-          </span>
-        </div>
+        <span className="stpr__count">
+          {slide + 1} / {n}
+        </span>
         <div className="stpr__stage">
           <button type="button" data-ui className="stpr__arrow" onClick={() => onSlide(-1)} aria-label="Предыдущий слайд">
             <ArrowIcon dir="prev" />
@@ -721,8 +931,9 @@ function Contact({ selected }: { selected: boolean }) {
         <SpinFigure ms={110} />
         <span>кручусь, пока ты решаешься</span>
       </div>
-      <div className="st-deco stx__vertical" style={{ left: isl.x + isl.w / 2 - 70, top: isl.y + 1330 }}>
-        напиши мне
+      <div className="st-deco stx__vertical" style={{ left: isl.x + isl.w / 2 - 150, top: isl.y + 1380 }}>
+        <span>напиши</span>
+        <span>мне</span>
       </div>
     </>
   );
@@ -781,6 +992,10 @@ type WorldProps = {
   slideDir: "next" | "prev";
   onDeck: (i: number) => void;
   onSlide: (delta: number) => void;
+  carId: number;
+  driving: boolean;
+  onPickCar: (i: number) => void;
+  onDrive: () => void;
 };
 
 export const World = memo(function World(p: WorldProps) {
@@ -790,20 +1005,17 @@ export const World = memo(function World(p: WorldProps) {
       <Greeting step={p.introStep} typed={p.typed} selected={p.selected === "hero"} onSticker={p.onSticker} />
       <Chat step={p.chatStep} selected={p.selected === "chat"} />
       <History selected={p.selected === "history"} />
+      <LabIntro selected={p.selected === "lab-intro"} />
       {AUTOMATION.cards.map((_, i) => (
         <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} />
       ))}
-      {Array.from({ length: PLUGIN_SLOTS - AUTOMATION.cards.length }, (_, k) => {
-        const s = pluginSlot(AUTOMATION.cards.length + k);
-        return (
-          <div key={k} className="st-slot" style={{ left: s.x, top: s.y, width: s.w, height: s.h }}>
-            <span>+</span>
-            Скоро тут будет
-            <br />
-            новый плагин
-          </div>
-        );
-      })}
+      <Garage
+        selected={p.selected === "garage"}
+        carId={p.carId}
+        driving={p.driving}
+        onPick={p.onPickCar}
+        onDrive={p.onDrive}
+      />
       <SocialPile spread={p.spread} selected={p.selected === "social"} />
       <Orbit selected={p.selected === "wall"} onPhone={p.onPhone} />
       <Presentations

@@ -11,15 +11,18 @@ import {
   SECRET_DISCOUNT,
   SECRET_WORD,
   WORLD,
+  CARS,
+  COLLIDERS,
   frameById,
   islandById,
   type AchievementId,
   type Rect,
 } from "./data";
 import { Glyph } from "./glyphs";
-import { CHAT, NAME_CHARS, SpinFigure, World } from "./World";
+import { CarSvg, CHAT, NAME_CHARS, SpinFigure, World } from "./World";
 
 const BASE_BG = "#ECEAE4";
+const DRIVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 const STORAGE_KEY = "ak-achievements";
 const MAP_W = 172;
 
@@ -101,6 +104,15 @@ export function StudioApp() {
   const [earned, setEarned] = useState<AchievementId[]>([]);
   const [openAch, setOpenAch] = useState<AchievementId | null>(null);
   const [celebrate, setCelebrate] = useState(false);
+  const [carId, setCarId] = useState(0);
+  const [driving, setDriving] = useState(false);
+  const drivingRef = useRef(driving);
+  drivingRef.current = driving;
+  const carElRef = useRef<HTMLDivElement>(null);
+  const speedRef = useRef<HTMLSpanElement>(null);
+  const carState = useRef({ x: 0, y: 0, a: 0, v: 0 });
+  const keysRef = useRef(new Set<string>());
+  const hitAt = useRef(new Map<string, number>());
 
   const introDone = intro >= 6;
   const tourRef = useRef(tour);
@@ -268,8 +280,8 @@ export function StudioApp() {
       const mv = miniViewRef.current;
       if (mv) {
         const s = MAP_W / WORLD.w;
-        mv.style.left = `${(-x / z) * s}px`;
-        mv.style.top = `${(-y / z) * s}px`;
+        mv.style.left = `${(-x / z - WORLD.x) * s}px`;
+        mv.style.top = `${(-y / z - WORLD.y) * s}px`;
         mv.style.width = `${(r.width / z) * s}px`;
         mv.style.height = `${(r.height / z) * s}px`;
       }
@@ -352,7 +364,7 @@ export function StudioApp() {
   const tourStops = useMemo(
     () => [
       { rect: frameById("hero"), text: "Это я — дизайнер широкого профиля, в дизайне с 2021 года" },
-      { rect: islandById("plugins"), text: "Плагины и сервисы, которые я сделал с помощью вайб-кодинга" },
+      { rect: islandById("plugins"), text: "Лаборатория: плагины, сервисы и гараж — возьми машинку и прокатись по сайту" },
       { rect: frameById("social"), text: "Больше 2000 постов. Разложил часть для тебя", arrive: () => setSpread(true) },
       { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
       { rect: islandById("pres"), text: "Презентации — листай стрелками, по порядку" },
@@ -411,6 +423,124 @@ export function StudioApp() {
     setSlideDir("next");
   }, []);
 
+  /* ---------- гараж: машинка на WASD ---------- */
+
+  const stopDrive = useCallback(() => {
+    keysRef.current.clear();
+    setDriving(false);
+  }, []);
+
+  const startDrive = useCallback(() => {
+    if (drivingRef.current) return stopDrive();
+    const g = frameById("garage");
+    // машинка выезжает из гаража вниз, носом вниз
+    carState.current = { x: g.x + g.w / 2, y: g.y + g.h + 140, a: Math.PI, v: 0 };
+    keysRef.current.clear();
+    setSelected(null);
+    stopTour();
+    setDriving(true);
+    const { w, h } = vpSize();
+    const z = 0.7;
+    animateTo(clampCam({ z, x: w / 2 - carState.current.x * z, y: h / 2 - carState.current.y * z }), 700);
+  }, [animateTo, clampCam, stopDrive, stopTour, vpSize]);
+
+  const hitFrame = useCallback((id: string) => {
+    const now = performance.now();
+    if ((hitAt.current.get(id) ?? 0) > now - 350) return;
+    hitAt.current.set(id, now);
+    const el = worldRef.current?.querySelector(`[data-frame="${id}"]`);
+    if (el) {
+      el.classList.remove("is-hit");
+      void (el as HTMLElement).offsetWidth;
+      el.classList.add("is-hit");
+    }
+    earnRef.current("drive");
+  }, []);
+
+  useEffect(() => {
+    if (!driving) return;
+    const spec = CARS[carId];
+    const R = Math.max(spec.w, spec.h) * 0.42;
+    let raf = 0;
+    let last = performance.now();
+    const step = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const k = keysRef.current;
+      const c = carState.current;
+      const up = k.has("KeyW") || k.has("ArrowUp");
+      const down = k.has("KeyS") || k.has("ArrowDown");
+      const left = k.has("KeyA") || k.has("ArrowLeft");
+      const right = k.has("KeyD") || k.has("ArrowRight");
+
+      if (up) c.v += spec.accel * dt;
+      else if (down) c.v -= spec.accel * (c.v > 0 ? 1.6 : 0.7) * dt;
+      else c.v -= c.v * Math.min(1, 1.8 * dt);
+      c.v = clamp(c.v, -spec.max * 0.45, spec.max);
+      // руль работает пропорционально скорости и наоборот при заднем ходе
+      c.a += ((right ? 1 : 0) - (left ? 1 : 0)) * spec.turn * dt * clamp(c.v / 400, -1, 1);
+
+      let nx = c.x + Math.sin(c.a) * c.v * dt;
+      let ny = c.y - Math.cos(c.a) * c.v * dt;
+
+      for (const f of COLLIDERS) {
+        const px = clamp(nx, f.x, f.x + f.w);
+        const py = clamp(ny, f.y, f.y + f.h);
+        let dx = nx - px;
+        let dy = ny - py;
+        const d = Math.hypot(dx, dy);
+        if (d >= R) continue;
+        if (d === 0) {
+          // центр машинки уже внутри блока — выталкиваем через ближайшую сторону
+          const sides = [nx - f.x, f.x + f.w - nx, ny - f.y, f.y + f.h - ny];
+          const m = sides.indexOf(Math.min(...sides));
+          dx = m === 0 ? -1 : m === 1 ? 1 : 0;
+          dy = m === 2 ? -1 : m === 3 ? 1 : 0;
+          nx = m === 0 ? f.x - R : m === 1 ? f.x + f.w + R : nx;
+          ny = m === 2 ? f.y - R : m === 3 ? f.y + f.h + R : ny;
+        } else {
+          nx = px + (dx / d) * R;
+          ny = py + (dy / d) * R;
+        }
+        c.v = -c.v * spec.bounce;
+        hitFrame(f.id);
+      }
+
+      if (nx < WORLD.x + R || nx > WORLD.x + WORLD.w - R) {
+        nx = clamp(nx, WORLD.x + R, WORLD.x + WORLD.w - R);
+        c.v = -c.v * spec.bounce;
+      }
+      if (ny < WORLD.y + R || ny > WORLD.y + WORLD.h - R) {
+        ny = clamp(ny, WORLD.y + R, WORLD.y + WORLD.h - R);
+        c.v = -c.v * spec.bounce;
+      }
+      c.x = nx;
+      c.y = ny;
+
+      const el = carElRef.current;
+      if (el) el.style.transform = `translate(${c.x - spec.w / 2}px, ${c.y - spec.h / 2}px) rotate(${c.a}rad)`;
+      if (speedRef.current) speedRef.current.textContent = String(Math.round(Math.abs(c.v) / 10));
+
+      // камера мягко едет за машинкой
+      const cam = camera.get();
+      const { w, h } = vpSize();
+      const kf = Math.min(1, dt * 5);
+      camera.set({
+        z: cam.z,
+        x: cam.x + (w / 2 - c.x * cam.z - cam.x) * kf,
+        y: cam.y + (h / 2 - c.y * cam.z - cam.y) * kf,
+      });
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    const release = () => keysRef.current.clear();
+    window.addEventListener("blur", release);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("blur", release);
+    };
+  }, [driving, carId, camera, vpSize, hitFrame]);
+
   const discuss = (name: string) => {
     const text = `Привет, Арсений! Пишу по поводу работы «${name}» с твоего сайта.`;
     navigator.clipboard?.writeText(text).catch(() => {});
@@ -449,6 +579,14 @@ export function StudioApp() {
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.target instanceof Element && e.target.closest("input, textarea")) return;
+      if (drivingRef.current) {
+        if (DRIVE_KEYS.has(e.code)) {
+          e.preventDefault();
+          keysRef.current.add(e.code);
+          return;
+        }
+        if (e.code === "Escape") return stopDrive();
+      }
       if (e.code === "Space") {
         e.preventDefault();
         setSpaceHeld(true);
@@ -469,6 +607,7 @@ export function StudioApp() {
       if (e.code === "Minus" || e.code === "NumpadSubtract") zoomCenter(camera.get().z / 1.3);
     };
     const up = (e: KeyboardEvent) => {
+      keysRef.current.delete(e.code);
       if (e.code === "Space") setSpaceHeld(false);
     };
     window.addEventListener("keydown", down);
@@ -477,7 +616,7 @@ export function StudioApp() {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [camera, onSlide, showAll, stopTour, zoomCenter]);
+  }, [camera, onSlide, showAll, stopDrive, stopTour, zoomCenter]);
 
   /* ---------- мышь, тач, щипок ---------- */
 
@@ -582,8 +721,8 @@ export function StudioApp() {
   const onMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     const s = WORLD.w / MAP_W;
-    const wx = (e.clientX - r.left) * s;
-    const wy = (e.clientY - r.top) * s;
+    const wx = (e.clientX - r.left) * s + WORLD.x;
+    const wy = (e.clientY - r.top) * s + WORLD.y;
     const { w, h } = vpSize();
     const z = Math.max(camera.get().z, 0.45);
     stopTour();
@@ -621,7 +760,19 @@ export function StudioApp() {
             slideDir={slideDir}
             onDeck={onDeck}
             onSlide={onSlide}
+            carId={carId}
+            driving={driving}
+            onPickCar={setCarId}
+            onDrive={startDrive}
           />
+
+          <div
+            ref={carElRef}
+            className={`st-car${driving ? " is-on" : ""}`}
+            style={{ width: CARS[carId].w, height: CARS[carId].h }}
+          >
+            <CarSvg car={CARS[carId]} />
+          </div>
 
           {sel && (
             <div className="st-callout" data-ui style={{ left: sel.x + sel.w, top: sel.y }}>
@@ -706,8 +857,8 @@ export function StudioApp() {
               className={`st-map__isl${activeIsland === i.id ? " is-active" : ""}${i.dark ? " is-dark" : ""}`}
               style={
                 {
-                  left: i.x * mapS,
-                  top: i.y * mapS,
+                  left: (i.x - WORLD.x) * mapS,
+                  top: (i.y - WORLD.y) * mapS,
                   width: i.w * mapS,
                   height: i.h * mapS,
                   "--c": i.color,
@@ -845,6 +996,19 @@ export function StudioApp() {
         <button type="button" className="st-skip" onClick={finishIntro}>
           Пропустить интро
         </button>
+      )}
+
+      {driving && (
+        <div className="st-hud" style={{ "--c": CARS[carId].color } as React.CSSProperties}>
+          <span className="st-hud__car">{CARS[carId].name}</span>
+          <b>
+            <span ref={speedRef}>0</span> км/ч
+          </b>
+          <span className="st-hud__keys">WASD — руль и газ · Esc — выйти</span>
+          <button type="button" onClick={stopDrive}>
+            Выйти из машины
+          </button>
+        </div>
       )}
 
       {toast && (
