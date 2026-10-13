@@ -15,7 +15,7 @@ const GAP = 200;
 const colX = (i: number) => i * (COL + GAP);
 const span = (n: number) => n * COL + (n - 1) * GAP;
 
-const ROW1 = { y: 0, h: 2040 };
+const ROW1 = { y: 0, h: 2260 };
 const ROW2 = { y: ROW1.y + ROW1.h + GAP, h: 1840 };
 const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 2500 };
 
@@ -133,7 +133,7 @@ export const FRAMES: FrameMeta[] = [
     name: "Обо мне",
     ...rel("about", 60, 960),
     w: 1280,
-    h: 980,
+    h: 1200,
     r: 40,
     text: HERO.paragraphs[1],
   },
@@ -142,7 +142,7 @@ export const FRAMES: FrameMeta[] = [
     name: "История версий",
     ...rel("about", 1400, 120),
     w: 740,
-    h: 1820,
+    h: 2040,
     r: 40,
     text: "Опыт работы: от фриланса и собственного стартапа до федерального ведомства.",
   },

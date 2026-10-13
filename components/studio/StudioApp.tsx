@@ -22,7 +22,7 @@ import { Glyph } from "./glyphs";
 import { CarSvg, CHAT, NAME_CHARS, SpinFigure, World } from "./World";
 import { CityLayer } from "./CityLayer";
 import { SURFACES, getCity, surfaceAt, type Surface } from "./city";
-import { addParticle, drawFx, makeCrack, type Mark, type Particle } from "./effects";
+import { addParticle, drawFx, makeCrack, shatter, type Mark, type Particle } from "./effects";
 
 const BASE_BG = "#ECEAE4";
 const DRIVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
@@ -152,6 +152,8 @@ export function StudioApp() {
       const r = viewportRef.current.getBoundingClientRect();
       vpRef.current = { w: r.width, h: r.height };
     }
+    // в скрытой вкладке размер бывает нулевым — тогда считаем по окну, иначе камера улетает в минимальный масштаб
+    if (!vpRef.current.w) return { w: window.innerWidth, h: window.innerHeight };
     return vpRef.current;
   }, []);
   useEffect(() => {
@@ -512,6 +514,51 @@ export function StudioApp() {
     setDriving(true);
   }, [stopDrive, stopTour]);
 
+  /* ---------- блоки, разбитые машинкой ---------- */
+
+  // три сильных удара — и блок рассыпается; на его месте остаётся кнопка, которая собирает его обратно
+  const [broken, setBroken] = useState<string[]>([]);
+  const brokenRef = useRef(new Set<string>());
+  const hitsRef = useRef(new Map<string, number>());
+  const countedAt = useRef(new Map<string, number>());
+  const restoring = useRef(new Set<string>());
+
+  const breakFrame = useCallback((id: string, ix: number, iy: number) => {
+    const el = worldRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`);
+    const f = frameById(id);
+    if (!el) return;
+    el.classList.remove("is-hit");
+    shatter(el, f.w, f.h, ix, iy, "out");
+    // трещины разлетелись вместе с осколками
+    el.querySelector(".st-crack-clip")?.remove();
+    brokenRef.current.add(id);
+    hitsRef.current.delete(id);
+    setBroken([...brokenRef.current]);
+  }, []);
+
+  const restoreFrame = useCallback((id: string) => {
+    if (restoring.current.has(id)) return;
+    const el = worldRef.current?.querySelector<HTMLElement>(`[data-frame="${id}"]`);
+    const f = frameById(id);
+    if (!el) return;
+    restoring.current.add(id);
+    // осколки слетаются со всех сторон, затем блок появляется целиком и пружинит
+    const ms = shatter(el, f.w, f.h, f.w / 2, f.h / 2, "in");
+    setTimeout(() => {
+      brokenRef.current.delete(id);
+      restoring.current.delete(id);
+      setBroken([...brokenRef.current]);
+      el.animate(
+        [
+          { transform: "scale(0.96)", filter: "brightness(1.25)" },
+          { transform: "scale(1.02)", filter: "brightness(1.1)", offset: 0.5 },
+          { transform: "none", filter: "none" },
+        ],
+        { duration: 520, easing: "cubic-bezier(.34,1.56,.64,1)" }
+      );
+    }, ms);
+  }, []);
+
   // Удар: блок вздрагивает, в точке удара появляется трещина, летят осколки.
   const hitSolid = useCallback((s: Solid, px: number, py: number, angle: number, power: number) => {
     const now = performance.now();
@@ -519,6 +566,18 @@ export function StudioApp() {
     hitAt.current.set(s.id, now);
     if (s.frame) {
       const el = worldRef.current?.querySelector<HTMLElement>(`[data-frame="${s.id}"]`);
+      // один заезд — один удар: пока машинка отскакивает и упирается, счёт не растёт
+      if (el && power > 0.15 && (countedAt.current.get(s.id) ?? 0) < now - 900) {
+        countedAt.current.set(s.id, now);
+        const n = (hitsRef.current.get(s.id) ?? 0) + 1;
+        hitsRef.current.set(s.id, n);
+        if (n >= 3) {
+          breakFrame(s.id, px - s.x, py - s.y);
+          earnRef.current("drive");
+          return true;
+        }
+        if (n === 2) showToast({ text: "Блок трещит — ещё удар, и он рассыплется" });
+      }
       if (el) {
         el.classList.remove("is-hit");
         void el.offsetWidth;
@@ -541,7 +600,7 @@ export function StudioApp() {
     }
     earnRef.current("drive");
     return true;
-  }, []);
+  }, [breakFrame, showToast]);
 
   useEffect(() => {
     if (!driving) return;
@@ -634,6 +693,8 @@ export function StudioApp() {
       let ny = c.y - Math.cos(c.a) * c.v * dt;
 
       for (const f of solids) {
+        // разбитый блок не мешает — по развалинам можно ехать
+        if (f.frame && brokenRef.current.has(f.id)) continue;
         // дальние дома отсекаем сразу
         if (nx < f.x - R || nx > f.x + f.w + R || ny < f.y - R || ny > f.y + f.h + R) continue;
         const px = clamp(nx, f.x, f.x + f.w);
@@ -1043,6 +1104,30 @@ export function StudioApp() {
             onPickCar={setCarId}
             onDrive={startDrive}
           />
+
+          {broken.length > 0 && (
+            // разбитые блоки прячем правилом, а не классом: React не перезапишет его при перерисовке
+            <style>{`${broken.map((id) => `[data-frame="${id}"]`).join(",")}{visibility:hidden}`}</style>
+          )}
+          {broken.map((id) => {
+            const f = frameById(id);
+            return (
+              <div
+                key={id}
+                className="st-ruin"
+                data-ui
+                style={{ left: f.x, top: f.y, width: f.w, height: f.h, "--r": `${f.r}px` } as React.CSSProperties}
+              >
+                <button type="button" className="st-ruin__btn" onClick={() => restoreFrame(id)}>
+                  <span className="st-ruin__icon">↺</span>
+                  <span>
+                    <b>Собрать блок</b>
+                    <small>«{f.name}»</small>
+                  </span>
+                </button>
+              </div>
+            );
+          })}
 
           <canvas ref={fxRef} className={`st-fx${driving ? " is-on" : ""}`} aria-hidden />
 

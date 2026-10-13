@@ -89,6 +89,89 @@ export function drawFx(
 }
 
 /*
+ * Блок разлетается на осколки: копии блока, обрезанные клиньями от точки удара.
+ * mode "out" — осколки разлетаются и гаснут, "in" — слетаются обратно на место.
+ * Возвращает длительность анимации в мс.
+ */
+export function shatter(el: HTMLElement, w: number, h: number, ix: number, iy: number, mode: "out" | "in") {
+  const parent = el.parentElement;
+  if (!parent) return 0;
+  // точку чуть сдвигаем к центру, иначе клинья у самого края получаются нулевыми
+  const px = ix + (w / 2 - ix) * 0.25;
+  const py = iy + (h / 2 - iy) * 0.25;
+  const n = 11;
+  const base = Math.random() * Math.PI * 2;
+  const angles = Array.from({ length: n + 1 }, (_, i) => base + ((i + (i < n ? (Math.random() - 0.5) * 0.6 : 0)) * Math.PI * 2) / n);
+  const edge = (a: number): [number, number] => {
+    const dx = Math.cos(a);
+    const dy = Math.sin(a);
+    let t = Infinity;
+    if (dx > 1e-6) t = Math.min(t, (w - px) / dx);
+    if (dx < -1e-6) t = Math.min(t, -px / dx);
+    if (dy > 1e-6) t = Math.min(t, (h - py) / dy);
+    if (dy < -1e-6) t = Math.min(t, -py / dy);
+    return [px + dx * t, py + dy * t];
+  };
+  const corners: [number, number][] = [
+    [0, 0],
+    [w, 0],
+    [w, h],
+    [0, h],
+  ];
+  const norm = (a: number) => ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  let longest = 0;
+  for (let i = 0; i < n; i++) {
+    const a1 = angles[i];
+    const a2 = angles[i + 1];
+    const pts: [number, number][] = [[px, py], edge(a1)];
+    // углы блока, попавшие внутрь клина, — по порядку обхода
+    corners
+      .map((c) => ({ c, d: norm(Math.atan2(c[1] - py, c[0] - px) - a1) }))
+      .filter((c) => c.d > 0 && c.d < a2 - a1)
+      .sort((p, q) => p.d - q.d)
+      .forEach((c) => pts.push(c.c));
+    pts.push(edge(a2));
+
+    const shard = el.cloneNode(true) as HTMLElement;
+    shard.removeAttribute("data-frame");
+    shard.classList.remove("is-hit", "is-selected");
+    shard.classList.add("st-shard");
+    shard.querySelectorAll("video").forEach((v) => v.remove());
+    shard.style.clipPath = `polygon(${pts.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(",")})`;
+    const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+    shard.style.transformOrigin = `${cx}px ${cy}px`;
+    parent.appendChild(shard);
+
+    const am = (a1 + a2) / 2;
+    const dist = 180 + Math.random() * 420;
+    const away = `translate(${(Math.cos(am) * dist).toFixed(0)}px, ${(Math.sin(am) * dist).toFixed(0)}px) rotate(${((Math.random() - 0.5) * 160).toFixed(0)}deg) scale(${(0.45 + Math.random() * 0.3).toFixed(2)})`;
+    const dur = 750 + Math.random() * 550;
+    const delay = mode === "in" ? i * 35 : Math.random() * 60;
+    longest = Math.max(longest, dur + delay);
+    const frames =
+      mode === "out"
+        ? [
+            { transform: "none", opacity: 1, filter: "brightness(1)" },
+            { transform: away, opacity: 0, filter: "brightness(0.8)" },
+          ]
+        : [
+            { transform: away, opacity: 0 },
+            { transform: "none", opacity: 1 },
+          ];
+    shard.animate(frames, {
+      duration: dur,
+      delay,
+      easing: mode === "out" ? "cubic-bezier(.15,.75,.3,1)" : "cubic-bezier(.5,0,.25,1.25)",
+      fill: "both",
+    });
+    // убираем по таймеру: в фоновой вкладке анимации стоят, а осколки не должны копиться
+    setTimeout(() => shard.remove(), dur + delay + 40);
+  }
+  return longest;
+}
+
+/*
  * Трещина: короткие изломанные лучи расходятся от точки удара вглубь объекта
  * (вдоль +x, потом поворот на angle) и «бегут» за доли секунды. Лежит в обёртке,
  * обрезанной по форме объекта, — за его края не вылезает. Через несколько секунд тает.

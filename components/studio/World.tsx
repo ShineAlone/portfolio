@@ -408,8 +408,14 @@ function History({ selected }: { selected: boolean }) {
           <li className="stv__next">
             <span className="stv__ver">v{WORK.length + 1}.0 · скоро</span>
             <div className="stv__company">Твой проект?</div>
-            <a data-ui className="st-btn st-btn--small" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
-              Обсудить в Telegram ↗
+            <a data-ui className="stv__cta" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
+              <span className="stv__plane" aria-hidden>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
+                  <path d="M21.6 3.2 2.9 10.4c-1.3.5-1.3 1.2-.2 1.6l4.8 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.8-1.3-1.5zM8.6 13.2l9.8-6.2c.5-.3.9-.1.5.2l-8.1 7.3-.3 3.4-1.9-4.7z" />
+                </svg>
+              </span>
+              Обсудить проект в Telegram
+              <span className="stv__arrow">↗</span>
             </a>
           </li>
         </ol>

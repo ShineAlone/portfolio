@@ -1160,7 +1160,7 @@
   position: absolute;
   left: 10px;
   top: 14px;
-  bottom: 102px;
+  bottom: 136px;
   width: 2px;
   background: #111;
   opacity: 0.15;
@@ -1184,7 +1184,90 @@
 }
 
 .stv li.stv__next {
-  height: 116px;
+  height: 150px;
+}
+
+/* главный призыв истории — крупная кнопка-наклейка с самолётиком Telegram */
+.stv__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 24px 12px 12px;
+  border-radius: 22px;
+  background: #86ddff;
+  color: #111;
+  border: 3px solid #111;
+  box-shadow: 6px 6px 0 #111;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+}
+
+.stv__cta:hover {
+  transform: translate(-3px, -3px) rotate(-1deg);
+  box-shadow: 9px 9px 0 #111;
+}
+
+.stv__cta:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 #111;
+}
+
+.stv__plane {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #111;
+}
+
+/* расходящееся кольцо — кнопка «зовёт» */
+.stv__plane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #111;
+  animation: st-ping 1.8s ease-out infinite;
+}
+
+@keyframes st-ping {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+.stv__cta:hover .stv__plane svg {
+  animation: st-fly 0.6s ease-in-out;
+}
+
+@keyframes st-fly {
+  50% {
+    transform: translate(10px, -10px) scale(0.6);
+    opacity: 0;
+  }
+  51% {
+    transform: translate(-10px, 10px) scale(0.6);
+  }
+}
+
+.stv__arrow {
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+
+.stv__cta:hover .stv__arrow {
+  transform: translate(3px, -3px);
 }
 
 .stv li.stv__next::before {
@@ -3049,6 +3132,103 @@
 
 .st-fx.is-on {
   display: block;
+}
+
+/* осколок разбитого блока: копия блока, обрезанная клином */
+.st-shard {
+  z-index: 75;
+  pointer-events: none !important;
+  will-change: transform, opacity;
+}
+
+.st-shard::after,
+.st-shard .st-frame__label {
+  display: none !important;
+}
+
+/* развалины на месте блока: пунктирный контур, штриховка и кнопка «Собрать» */
+.st-ruin {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r);
+  border: calc(3px / var(--z)) dashed rgba(17, 17, 17, 0.45);
+  background: repeating-linear-gradient(-45deg, rgba(17, 17, 17, 0.06) 0 18px, transparent 18px 36px);
+  animation: st-ruin-in 0.5s 0.4s ease-out both;
+}
+
+@keyframes st-ruin-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.st-ruin__btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 22px 10px 10px;
+  border-radius: 24px;
+  background: #fefe78 !important;
+  border: 2px solid #111 !important;
+  box-shadow: 4px 4px 0 #111;
+  color: #111;
+  text-align: left;
+  cursor: pointer;
+  transform: scale(calc(1 / var(--z)));
+  transition: box-shadow 0.2s, translate 0.2s;
+  animation: st-ruin-btn 0.6s 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.st-ruin__btn:hover {
+  translate: -2px -2px;
+  box-shadow: 6px 6px 0 #111;
+}
+
+@keyframes st-ruin-btn {
+  from {
+    opacity: 0;
+    translate: 0 20px;
+  }
+}
+
+.st-ruin__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #111;
+  color: #fefe78;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.st-ruin__btn:hover .st-ruin__icon {
+  animation: st-spin 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes st-spin {
+  to {
+    rotate: -360deg;
+  }
+}
+
+.st-ruin__btn b {
+  display: block;
+  font-family: var(--display);
+  font-size: 16px;
+}
+
+.st-ruin__btn small {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  opacity: 0.65;
 }
 
 /* обёртка трещин повторяет форму объекта и обрезает всё, что вылезло бы за край */
