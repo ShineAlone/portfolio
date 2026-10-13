@@ -1999,6 +1999,8 @@
 
 .st-map__view {
   position: absolute;
+  left: 0;
+  top: 0;
   border: 2px solid #fff;
   border-radius: 5px;
   pointer-events: none;
@@ -2702,6 +2704,20 @@
     translate: -2px 1px;
     rotate: 0deg;
   }
+}
+
+/* Во время езды экономим кадры: холст — отдельный слой, орбита стоит, размытие под шапкой выключено */
+.is-driving .st-world {
+  will-change: transform;
+}
+
+.is-driving .st-phone {
+  animation-play-state: paused;
+}
+
+.is-driving .st-chips {
+  backdrop-filter: none;
+  background: #fff;
 }
 
 /* приборная панель во время езды */

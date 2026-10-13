@@ -126,9 +126,23 @@ export function StudioApp() {
 
   /* ---------- камера ---------- */
 
+  // Размер окна кешируется: чтение getBoundingClientRect на каждом кадре заставляет браузер пересчитывать вёрстку.
+  const vpRef = useRef({ w: 0, h: 0 });
   const vpSize = useCallback(() => {
-    const r = viewportRef.current!.getBoundingClientRect();
-    return { w: r.width, h: r.height };
+    if (!vpRef.current.w && viewportRef.current) {
+      const r = viewportRef.current.getBoundingClientRect();
+      vpRef.current = { w: r.width, h: r.height };
+    }
+    return vpRef.current;
+  }, []);
+  useEffect(() => {
+    const v = viewportRef.current;
+    if (!v) return;
+    const ro = new ResizeObserver(([e]) => {
+      vpRef.current = { w: e.contentRect.width, h: e.contentRect.height };
+    });
+    ro.observe(v);
+    return () => ro.disconnect();
   }, []);
 
   const clampCam = useCallback(
@@ -257,46 +271,58 @@ export function StudioApp() {
 
   // Камера → DOM: трансформация мира, фон, дальний план, мини-карта, активный остров.
   useEffect(() => {
+    // Пишем в DOM только то, что реально поменялось: при панорамировании меняется лишь сдвиг,
+    // а переустановка --z и фона заставляла браузер пересчитывать стили сотен элементов каждый кадр.
+    let lastZ = -1;
+    let lastIsland = "";
     const apply = () => {
       const { x, y, z } = camera.get();
       const w = worldRef.current;
       const v = viewportRef.current;
       if (!w || !v) return;
       w.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${z})`;
-      w.style.setProperty("--z", String(z));
-
-      v.style.backgroundColor = BASE_BG;
-      v.style.backgroundImage = z < 0.35 ? "none" : "radial-gradient(rgba(0,0,0,.13) 1.1px, transparent 1.4px)";
-      v.style.backgroundSize = `${28 * z}px ${28 * z}px`;
       v.style.backgroundPosition = `${x}px ${y}px`;
 
-      if (!farRef.current && z < 0.26) {
-        farRef.current = true;
-        if (introDoneRef.current) earnRef.current("map");
-      } else if (farRef.current && z > 0.3) farRef.current = false;
-      w.classList.toggle("is-far", farRef.current);
+      if (z !== lastZ) {
+        lastZ = z;
+        w.style.setProperty("--z", String(z));
+        v.style.backgroundColor = BASE_BG;
+        v.style.backgroundImage = z < 0.35 ? "none" : "radial-gradient(rgba(0,0,0,.13) 1.1px, transparent 1.4px)";
+        v.style.backgroundSize = `${28 * z}px ${28 * z}px`;
 
-      const r = v.getBoundingClientRect();
+        if (!farRef.current && z < 0.26) {
+          farRef.current = true;
+          w.classList.add("is-far");
+          if (introDoneRef.current) earnRef.current("map");
+        } else if (farRef.current && z > 0.3) {
+          farRef.current = false;
+          w.classList.remove("is-far");
+        }
+      }
+
+      const { w: vw, h: vh } = vpSize();
       const mv = miniViewRef.current;
       if (mv) {
         const s = MAP_W / WORLD.w;
-        mv.style.left = `${(-x / z - WORLD.x) * s}px`;
-        mv.style.top = `${(-y / z - WORLD.y) * s}px`;
-        mv.style.width = `${(r.width / z) * s}px`;
-        mv.style.height = `${(r.height / z) * s}px`;
+        mv.style.transform = `translate(${(-x / z - WORLD.x) * s}px, ${(-y / z - WORLD.y) * s}px)`;
+        mv.style.width = `${(vw / z) * s}px`;
+        mv.style.height = `${(vh / z) * s}px`;
       }
 
-      const cx = (r.width / 2 - x) / z;
-      const cy = (r.height / 2 - y) / z;
+      const cx = (vw / 2 - x) / z;
+      const cy = (vh / 2 - y) / z;
       const isl = ISLANDS.find((i) => cx >= i.x && cx <= i.x + i.w && cy >= i.y && cy <= i.y + i.h);
       if (isl) {
-        setActiveIsland((cur) => (cur === isl.id ? cur : isl.id));
+        if (isl.id !== lastIsland) {
+          lastIsland = isl.id;
+          setActiveIsland(isl.id);
+        }
         if (isl.id === "proj" && z >= 0.95) earnRef.current("zoom");
       }
     };
     apply();
     return camera.subscribe(apply);
-  }, [camera]);
+  }, [camera, vpSize]);
 
   /* ---------- интро: Арсений собирает приветствие на глазах ---------- */
 
@@ -438,11 +464,10 @@ export function StudioApp() {
     keysRef.current.clear();
     setSelected(null);
     stopTour();
+    // камерой во время езды управляет только цикл машинки — отдельный перелёт с ним спорил бы
+    cancelAnimationFrame(animRef.current);
     setDriving(true);
-    const { w, h } = vpSize();
-    const z = 0.7;
-    animateTo(clampCam({ z, x: w / 2 - carState.current.x * z, y: h / 2 - carState.current.y * z }), 700);
-  }, [animateTo, clampCam, stopDrive, stopTour, vpSize]);
+  }, [stopDrive, stopTour]);
 
   const hitFrame = useCallback((id: string) => {
     const now = performance.now();
@@ -463,8 +488,11 @@ export function StudioApp() {
     const R = Math.max(spec.w, spec.h) * 0.42;
     let raf = 0;
     let last = performance.now();
+    let lastHud = 0;
+    const DRIVE_Z = 0.75;
     const step = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      // шаг ограничен 0.1 с: при просадке FPS машинка не уходит в замедленную съёмку
+      const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       const k = keysRef.current;
       const c = carState.current;
@@ -473,12 +501,14 @@ export function StudioApp() {
       const left = k.has("KeyA") || k.has("ArrowLeft");
       const right = k.has("KeyD") || k.has("ArrowRight");
 
-      if (up) c.v += spec.accel * dt;
-      else if (down) c.v -= spec.accel * (c.v > 0 ? 1.6 : 0.7) * dt;
-      else c.v -= c.v * Math.min(1, 1.8 * dt);
+      if (up) c.v += spec.accel * (c.v < 0 ? 2.2 : 1) * dt;
+      else if (down) c.v -= spec.accel * (c.v > 0 ? 2.2 : 0.8) * dt;
+      else c.v -= c.v * Math.min(1, 4 * dt);
+      if (!up && !down && Math.abs(c.v) < 8) c.v = 0;
       c.v = clamp(c.v, -spec.max * 0.45, spec.max);
-      // руль работает пропорционально скорости и наоборот при заднем ходе
-      c.a += ((right ? 1 : 0) - (left ? 1 : 0)) * spec.turn * dt * clamp(c.v / 400, -1, 1);
+      // руль работает и на малой скорости, при заднем ходе — в обратную сторону
+      const grip = Math.sign(c.v) * Math.min(1, 0.35 + Math.abs(c.v) / 500);
+      c.a += ((right ? 1 : 0) - (left ? 1 : 0)) * spec.turn * dt * (c.v === 0 ? 0 : grip);
 
       let nx = c.x + Math.sin(c.a) * c.v * dt;
       let ny = c.y - Math.cos(c.a) * c.v * dt;
@@ -519,17 +549,21 @@ export function StudioApp() {
 
       const el = carElRef.current;
       if (el) el.style.transform = `translate(${c.x - spec.w / 2}px, ${c.y - spec.h / 2}px) rotate(${c.a}rad)`;
-      if (speedRef.current) speedRef.current.textContent = String(Math.round(Math.abs(c.v) / 10));
+      if (speedRef.current && now - lastHud > 100) {
+        lastHud = now;
+        speedRef.current.textContent = String(Math.round(Math.abs(c.v) / 10));
+      }
 
-      // камера мягко едет за машинкой
+      // Камера держит машинку в центре почти без запаздывания и плавно выходит на масштаб езды
       const cam = camera.get();
       const { w, h } = vpSize();
-      const kf = Math.min(1, dt * 5);
-      camera.set({
-        z: cam.z,
-        x: cam.x + (w / 2 - c.x * cam.z - cam.x) * kf,
-        y: cam.y + (h / 2 - c.y * cam.z - cam.y) * kf,
-      });
+      const kz = 1 - Math.exp(-dt * 4);
+      // доводим масштаб точно до цели, иначе --z менялся бы на каждом кадре и пересчитывал стили
+      const z = Math.abs(DRIVE_Z - cam.z) < 0.002 ? DRIVE_Z : cam.z + (DRIVE_Z - cam.z) * kz;
+      const kf = 1 - Math.exp(-dt * 16);
+      const tx = w / 2 - c.x * z;
+      const ty = h / 2 - c.y * z;
+      camera.set({ z, x: cam.x + (tx - cam.x) * kf, y: cam.y + (ty - cam.y) * kf });
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
@@ -734,7 +768,7 @@ export function StudioApp() {
   const mapS = MAP_W / WORLD.w;
 
   return (
-    <div className={`st-app${introDone ? " is-ready" : " is-intro"}`}>
+    <div className={`st-app${introDone ? " is-ready" : " is-intro"}${driving ? " is-driving" : ""}`}>
       <main
         ref={viewportRef}
         className={`st-viewport${spaceHeld ? " is-hand" : ""}`}
