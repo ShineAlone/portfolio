@@ -517,7 +517,7 @@ function Garage({
       <div className="stg__info">
         <span className="stl__kicker">мини-игра</span>
         <b className="stl__title">Гараж</b>
-        <p>Выбери машинку и прокатись по всему сайту. Врезайся в блоки — им не больно.</p>
+        <p>Выбери машинку — и вокруг блоков вырастет город. Врезайся в блоки — трещины заживут.</p>
         <div className="stg__keys">
           <span className="stg__wasd">
             <kbd>W</kbd>

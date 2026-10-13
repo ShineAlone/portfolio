@@ -2681,15 +2681,281 @@
   transition: none !important;
   transform-origin: center;
   pointer-events: none;
-  filter: drop-shadow(0 14px 10px rgba(0, 0, 0, 0.35));
 }
 
 .st-car.is-on {
   display: block;
 }
 
+/* тень — только у кузова, иначе её отбрасывал бы и свет фар */
 .st-car svg {
+  position: relative;
   display: block;
+  filter: drop-shadow(0 14px 10px rgba(0, 0, 0, 0.35));
+}
+
+/* свет фар: два мягких конуса перед носом */
+.st-car__beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% - var(--ly) - 4px);
+  height: 250px;
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.st-car__beam::before,
+.st-car__beam::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 170%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(255, 238, 150, 0.6), rgba(255, 238, 150, 0.22) 55%, rgba(255, 238, 150, 0));
+  clip-path: polygon(46% 100%, 54% 100%, 100% 0, 0 0);
+}
+
+.st-car__beam::before {
+  left: calc(var(--lx) - 85%);
+}
+
+.st-car__beam::after {
+  left: calc(100% - var(--lx) - 85%);
+}
+
+.st-car__lamp,
+.st-car__tail {
+  position: absolute;
+  left: calc(var(--lx) - 5px);
+  top: calc(var(--ly) - 5px);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff8d2;
+  box-shadow: 0 0 10px 5px rgba(255, 232, 140, 0.85);
+  pointer-events: none;
+}
+
+.st-car__lamp.is-r,
+.st-car__tail.is-r {
+  left: calc(100% - var(--lx) - 5px);
+}
+
+.st-car__tail {
+  top: auto;
+  bottom: 3px;
+  width: 12px;
+  height: 6px;
+  margin-left: -1px;
+  border-radius: 3px;
+  background: #ff6b6b;
+  box-shadow: 0 0 6px 2px rgba(255, 60, 60, 0.45);
+  transition: box-shadow 0.12s, background 0.12s;
+}
+
+.st-car.is-braking .st-car__tail {
+  background: #ffb0b0;
+  box-shadow: 0 0 16px 9px rgba(255, 40, 40, 0.85);
+}
+
+/* холст следов и частиц: над работами, под машинкой */
+.st-fx {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 79;
+  display: none;
+  transform-origin: 0 0;
+  transition: none !important;
+  pointer-events: none;
+}
+
+.st-fx.is-on {
+  display: block;
+}
+
+/* трещина в месте удара: появляется рывком и через несколько секунд «зарастает» */
+.st-crack {
+  position: absolute;
+  z-index: 60;
+  width: 320px;
+  height: 320px;
+  pointer-events: none;
+  animation: st-crack 5s ease-out forwards;
+}
+
+.st-crack svg {
+  display: block;
+}
+
+@keyframes st-crack {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  5% {
+    opacity: 1;
+    scale: 1.06;
+  }
+  10% {
+    scale: 1;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- город вокруг островов ---------- */
+
+.st-city {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s, visibility 0s 0.6s;
+}
+
+.is-driving .st-city {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s;
+}
+
+.st-city svg {
+  display: block;
+}
+
+.st-city__fx {
+  position: absolute;
+  inset: 0;
+}
+
+.st-city__block {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* кварталы вырастают волной от островов наружу */
+.is-driving .st-city__block {
+  animation: st-grow 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--d);
+}
+
+@keyframes st-grow {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+/* за городом — бескрайнее поле */
+.is-driving .st-viewport {
+  background-color: #bcdc9c !important;
+  background-image: radial-gradient(rgba(58, 104, 36, 0.28) 2px, transparent 2.6px) !important;
+}
+
+/* острова во время езды — площади, вымощенные плиткой */
+.is-driving .st-island {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.05) 3px, transparent 3px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 3px, transparent 3px);
+  background-size: 100px 100px;
+}
+
+/* машинка на мини-карте */
+.st-map__car {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 2px #111, 0 0 0 4px #fff;
+  pointer-events: none;
+}
+
+/* предупреждение о городе */
+.st-notice {
+  position: fixed;
+  left: 50%;
+  top: 156px;
+  z-index: 33;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 22px 14px 14px;
+  border-radius: 22px;
+  background: #fefe78;
+  color: #111;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 3px #111, 0 24px 50px -18px rgba(0, 0, 0, 0.5);
+  animation: st-notice 4.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.st-notice::before {
+  content: "";
+  position: absolute;
+  inset: auto 14px -10px;
+  height: 10px;
+  border-radius: 0 0 8px 8px;
+  background: repeating-linear-gradient(-45deg, #111 0 12px, #fefe78 12px 24px);
+  box-shadow: 0 0 0 3px #111;
+  z-index: -1;
+}
+
+.st-notice__sign {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 12px;
+  background: #111;
+  color: #fefe78;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  animation: st-blink 0.5s steps(2) 4;
+}
+
+.st-notice b {
+  display: block;
+  font-family: var(--display);
+  font-size: 18px;
+}
+
+.st-notice small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+@keyframes st-notice {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20px) scale(0.8);
+  }
+  8%,
+  88% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -12px) scale(0.96);
+  }
+}
+
+@keyframes st-blink {
+  50% {
+    background: #fefe78;
+    color: #111;
+  }
 }
 
 /* блок «вздрагивает» от удара машинкой */
@@ -2765,6 +3031,53 @@
 
 .st-hud__keys {
   opacity: 0.6;
+  white-space: nowrap;
+}
+
+@media (max-width: 1240px) {
+  .st-hud__keys {
+    display: none;
+  }
+}
+
+/* под колёсами: подсвечивается при смене покрытия */
+.st-hud__surf {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 14px;
+  background: #4a4b51;
+  color: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.st-hud__surf[data-s="grass"],
+.st-hud__surf[data-s="field"] {
+  background: #6fb453;
+}
+
+.st-hud__surf[data-s="dirt"] {
+  background: #b88f5e;
+}
+
+.st-hud__surf[data-s="water"] {
+  background: #86ddff;
+  color: #111;
+}
+
+.st-hud__surf[data-s="tile"] {
+  background: #dcd8cf;
+  color: #111;
+}
+
+.st-hud__surf.is-flash {
+  animation: st-surf 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes st-surf {
+  from {
+    transform: scale(1.5);
+  }
 }
 
 .st-hud button {
@@ -2772,6 +3085,7 @@
   border-radius: 18px;
   background: #fff !important;
   color: #111 !important;
+  white-space: nowrap;
   cursor: pointer;
 }
 

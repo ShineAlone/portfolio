@@ -20,11 +20,18 @@ import {
 } from "./data";
 import { Glyph } from "./glyphs";
 import { CarSvg, CHAT, NAME_CHARS, SpinFigure, World } from "./World";
+import { CityLayer } from "./CityLayer";
+import { SURFACES, getCity, surfaceAt, type Surface } from "./city";
+import { addParticle, drawFx, makeCrack, type Mark, type Particle } from "./effects";
 
 const BASE_BG = "#ECEAE4";
 const DRIVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 const STORAGE_KEY = "ak-achievements";
 const MAP_W = 172;
+// фары и стоп-сигналы стоят там, где они нарисованы у каждой машинки (доли ширины и высоты)
+const LAMPS: Record<string, [number, number]> = { sport: [0.26, 0.11], pickup: [0.23, 0.08], bug: [0.36, 0.1] };
+
+type Solid = Rect & { id: string; frame: boolean };
 
 type Agent = { x: number; y: number; visible: boolean; bubble: string | null };
 type Toast = { text: string; id?: AchievementId };
@@ -108,8 +115,14 @@ export function StudioApp() {
   const [driving, setDriving] = useState(false);
   const drivingRef = useRef(driving);
   drivingRef.current = driving;
+  const [cityOn, setCityOn] = useState(false);
+  const [cityNotice, setCityNotice] = useState(false);
   const carElRef = useRef<HTMLDivElement>(null);
   const speedRef = useRef<HTMLSpanElement>(null);
+  const surfRef = useRef<HTMLSpanElement>(null);
+  const fxRef = useRef<HTMLCanvasElement>(null);
+  const cityFxRef = useRef<HTMLDivElement>(null);
+  const mapCarRef = useRef<HTMLElement>(null);
   const carState = useRef({ x: 0, y: 0, a: 0, v: 0 });
   const keysRef = useRef(new Set<string>());
   const hitAt = useRef(new Map<string, number>());
@@ -170,6 +183,8 @@ export function StudioApp() {
 
   const animateTo = useCallback(
     (target: Cam, ms = 700) => {
+      // во время езды камерой управляет только машинка
+      if (drivingRef.current) return;
       cancelAnimationFrame(animRef.current);
       const { w, h } = vpSize();
       const from = camera.get();
@@ -454,8 +469,12 @@ export function StudioApp() {
   const stopDrive = useCallback(() => {
     keysRef.current.clear();
     setDriving(false);
-  }, []);
+    setCityNotice(false);
+    // машинка могла уехать далеко за острова — плавно возвращаем камеру в пределы холста
+    setTimeout(() => animateTo(clampCam(camera.get()), 800), 0);
+  }, [animateTo, camera, clampCam]);
 
+  const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const startDrive = useCallback(() => {
     if (drivingRef.current) return stopDrive();
     const g = frameById("garage");
@@ -466,54 +485,128 @@ export function StudioApp() {
     stopTour();
     // камерой во время езды управляет только цикл машинки — отдельный перелёт с ним спорил бы
     cancelAnimationFrame(animRef.current);
+    setCityOn(true);
+    setCityNotice(true);
+    clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setCityNotice(false), 4200);
     setDriving(true);
   }, [stopDrive, stopTour]);
 
-  const hitFrame = useCallback((id: string) => {
+  // Удар: блок вздрагивает, в точке удара появляется трещина, летят осколки.
+  const hitSolid = useCallback((s: Solid, px: number, py: number, angle: number, power: number) => {
     const now = performance.now();
-    if ((hitAt.current.get(id) ?? 0) > now - 350) return;
-    hitAt.current.set(id, now);
-    const el = worldRef.current?.querySelector(`[data-frame="${id}"]`);
-    if (el) {
-      el.classList.remove("is-hit");
-      void (el as HTMLElement).offsetWidth;
-      el.classList.add("is-hit");
+    if ((hitAt.current.get(s.id) ?? 0) > now - 350) return false;
+    hitAt.current.set(s.id, now);
+    if (s.frame) {
+      const el = worldRef.current?.querySelector<HTMLElement>(`[data-frame="${s.id}"]`);
+      if (el) {
+        el.classList.remove("is-hit");
+        void el.offsetWidth;
+        el.classList.add("is-hit");
+        if (power > 0.12) el.appendChild(makeCrack(px - s.x, py - s.y, angle, power));
+      }
+    } else if (power > 0.12 && cityFxRef.current) {
+      const b = getCity().bounds;
+      cityFxRef.current.appendChild(makeCrack(px - b.x, py - b.y, angle, power));
     }
     earnRef.current("drive");
+    return true;
   }, []);
 
   useEffect(() => {
     if (!driving) return;
     const spec = CARS[carId];
+    const city = getCity();
     const R = Math.max(spec.w, spec.h) * 0.42;
+    const solids: Solid[] = [
+      ...COLLIDERS.map((f) => ({ id: f.id, x: f.x, y: f.y, w: f.w, h: f.h, frame: true })),
+      ...city.buildings.map((b) => ({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h, frame: false })),
+    ];
+    const canvas = fxRef.current;
+    const ctx = canvas?.getContext("2d") ?? null;
+    const marks: Mark[] = [];
+    const parts: Particle[] = [];
+    // колёса и выхлоп в координатах машинки (нос смотрит вверх)
+    const wheels = [
+      [-spec.w * 0.36, -spec.h * 0.3],
+      [spec.w * 0.36, -spec.h * 0.3],
+      [-spec.w * 0.36, spec.h * 0.3],
+      [spec.w * 0.36, spec.h * 0.3],
+    ];
+    const lastWheel: ({ x: number; y: number } | null)[] = [null, null, null, null];
+    const exhaust = [-spec.w * 0.2, spec.h / 2 + 2];
+    const c = carState.current;
+    let surf: Surface = surfaceAt(city, c.x, c.y);
+    let pending = surf;
+    let pendingAt = 0;
+    if (surfRef.current) {
+      surfRef.current.textContent = SURFACES[surf].name;
+      surfRef.current.dataset.s = surf;
+    }
     let raf = 0;
-    let last = performance.now();
+    const t0 = performance.now();
+    let last = t0;
     let lastHud = 0;
-    const DRIVE_Z = 0.75;
+    let lastPuff = 0;
+    let lastDust = 0;
+    let braking = false;
+    const ZOOM_OUT = 0.3;
+    const DRIVE_Z = 0.6;
+    const rnd = (a: number) => (Math.random() - 0.5) * a;
+
+    const toWorld = (lx: number, ly: number) => {
+      const cos = Math.cos(c.a);
+      const sin = Math.sin(c.a);
+      return { x: c.x + lx * cos - ly * sin, y: c.y + lx * sin + ly * cos };
+    };
+
+    // частицы поверхности: трава летит клочками, грунт пылит, вода расходится кругами
+    const kick = (s: Surface, x: number, y: number, bx: number, by: number, t: number, n = 1) => {
+      for (let i = 0; i < n; i++) {
+        if (s === "grass" || s === "field") {
+          addParticle(parts, { x, y, vx: bx * 140 + rnd(160), vy: by * 140 + rnd(160), t, life: 0.55, r0: 5, r1: 2, rgb: Math.random() < 0.5 ? "78,130,52" : "120,176,78", a: 0.9 });
+        } else if (s === "dirt") {
+          addParticle(parts, { x, y, vx: bx * 70 + rnd(80), vy: by * 70 + rnd(80), t, life: 1.1, r0: 10, r1: 38, rgb: "176,136,92", a: 0.42 });
+        } else if (s === "water") {
+          addParticle(parts, { x, y, vx: 0, vy: 0, t, life: 0.9, r0: 8, r1: 46, rgb: "255,255,255", a: 0.8, ring: true });
+          addParticle(parts, { x, y, vx: bx * 120 + rnd(200), vy: by * 120 + rnd(200), t, life: 0.45, r0: 5, r1: 2, rgb: "220,246,255", a: 0.95 });
+        } else {
+          addParticle(parts, { x, y, vx: bx * 50 + rnd(60), vy: by * 50 + rnd(60), t, life: 0.9, r0: 10, r1: 34, rgb: "230,230,230", a: 0.45 });
+        }
+      }
+    };
+
     const step = (now: number) => {
       // шаг ограничен 0.1 с: при просадке FPS машинка не уходит в замедленную съёмку
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
+      const t = now / 1000;
       const k = keysRef.current;
-      const c = carState.current;
       const up = k.has("KeyW") || k.has("ArrowUp");
       const down = k.has("KeyS") || k.has("ArrowDown");
       const left = k.has("KeyA") || k.has("ArrowLeft");
       const right = k.has("KeyD") || k.has("ArrowRight");
+      const steer = (right ? 1 : 0) - (left ? 1 : 0);
+      const S = SURFACES[surf];
 
-      if (up) c.v += spec.accel * (c.v < 0 ? 2.2 : 1) * dt;
-      else if (down) c.v -= spec.accel * (c.v > 0 ? 2.2 : 0.8) * dt;
+      if (up) c.v += spec.accel * S.accel * (c.v < 0 ? 2.2 : 1) * dt;
+      else if (down) c.v -= spec.accel * S.accel * (c.v > 0 ? 2.2 : 0.8) * dt;
       else c.v -= c.v * Math.min(1, 4 * dt);
       if (!up && !down && Math.abs(c.v) < 8) c.v = 0;
+      // трава, грунт и вода не дают разогнаться: лишняя скорость плавно гасится
+      const vmax = spec.max * S.max;
+      if (c.v > vmax) c.v += (vmax - c.v) * Math.min(1, 4 * dt);
+      if (c.v < -vmax * 0.45) c.v += (-vmax * 0.45 - c.v) * Math.min(1, 4 * dt);
       c.v = clamp(c.v, -spec.max * 0.45, spec.max);
-      // руль работает и на малой скорости, при заднем ходе — в обратную сторону
-      const grip = Math.sign(c.v) * Math.min(1, 0.35 + Math.abs(c.v) / 500);
-      c.a += ((right ? 1 : 0) - (left ? 1 : 0)) * spec.turn * dt * (c.v === 0 ? 0 : grip);
+      // Аркадный руль: A/D крутят машинку даже на месте; задним ходом — в обратную сторону
+      c.a += steer * spec.turn * dt * (down && c.v < -5 ? -1 : 1);
 
       let nx = c.x + Math.sin(c.a) * c.v * dt;
       let ny = c.y - Math.cos(c.a) * c.v * dt;
 
-      for (const f of COLLIDERS) {
+      for (const f of solids) {
+        // дальние дома отсекаем сразу
+        if (nx < f.x - R || nx > f.x + f.w + R || ny < f.y - R || ny > f.y + f.h + R) continue;
         const px = clamp(nx, f.x, f.x + f.w);
         const py = clamp(ny, f.y, f.y + f.h);
         let dx = nx - px;
@@ -529,41 +622,151 @@ export function StudioApp() {
           nx = m === 0 ? f.x - R : m === 1 ? f.x + f.w + R : nx;
           ny = m === 2 ? f.y - R : m === 3 ? f.y + f.h + R : ny;
         } else {
-          nx = px + (dx / d) * R;
-          ny = py + (dy / d) * R;
+          dx /= d;
+          dy /= d;
+          nx = px + dx * R;
+          ny = py + dy * R;
+        }
+        const power = Math.min(1, Math.abs(c.v) / spec.max);
+        // точка удара — на краю блока; трещина растёт внутрь, против нормали
+        const hx = clamp(nx - dx * R, f.x, f.x + f.w);
+        const hy = clamp(ny - dy * R, f.y, f.y + f.h);
+        if (Math.abs(c.v) > 40 && hitSolid(f, hx, hy, Math.atan2(-dy, -dx), power)) {
+          for (let i = 0; i < 6 + power * 14; i++)
+            addParticle(parts, {
+              x: hx,
+              y: hy,
+              vx: dx * 220 * (0.4 + Math.random()) + rnd(260),
+              vy: dy * 220 * (0.4 + Math.random()) + rnd(260),
+              t,
+              life: 0.6,
+              r0: 3 + Math.random() * 4,
+              r1: 1,
+              rgb: i % 3 ? "30,30,30" : "255,255,255",
+              a: 0.9,
+            });
         }
         c.v = -c.v * spec.bounce;
-        hitFrame(f.id);
       }
-
-      if (nx < WORLD.x + R || nx > WORLD.x + WORLD.w - R) {
-        nx = clamp(nx, WORLD.x + R, WORLD.x + WORLD.w - R);
-        c.v = -c.v * spec.bounce;
-      }
-      if (ny < WORLD.y + R || ny > WORLD.y + WORLD.h - R) {
-        ny = clamp(ny, WORLD.y + R, WORLD.y + WORLD.h - R);
-        c.v = -c.v * spec.bounce;
-      }
+      // границ больше нет: за городом — бескрайнее поле
       c.x = nx;
       c.y = ny;
 
-      const el = carElRef.current;
-      if (el) el.style.transform = `translate(${c.x - spec.w / 2}px, ${c.y - spec.h / 2}px) rotate(${c.a}rad)`;
-      if (speedRef.current && now - lastHud > 100) {
-        lastHud = now;
-        speedRef.current.textContent = String(Math.round(Math.abs(c.v) / 10));
+      // покрытие меняется, только если машинка задержалась на новом дольше доли секунды —
+      // иначе на кромке тротуара надпись и эффекты мигали бы
+      const ns = surfaceAt(city, c.x, c.y);
+      if (ns !== pending) {
+        pending = ns;
+        pendingAt = t;
+      }
+      if (ns !== surf && t - pendingAt > 0.12) {
+        surf = ns;
+        kick(ns, c.x, c.y, 0, 0, t, 14);
+        const sEl = surfRef.current;
+        if (sEl) {
+          sEl.textContent = SURFACES[ns].name;
+          sEl.dataset.s = ns;
+          sEl.classList.remove("is-flash");
+          void sEl.offsetWidth;
+          sEl.classList.add("is-flash");
+        }
       }
 
-      // Камера держит машинку в центре почти без запаздывания и плавно выходит на масштаб езды
+      // следы: каждое колесо оставляет отрезок, как только сдвинулось на несколько пикселей
+      const S2 = SURFACES[surf];
+      const back = { x: -Math.sin(c.a), y: Math.cos(c.a) };
+      const spinning = steer !== 0 && Math.abs(c.v) < 60;
+      const skid = spinning || (steer !== 0 && Math.abs(c.v) > 420) || (down && c.v > 220);
+      wheels.forEach(([lx, ly], i) => {
+        const p = toWorld(lx, ly);
+        const L = lastWheel[i];
+        if (!L || Math.hypot(p.x - L.x, p.y - L.y) > 60) {
+          lastWheel[i] = p;
+          return;
+        }
+        if (Math.hypot(p.x - L.x, p.y - L.y) < 6) return;
+        if (S2.mark) {
+          marks.push({ x1: L.x, y1: L.y, x2: p.x, y2: p.y, t, rgb: S2.mark, a: S2.markA * (skid ? 2.4 : 1) * (i < 2 ? 0.7 : 1), w: 11 });
+        } else if (i >= 2 && Math.random() < 0.35) {
+          kick(surf, p.x, p.y, back.x, back.y, t);
+        }
+        lastWheel[i] = p;
+      });
+
+      // выхлоп: на газу дымит гуще
+      if (t - lastPuff > (up ? 0.03 : 0.11)) {
+        lastPuff = t;
+        const e = toWorld(exhaust[0], exhaust[1]);
+        const sp = 50 + Math.random() * 50;
+        addParticle(parts, {
+          x: e.x,
+          y: e.y,
+          vx: back.x * sp + rnd(30),
+          vy: back.y * sp + rnd(30),
+          t,
+          life: 1 + Math.random() * 0.4,
+          r0: 5,
+          r1: 18 + Math.random() * 12,
+          rgb: "140,140,146",
+          a: up ? 0.32 : 0.2,
+        });
+      }
+
+      // пыль и брызги из-под задних колёс, дым шин при пробуксовке на асфальте
+      const dusty = surf === "grass" || surf === "field" || surf === "dirt";
+      if (t - lastDust > 0.035 && ((dusty && Math.abs(c.v) > 80) || (skid && !dusty && surf !== "water"))) {
+        lastDust = t;
+        const [lx, ly] = wheels[2 + Math.floor(Math.random() * 2)];
+        const p = toWorld(lx, ly);
+        kick(surf, p.x, p.y, back.x, back.y, t);
+      }
+
+      const el = carElRef.current;
+      if (el) {
+        el.style.transform = `translate(${c.x - spec.w / 2}px, ${c.y - spec.h / 2}px) rotate(${c.a}rad)`;
+        if (down !== braking) {
+          braking = down;
+          el.classList.toggle("is-braking", down);
+        }
+      }
+      if (now - lastHud > 100) {
+        lastHud = now;
+        if (speedRef.current) speedRef.current.textContent = String(Math.round(Math.abs(c.v) / 10));
+        const mc = mapCarRef.current;
+        if (mc) {
+          const s = MAP_W / WORLD.w;
+          mc.style.transform = `translate(${clamp((c.x - WORLD.x) * s, 0, MAP_W)}px, ${clamp((c.y - WORLD.y) * s, 0, WORLD.h * s)}px)`;
+        }
+      }
+
+      // Камера: сначала отъезжает, чтобы показать выросший город, потом возвращается к машинке
       const cam = camera.get();
       const { w, h } = vpSize();
-      const kz = 1 - Math.exp(-dt * 4);
+      const reveal = now - t0 < 2600;
+      const target = reveal ? ZOOM_OUT : DRIVE_Z;
+      const kz = 1 - Math.exp(-dt * (reveal ? 2.6 : 2.2));
       // доводим масштаб точно до цели, иначе --z менялся бы на каждом кадре и пересчитывал стили
-      const z = Math.abs(DRIVE_Z - cam.z) < 0.002 ? DRIVE_Z : cam.z + (DRIVE_Z - cam.z) * kz;
+      const z = Math.abs(target - cam.z) < 0.002 ? target : cam.z + (target - cam.z) * kz;
       const kf = 1 - Math.exp(-dt * 16);
       const tx = w / 2 - c.x * z;
       const ty = h / 2 - c.y * z;
       camera.set({ z, x: cam.x + (tx - cam.x) * kf, y: cam.y + (ty - cam.y) * kf });
+
+      // холст эффектов лежит внутри мира, но в масштабе 1:1 с экраном — рисуем в экранных координатах
+      if (canvas && ctx) {
+        const cm = camera.get();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const cw = Math.round(w * dpr);
+        const ch = Math.round(h * dpr);
+        if (canvas.width !== cw || canvas.height !== ch) {
+          canvas.width = cw;
+          canvas.height = ch;
+          canvas.style.width = `${w}px`;
+          canvas.style.height = `${h}px`;
+        }
+        canvas.style.transform = `translate(${-cm.x / cm.z}px, ${-cm.y / cm.z}px) scale(${1 / cm.z})`;
+        drawFx(ctx, marks, parts, t, cm, w, h, dpr);
+      }
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
@@ -572,8 +775,10 @@ export function StudioApp() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("blur", release);
+      ctx?.clearRect(0, 0, canvas!.width, canvas!.height);
+      carElRef.current?.classList.remove("is-braking");
     };
-  }, [driving, carId, camera, vpSize, hitFrame]);
+  }, [driving, carId, camera, vpSize, hitSolid]);
 
   const discuss = (name: string) => {
     const text = `Привет, Арсений! Пишу по поводу работы «${name}» с твоего сайта.`;
@@ -588,6 +793,8 @@ export function StudioApp() {
     const v = viewportRef.current!;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      // за рулём камера привязана к машинке
+      if (drivingRef.current) return;
       cancelAnimationFrame(animRef.current);
       stopTour();
       const k = e.deltaMode === 1 ? 16 : 1;
@@ -716,6 +923,7 @@ export function StudioApp() {
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
+    if (drivingRef.current) return;
     const p = pinch.current;
     if (p && pointers.current.size >= 2) {
       const [a, b] = [...pointers.current.values()];
@@ -780,6 +988,7 @@ export function StudioApp() {
         onAuxClick={(e) => e.preventDefault()}
       >
         <div ref={worldRef} className={`st-world${ready ? " is-shown" : ""}`}>
+          {cityOn && <CityLayer ref={cityFxRef} />}
           <World
             introStep={intro}
             typed={typed}
@@ -800,12 +1009,26 @@ export function StudioApp() {
             onDrive={startDrive}
           />
 
+          <canvas ref={fxRef} className={`st-fx${driving ? " is-on" : ""}`} aria-hidden />
+
           <div
             ref={carElRef}
             className={`st-car${driving ? " is-on" : ""}`}
-            style={{ width: CARS[carId].w, height: CARS[carId].h }}
+            style={
+              {
+                width: CARS[carId].w,
+                height: CARS[carId].h,
+                "--lx": `${LAMPS[CARS[carId].id][0] * 100}%`,
+                "--ly": `${LAMPS[CARS[carId].id][1] * 100}%`,
+              } as React.CSSProperties
+            }
           >
+            <i className="st-car__beam" />
             <CarSvg car={CARS[carId]} />
+            <i className="st-car__lamp" />
+            <i className="st-car__lamp is-r" />
+            <i className="st-car__tail" />
+            <i className="st-car__tail is-r" />
           </div>
 
           {sel && (
@@ -908,6 +1131,7 @@ export function StudioApp() {
             </button>
           ))}
           <div ref={miniViewRef} className="st-map__view" />
+          {driving && <i ref={mapCarRef} className="st-map__car" style={{ "--c": CARS[carId].color } as React.CSSProperties} />}
         </div>
         <div className="st-map__ctrl">
           <button type="button" onClick={() => zoomCenter(camera.get().z / 1.3)} aria-label="Уменьшить">
@@ -1038,10 +1262,21 @@ export function StudioApp() {
           <b>
             <span ref={speedRef}>0</span> км/ч
           </b>
-          <span className="st-hud__keys">WASD — руль и газ · Esc — выйти</span>
+          <span ref={surfRef} className="st-hud__surf" />
+          <span className="st-hud__keys">W/S — газ и тормоз · A/D — поворот, хоть на месте · Esc — выйти</span>
           <button type="button" onClick={stopDrive}>
             Выйти из машины
           </button>
+        </div>
+      )}
+
+      {cityNotice && (
+        <div className="st-notice" role="status">
+          <span className="st-notice__sign">!</span>
+          <div>
+            <b>Внимание: вокруг блоков вырос город</b>
+            <small>Катайся по улицам. На траве и грунте машинка вязнет, в прудах — буксует</small>
+          </div>
         </div>
       )}
 

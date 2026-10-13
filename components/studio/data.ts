@@ -19,6 +19,9 @@ const ROW1 = { y: 0, h: 2040 };
 const ROW2 = { y: ROW1.y + ROW1.h + GAP, h: 1840 };
 const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 2500 };
 
+// Сетка нужна городу: улицы продолжают промежутки между островами.
+export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3], colX, span };
+
 export const ISLANDS: Island[] = [
   { id: "about", name: "Обо мне", color: "#FEFE78", x: colX(0), y: ROW1.y, w: span(3), h: ROW1.h },
   { id: "plugins", name: "Лаборатория", color: "#86DDFF", x: colX(3), y: ROW1.y, w: span(3), h: ROW1.h },
@@ -300,8 +303,8 @@ export const CARS: CarSpec[] = [
   { id: "bug", name: "Жук", color: "#FFB6E1", w: 72, h: 100, max: 860, accel: 900, turn: 4.4, bounce: 0.65 },
 ];
 
-// Блоки, в которые можно врезаться: всё, кроме прозрачных коллажей и самого гаража.
-export const COLLIDERS = FRAMES.filter((f) => !["hero", "wall", "garage"].includes(f.id));
+// Блоки, в которые можно врезаться: всё, кроме прозрачных коллажей (приветствие, обои, соцсети) и самого гаража.
+export const COLLIDERS = FRAMES.filter((f) => !["hero", "wall", "social", "garage"].includes(f.id));
 
 /* ---------- достижения ---------- */
 
