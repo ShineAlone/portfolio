@@ -26,7 +26,8 @@ import { addParticle, drawFx, makeCrack, shatter, type Mark, type Particle } fro
 
 const BASE_BG = "#ECEAE4";
 const DRIVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
-const STORAGE_KEY = "ak-achievements";
+// новый ключ обнуляет прогресс у всех, кто заходил раньше
+const STORAGE_KEY = "ak-achievements-v2";
 const MAP_W = 172;
 // фары и стоп-сигналы стоят там, где они нарисованы у каждой машинки (доли ширины и высоты)
 const DRIVE_Z = 0.6;

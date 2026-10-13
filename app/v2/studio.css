@@ -1134,7 +1134,7 @@
   display: block;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 44px;
+  font-size: 54px;
 }
 
 .stv__head small {
@@ -1281,7 +1281,7 @@
 }
 
 .stv__ver {
-  font-size: 13px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #777;
@@ -1301,26 +1301,32 @@
 .stv__company {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 30px;
-  margin-top: 6px;
+  font-size: 40px;
+  line-height: 1.1;
+  margin-top: 8px;
 }
 
 .stv__role {
-  font-size: 19px;
-  margin-top: 4px;
+  font-size: 24px;
+  margin-top: 6px;
 }
 
 .stv p {
   font-family: var(--font-open-sans);
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.5;
   color: #333;
   white-space: pre-line;
-  margin: 8px 0 12px;
+  margin: 12px 0 16px;
+}
+
+.stv .st-tags {
+  gap: 8px;
 }
 
 .stv .st-tags span {
-  font-size: 14px;
+  font-size: 17px;
+  padding: 6px 14px;
 }
 
 /* ---------- плагины ---------- */
