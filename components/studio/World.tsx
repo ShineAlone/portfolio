@@ -1,26 +1,24 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
-import { AUTOMATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, STATS, WORK } from "@/lib/content";
+import { AUTOMATION, EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, STATS, TOOLS, WORK } from "@/lib/content";
 import {
-  DECK_SLIDES,
+  DECKS,
   ISLANDS,
-  SITE_IMAGES,
-  TOOLS,
+  SITE_FRAMES,
   frameById,
   islandById,
   narrowWallpapers,
   poster,
   wideWallpapers,
   type FrameMeta,
-  type ToolId,
 } from "./data";
-import { ToolGlyph } from "./glyphs";
 
 /* eslint-disable @next/next/no-img-element */
 
-export const HERO_LINES = ["Привет,", "я Арсений", "Кононов"];
-export const HERO_CHARS = HERO_LINES.join("").length;
+export const NAME_LINES = ["я Арсений", "Кононов"];
+export const NAME_CHARS = NAME_LINES.join("").length;
+const HELLO = "Привет!";
 
 // Округление обязательно: на сервере и в браузере Math.sin даёт разные хвосты после запятой.
 const rand = (seed: number) => {
@@ -100,90 +98,179 @@ function HoverVideo({ video }: { video: string }) {
   );
 }
 
-function Cycler({ images, delay, interval = 2600 }: { images: string[]; delay: number; interval?: number }) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    let id: ReturnType<typeof setInterval> | undefined;
-    const t = setTimeout(() => {
-      id = setInterval(() => setI((v) => (v + 1) % images.length), interval);
-    }, delay);
-    return () => {
-      clearTimeout(t);
-      if (id) clearInterval(id);
-    };
-  }, [delay, interval, images.length]);
-  return (
-    <>
-      {images.map((src, k) => (
-        <img key={src} src={src} alt="" loading="lazy" draggable={false} className={k === i ? "is-on" : ""} />
-      ))}
-    </>
-  );
-}
+/* ---------- Обо мне: приветствие-коллаж ---------- */
 
-/* ---------- Обо мне ---------- */
+type StickerShape = "circle" | "burst" | "pill" | "square";
 
-function Hero({ step, typed, selected }: { step: number; typed: number; selected: boolean }) {
+const STICKERS: { shape: StickerShape; x: number; y: number; w: number; h: number; rot: number; color: string }[] = [
+  { shape: "circle", x: 1110, y: 140, w: 180, h: 180, rot: 10, color: "#FEFE78" },
+  { shape: "burst", x: 1090, y: 390, w: 210, h: 210, rot: -8, color: "#FFB6E1" },
+  { shape: "pill", x: 560, y: 690, w: 250, h: 96, rot: -4, color: "#86DDFF" },
+  { shape: "square", x: 840, y: 636, w: 170, h: 150, rot: 7, color: "#ACF9A2" },
+  { shape: "burst", x: 0, y: 628, w: 200, h: 200, rot: -6, color: "#C791FF" },
+  { shape: "pill", x: 220, y: 690, w: 270, h: 96, rot: 5, color: "#FFC7B6" },
+];
+
+const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
+  const a = (i / 28) * Math.PI * 2;
+  const r = i % 2 ? 41 : 49;
+  return `${(50 + Math.cos(a) * r).toFixed(2)},${(50 + Math.sin(a) * r).toFixed(2)}`;
+}).join(" ");
+
+function Greeting({
+  step,
+  typed,
+  selected,
+  onSticker,
+}: {
+  step: number;
+  typed: number;
+  selected: boolean;
+  onSticker: () => void;
+}) {
   let rest = typed;
   let caretLine = -1;
-  const lines = HERO_LINES.map((l, i) => {
+  const lines = NAME_LINES.map((l, i) => {
     const s = l.slice(0, Math.max(0, rest));
     if (caretLine === -1 && rest <= l.length) caretLine = i;
     rest -= l.length;
     return s;
   });
-  const typing = step === 2;
   const cls = [1, 2, 3, 4, 5].filter((s) => step >= s).map((s) => `s${s}`).join(" ");
 
   return (
-    <Frame meta={frameById("hero")} selected={selected} className="st-free">
-      <div className={`sth ${cls}`}>
-        <div className="sth__card">
-          <span className="sth__role">Дизайнер широкого профиля</span>
-          <h1 className="sth__title">
-            {lines.map((l, i) => (
-              <span key={i} className={`sth__l${i}`}>
-                {l || " "}
-                {typing && caretLine === i && <i className="sth__caret" />}
-              </span>
-            ))}
-          </h1>
-          <div className="sth__cta">
-            <a data-ui className="st-btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
-              {HERO.contactLabel}
-            </a>
-            <span className="sth__status">
-              <i />
-              {HERO.statusLabel}
-            </span>
-          </div>
-          <div className="sth__stats">
-            {STATS.map((s, i) => (
-              <div key={s.label} style={{ transitionDelay: `${i * 90}ms` }}>
-                <b>
-                  <CountUp value={s.value} run={step >= 4} />
-                </b>
-                <span>{s.label}</span>
-              </div>
-            ))}
-          </div>
-          <div className="sth__photo">
-            <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
-          </div>
-        </div>
-        <span className="sth__size">1240 × 720</span>
+    <Frame meta={frameById("hero")} selected={selected} className={`st-free sthg ${cls}`}>
+      <div className="sthg__hello" aria-label={HELLO}>
+        {[...HELLO].map((ch, i) => (
+          <span key={i} style={{ "--i": i } as React.CSSProperties}>
+            {ch}
+          </span>
+        ))}
       </div>
+
+      <div className="sthg__photo">
+        <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
+      </div>
+
+      <div className="sthg__name">
+        {lines.map((l, i) => (
+          <span key={i}>
+            {l || " "}
+            {step === 2 && caretLine === i && <i className="sth__caret" />}
+          </span>
+        ))}
+      </div>
+
+      <div className="sthg__note">
+        <span>дизайнер широкого профиля</span>
+        <svg width="190" height="70" viewBox="0 0 190 70" fill="none" aria-hidden>
+          <path d="M6 52c40 10 90 6 132-26" stroke="#111" strokeWidth="4" strokeLinecap="round" />
+          <path d="M120 20l20 4-6 19" stroke="#111" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      <div className="sthg__cta">
+        <a data-ui className="st-btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
+          {HERO.contactLabel}
+        </a>
+        <span className="sth__status">
+          <i />
+          {HERO.statusLabel}
+        </span>
+      </div>
+
+      {STICKERS.map((s, i) => (
+        <button
+          key={i}
+          type="button"
+          data-ui
+          className={`st-sticker st-sticker--${s.shape}`}
+          style={
+            {
+              left: s.x,
+              top: s.y,
+              width: s.w,
+              height: s.h,
+              "--rot": `${s.rot}deg`,
+              "--c": s.color,
+              "--i": i,
+            } as React.CSSProperties
+          }
+          onClick={(e) => {
+            const el = e.currentTarget;
+            el.classList.remove("is-wiggle");
+            void el.offsetWidth;
+            el.classList.add("is-wiggle");
+            onSticker();
+          }}
+        >
+          {s.shape === "burst" && (
+            <svg className="st-sticker__burst" viewBox="0 0 100 100" aria-hidden>
+              <polygon points={BURST_POINTS} />
+            </svg>
+          )}
+          <b>
+            <CountUp value={STATS[i].value} run={step >= 4} />
+          </b>
+          <span>{STATS[i].label}</span>
+        </button>
+      ))}
     </Frame>
   );
 }
 
-function Bio({ selected }: { selected: boolean }) {
+/* ---------- Обо мне: переписка ---------- */
+
+const EDU_TEXT = `${EDUCATION.lines[0]} — ${EDUCATION.lines[1].toLowerCase()}, ${EDUCATION.years[0]}–${EDUCATION.years[1].replace(/^[–-]\s*/, "")}. Работаю в этих инструментах:`;
+
+export const CHAT: { q: boolean; text: string; color?: string; tools?: boolean }[] = [
+  { q: true, text: "Привет! Чем занимаешься?" },
+  { q: false, text: HERO.paragraphs[0], color: "#FEFE78" },
+  { q: true, text: "А как ты работаешь?" },
+  { q: false, text: HERO.paragraphs[1], color: "#86DDFF" },
+  { q: true, text: "Где учился и в чём работаешь?" },
+  { q: false, text: EDU_TEXT, color: "#ACF9A2", tools: true },
+];
+
+function Chat({ step, selected }: { step: number; selected: boolean }) {
+  const typing = step < CHAT.length && step > 0 && !CHAT[step].q;
   return (
-    <Frame meta={frameById("bio")} selected={selected} className="st-card">
-      <div className="stb">
-        {HERO.paragraphs.map((p) => (
-          <p key={p.slice(0, 20)}>{p}</p>
+    <Frame meta={frameById("chat")} selected={selected} className="st-card stchat">
+      <div className="stchat__head">
+        <span className="stchat__avatar">
+          <img src="/images/photo.png" alt="" draggable={false} />
+        </span>
+        <div>
+          <b>Арсений Кононов</b>
+          <small>{typing ? "печатает…" : "в сети"}</small>
+        </div>
+      </div>
+      <div className="stchat__body">
+        {CHAT.slice(0, step).map((m, i) => (
+          <div
+            key={i}
+            className={`stchat__msg ${m.q ? "is-q" : "is-a"}`}
+            style={m.color ? ({ "--c": m.color } as React.CSSProperties) : undefined}
+          >
+            {m.text}
+            {m.tools && (
+              <div className="stchat__tools">
+                {TOOLS.icons.map((t) => (
+                  <span key={t.src} className={t.boxed ? "is-boxed" : ""} title={t.alt}>
+                    <img src={t.src} alt={t.alt} draggable={false} />
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
+        {typing && (
+          <div className="stchat__msg is-a is-typing">
+            <i />
+            <i />
+            <i />
+          </div>
+        )}
       </div>
     </Frame>
   );
@@ -222,28 +309,23 @@ function History({ selected }: { selected: boolean }) {
 
 /* ---------- Плагины ---------- */
 
-function PluginCard({ index, selected, onTry }: { index: number; selected: boolean; onTry: (t: ToolId) => void }) {
+function PluginCard({ index, selected }: { index: number; selected: boolean }) {
   const card = AUTOMATION.cards[index];
-  const tool = TOOLS[index];
+  const meta = frameById(`plugin-${index}`);
   return (
-    <Frame meta={frameById(`plugin-${index}`)} selected={selected} className="st-card">
+    <Frame meta={meta} selected={selected} className="st-card">
       <div className="stp" style={{ "--tc": card.tagColor } as React.CSSProperties}>
         <div className="stp__media">
-          {card.video ? (
-            <HoverVideo video={card.video} />
-          ) : (
-            <div className="stp__art">
-              <ToolGlyph id={tool.id} size={96} />
-            </div>
-          )}
+          {card.video ? <HoverVideo video={card.video} /> : <div className="stp__art">{card.title}</div>}
         </div>
         <span className="stp__tag">{card.tag}</span>
         <div className="stp__name">{card.title}</div>
         <p>{card.text}</p>
-        <button type="button" data-ui className="stp__try" onClick={() => onTry(tool.id)}>
-          <ToolGlyph id={tool.id} size={18} />
-          Попробовать здесь
-        </button>
+        {meta.link && (
+          <a data-ui className="stp__link" href={meta.link.href} target="_blank" rel="noopener noreferrer">
+            {meta.link.label} ↗
+          </a>
+        )}
       </div>
     </Frame>
   );
@@ -287,48 +369,162 @@ function SocialPile({ spread, selected }: { spread: boolean; selected: boolean }
   );
 }
 
-/* ---------- Обои ---------- */
+/* ---------- Обои: телефоны по орбите вокруг монитора ---------- */
 
-const PHONE_GROUPS = [0, 1, 2, 3, 4].map((g) => narrowWallpapers.filter((_, i) => i % 5 === g));
+const ORBIT_N = 10;
 
-function Wallpapers({ selected }: { selected: string | null }) {
+function OrbitPhone({ images, delay, style, onPick }: { images: string[]; delay: number; style: React.CSSProperties; onPick: () => void }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    let id: ReturnType<typeof setInterval> | undefined;
+    const t = setTimeout(() => {
+      id = setInterval(() => setI((v) => (v + 1) % images.length), 3600);
+    }, delay);
+    return () => {
+      clearTimeout(t);
+      if (id) clearInterval(id);
+    };
+  }, [delay, images.length]);
   return (
-    <>
-      <Frame meta={frameById("wall-phones")} selected={selected === "wall-phones"} className="st-free st-phones">
-        {PHONE_GROUPS.map((imgs, i) => (
-          <div key={i} className="st-phone" style={{ "--ry": `${(i - 2) * 11}deg` } as React.CSSProperties}>
-            <Cycler images={imgs} delay={i * 450} />
-          </div>
-        ))}
-      </Frame>
-      <Frame meta={frameById("wall-pc")} selected={selected === "wall-pc"} className="st-free st-monitor">
-        <div className="st-monitor__screen">
-          <Cycler images={wideWallpapers} delay={1200} interval={2200} />
-        </div>
-        <div className="st-monitor__neck" />
-        <div className="st-monitor__base" />
-      </Frame>
-    </>
+    <button
+      type="button"
+      data-ui
+      className="st-phone"
+      style={style}
+      onClick={() => {
+        setI((v) => (v + 1) % images.length);
+        onPick();
+      }}
+    >
+      {images.map((src, k) => (
+        <img key={src} src={src} alt="" loading="lazy" draggable={false} className={k === i ? "is-on" : ""} />
+      ))}
+    </button>
   );
 }
 
-/* ---------- Презентации ---------- */
+function Monitor() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((v) => (v + 1) % wideWallpapers.length), 2600);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="st-monitor__screen">
+      {wideWallpapers.map((src, k) => (
+        <img key={src} src={src} alt="" loading="lazy" draggable={false} className={k === i ? "is-on" : ""} />
+      ))}
+    </div>
+  );
+}
 
-function Presentations({
+function Orbit({ selected, onPhone }: { selected: boolean; onPhone: () => void }) {
+  const meta = frameById("wall");
+  const cx = meta.w / 2;
+  const cy = meta.h / 2 + 20;
+  return (
+    <Frame meta={meta} selected={selected} className="st-free st-orbit">
+      {Array.from({ length: ORBIT_N }, (_, k) => {
+        const a = ((-90 + k * (360 / ORBIT_N)) * Math.PI) / 180;
+        const left = Math.round(cx + Math.cos(a) * 520 - 65);
+        const top = Math.round(cy + Math.sin(a) * 480 - 130);
+        return (
+          <OrbitPhone
+            key={k}
+            images={narrowWallpapers.filter((_, n) => n % ORBIT_N === k)}
+            delay={k * 360}
+            onPick={onPhone}
+            style={{ left, top, "--d": `${-k * 0.5}s` } as React.CSSProperties}
+          />
+        );
+      })}
+      <div className="st-monitor" style={{ left: cx - 332, top: cy - 230 }}>
+        <Monitor />
+        <div className="st-monitor__neck" />
+        <div className="st-monitor__base" />
+        <span className="st-orbit__caption">Каждый месяц — новые обои</span>
+      </div>
+    </Frame>
+  );
+}
+
+/* ---------- Презентации: просмотрщик по порядку ---------- */
+
+function Presenter({
   selected,
-  order,
-  flying,
-  onNext,
+  deck,
+  slide,
+  dir,
+  onDeck,
+  onSlide,
 }: {
+  selected: boolean;
+  deck: number;
+  slide: number;
+  dir: "next" | "prev";
+  onDeck: (i: number) => void;
+  onSlide: (delta: number) => void;
+}) {
+  const d = DECKS[deck];
+  const n = d.slides.length;
+  const start = Math.max(0, Math.min(slide - 4, n - 9));
+  return (
+    <Frame meta={frameById("deck")} selected={selected} className="st-presenter">
+      <div className="stpr">
+        <div className="stpr__top">
+          <div className="stpr__tabs">
+            {DECKS.map((x, i) => (
+              <button key={x.name} type="button" data-ui className={i === deck ? "is-active" : ""} onClick={() => onDeck(i)}>
+                {x.name}
+                <small>{x.slides.length}</small>
+              </button>
+            ))}
+          </div>
+          <span className="stpr__count">
+            {slide + 1} / {n}
+          </span>
+        </div>
+        <div className="stpr__stage">
+          <button type="button" data-ui className="stpr__arrow" onClick={() => onSlide(-1)} aria-label="Предыдущий слайд">
+            ←
+          </button>
+          <div className="stpr__screen">
+            <img key={`${deck}-${slide}`} src={d.slides[slide]} alt="" draggable={false} className={`is-${dir}`} />
+          </div>
+          <button type="button" data-ui className="stpr__arrow" onClick={() => onSlide(1)} aria-label="Следующий слайд">
+            →
+          </button>
+        </div>
+        <div className="stpr__strip">
+          {d.slides.slice(start, start + 9).map((src, k) => (
+            <button
+              key={src}
+              type="button"
+              data-ui
+              className={start + k === slide ? "is-active" : ""}
+              onClick={() => onSlide(start + k - slide)}
+            >
+              <img src={src} alt="" loading="lazy" draggable={false} />
+            </button>
+          ))}
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function Presentations(p: {
   selected: string | null;
-  order: number[];
-  flying: number | null;
-  onNext: () => void;
+  deck: number;
+  slide: number;
+  dir: "next" | "prev";
+  onDeck: (i: number) => void;
+  onSlide: (delta: number) => void;
 }) {
   return (
     <>
       {PRESENTATIONS.cards.map((card, i) => (
-        <Frame key={i} meta={frameById(`pres-${i}`)} selected={selected === `pres-${i}`} className="st-card">
+        <Frame key={i} meta={frameById(`pres-${i}`)} selected={p.selected === `pres-${i}`} className="st-card">
           <div className="stc">
             <div className="stc__media">
               <HoverVideo video={card.video!} />
@@ -340,80 +536,107 @@ function Presentations({
           </div>
         </Frame>
       ))}
-      <Frame meta={frameById("deck")} selected={selected === "deck"} className="st-free st-deck">
-        <div data-ui className="st-deck__stack" onClick={onNext}>
-          {DECK_SLIDES.map((src, k) => {
-            const pos = order.indexOf(k);
-            return (
-              <img
-                key={src}
-                src={src}
-                alt=""
-                loading="lazy"
-                draggable={false}
-                className={flying === k ? "is-flying" : ""}
-                style={{
-                  zIndex: 100 - pos,
-                  transform: `translate(${pos * 8}px, ${pos * 8}px) rotate(${pos === 0 ? 0 : (k % 2 ? 1 : -1) * 1.2}deg)`,
-                }}
-              />
-            );
-          })}
-        </div>
-        <span className="st-deck__hint">кликни по стопке — следующий слайд</span>
-      </Frame>
+      <Presenter
+        selected={p.selected === "deck"}
+        deck={p.deck}
+        slide={p.slide}
+        dir={p.dir}
+        onDeck={p.onDeck}
+        onSlide={p.onSlide}
+      />
     </>
   );
 }
 
 /* ---------- Проекты ---------- */
 
+// [x, y, ширина, поворот] — коллаж из презентации айдентики поверх фирменной волны
+const COFFEE_LAYOUT: [number, number, number, number][] = [
+  [760, 60, 670, 2],
+  [60, 300, 360, -4],
+  [450, 320, 360, 3],
+  [840, 480, 330, 4],
+  [1150, 500, 300, -3],
+  [60, 580, 360, 3],
+  [450, 600, 360, -2],
+  [840, 740, 330, -4],
+  [1150, 760, 300, 3],
+];
+
+function Coffee({ selected }: { selected: boolean }) {
+  return (
+    <Frame meta={frameById("coffee")} selected={selected} className="st-coffee">
+      <div className="stk__bg">
+        {Array.from({ length: 8 }, (_, i) => (
+          <span key={i} style={{ marginLeft: (i % 2) * -260 }}>
+            coffee is the new cult · coffee is the new cult · coffee is the new cult
+          </span>
+        ))}
+      </div>
+      <svg className="stk__wave" viewBox="0 0 1490 1000" preserveAspectRatio="none" aria-hidden>
+        <path d="M-40 860C300 640 520 940 820 640S1300 280 1540 380" stroke="#111" strokeWidth="120" fill="none" />
+        <path d="M-40 760C300 540 520 840 820 540S1300 180 1540 280" stroke="#fff" strokeWidth="46" fill="none" />
+      </svg>
+      <div className="stk__title">
+        <span>Айдентика</span>
+        <b>Кофе Культ</b>
+        <p>стаканчики · упаковка · меню · абонементы</p>
+      </div>
+      {COFFEE_LAYOUT.map(([x, y, w, rot], i) => (
+        <div
+          key={i}
+          className="stk__card"
+          style={{ left: x, top: y, width: w, "--rot": `${rot}deg` } as React.CSSProperties}
+        >
+          <img src={PROJECTS.coffeeGrid[i]} alt="" loading="lazy" draggable={false} />
+        </div>
+      ))}
+    </Frame>
+  );
+}
+
 function Projects({ selected }: { selected: string | null }) {
   return (
     <>
-      {SITE_IMAGES.slice(0, 6).map((src, i) => {
-        const meta = frameById(`site-${i}`);
-        return (
-          <Frame key={meta.id} meta={meta} selected={selected === meta.id} className="st-win">
-            <div className="st-win__bar">
-              <i />
-              <i />
-              <i />
-              <span>{meta.name}</span>
-            </div>
-            <div className="st-win__page">
-              <img src={src} alt="" loading="lazy" draggable={false} />
-            </div>
-          </Frame>
-        );
-      })}
-      <Frame meta={frameById("site-6")} selected={selected === "site-6"} className="st-win st-win--phone">
+      {SITE_FRAMES.map(({ src, meta }) => (
+        <Frame key={meta.id} meta={meta} selected={selected === meta.id} className="st-win">
+          <div className="st-win__bar">
+            <i />
+            <i />
+            <i />
+            <span>{meta.name}</span>
+          </div>
+          <div className="st-win__page">
+            <img src={src} alt="" loading="lazy" draggable={false} />
+          </div>
+        </Frame>
+      ))}
+      <Frame meta={frameById("site-5")} selected={selected === "site-5"} className="st-win">
+        <div className="st-win__bar">
+          <i />
+          <i />
+          <i />
+          <span>Вне рамок</span>
+        </div>
         <div className="st-win__page">
-          <img src={SITE_IMAGES[6]} alt="" loading="lazy" draggable={false} />
+          <img src={PROJECTS.sites.site1920} alt="" loading="lazy" draggable={false} />
         </div>
       </Frame>
-      <Frame meta={frameById("coffee")} selected={selected === "coffee"} className="st-card st-coffee">
-        {PROJECTS.coffeeGrid.map((src) => (
-          <img key={src} src={src} alt="" loading="lazy" draggable={false} />
-        ))}
+      <Frame meta={frameById("site-6")} selected={selected === "site-6"} className="st-win st-win--phone">
+        <div className="st-win__page">
+          <img src={PROJECTS.sites.androidCompact} alt="" loading="lazy" draggable={false} />
+        </div>
       </Frame>
+      <Coffee selected={selected === "coffee"} />
       <Frame meta={frameById("merch")} selected={selected === "merch"} className="st-free st-prints">
         {PROJECTS.merch.map((src, i) => (
           <div
             key={src}
             className="st-print"
-            style={{ left: 10 + i * 238, "--rot": `${(i % 2 ? 1 : -1) * (4 + i * 1.5)}deg` } as React.CSSProperties}
+            style={{ left: 10 + i * 242, "--rot": `${(i % 2 ? 1 : -1) * (4 + i * 1.5)}deg` } as React.CSSProperties}
           >
             <img src={src} alt="" loading="lazy" draggable={false} />
           </div>
-        ))}
-      </Frame>
-      <Frame meta={frameById("transarctic")} selected={selected === "transarctic"} className="st-img">
-        <img src={PROJECTS.transarctic} alt="" loading="lazy" draggable={false} />
-      </Frame>
-      <Frame meta={frameById("forum")} selected={selected === "forum"} className="st-free st-forum">
-        {PROJECTS.er.banners.map((src) => (
-          <img key={src} src={src} alt="" loading="lazy" draggable={false} />
         ))}
       </Frame>
     </>
@@ -462,24 +685,28 @@ function Islands({ spread, onToggleSpread }: { spread: boolean; onToggleSpread: 
 type WorldProps = {
   introStep: number;
   typed: number;
+  chatStep: number;
   selected: string | null;
   spread: boolean;
   onToggleSpread: () => void;
-  deckOrder: number[];
-  deckFlying: number | null;
-  onDeckNext: () => void;
-  onTry: (t: ToolId) => void;
+  onSticker: () => void;
+  onPhone: () => void;
+  deck: number;
+  slide: number;
+  slideDir: "next" | "prev";
+  onDeck: (i: number) => void;
+  onSlide: (delta: number) => void;
 };
 
 export const World = memo(function World(p: WorldProps) {
   return (
     <>
       <Islands spread={p.spread} onToggleSpread={p.onToggleSpread} />
-      <Hero step={p.introStep} typed={p.typed} selected={p.selected === "hero"} />
-      <Bio selected={p.selected === "bio"} />
+      <Greeting step={p.introStep} typed={p.typed} selected={p.selected === "hero"} onSticker={p.onSticker} />
+      <Chat step={p.chatStep} selected={p.selected === "chat"} />
       <History selected={p.selected === "history"} />
       {AUTOMATION.cards.map((_, i) => (
-        <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} onTry={p.onTry} />
+        <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} />
       ))}
       {[6, 7].map((i) => (
         <div
@@ -494,12 +721,14 @@ export const World = memo(function World(p: WorldProps) {
         </div>
       ))}
       <SocialPile spread={p.spread} selected={p.selected === "social"} />
-      <Wallpapers selected={p.selected} />
+      <Orbit selected={p.selected === "wall"} onPhone={p.onPhone} />
       <Presentations
         selected={p.selected}
-        order={p.deckOrder}
-        flying={p.deckFlying}
-        onNext={p.onDeckNext}
+        deck={p.deck}
+        slide={p.slide}
+        dir={p.slideDir}
+        onDeck={p.onDeck}
+        onSlide={p.onSlide}
       />
       <Projects selected={p.selected} />
     </>

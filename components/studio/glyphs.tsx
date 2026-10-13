@@ -1,29 +1,27 @@
-import type { ToolId } from "./data";
+import type { AchievementId } from "./data";
 
-// Свои значки для плагинов в доке.
-const GLYPHS: Record<ToolId, React.ReactNode> = {
-  geometry: <path d="M5 16l4-11 6 4 4 9-9 2-5-4z" />,
-  digest: <path d="M5 4h10l4 4v12H5V4zm3 6h8M8 13h8M8 16h5" />,
-  card: (
+// Свои значки для достижений и экскурсии.
+const GLYPHS: Record<AchievementId | "tour", React.ReactNode> = {
+  tour: <path d="M8 5l11 7-11 7V5z" />,
+  sticker: <path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.9l-5.3 2.5 1.2-6-4.5-4.1 6-.7z" />,
+  map: <path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5V6.5zm6-2.5v13.5m6-11v13.5" />,
+  pile: (
     <>
-      <rect x="4" y="4" width="16" height="16" rx="3" />
-      <path d="M7.5 15.5h9M7.5 12h6M7.5 8.5h3" />
+      <rect x="8" y="8" width="12" height="12" rx="2" />
+      <path d="M5 16V6a2 2 0 012-2h10" />
     </>
   ),
-  pattern: (
+  orbit: (
     <>
-      <circle cx="7" cy="7" r="2.2" />
-      <circle cx="17" cy="7" r="2.2" />
-      <circle cx="7" cy="17" r="2.2" />
-      <circle cx="17" cy="17" r="2.2" />
-      <path d="M12 9.5v5M9.5 12h5" />
+      <rect x="7.5" y="3" width="9" height="18" rx="2" />
+      <path d="M11 17.5h2" />
     </>
   ),
-  telegram: <path d="M20 4.5L3.8 10.8l5.4 2 2 6 3-3.7 4.4 3.2L20 4.5zM9.2 12.8l8-5.6" />,
-  check: <path d="M5 6.5l1.6 1.6L9.5 5M5 12.5l1.6 1.6 2.9-3.1M5 18.5l1.6 1.6 2.9-3.1M12.5 7h7M12.5 13h7M12.5 19h5" />,
+  slides: <path d="M3 4.5h18v11H3zM12 15.5V20m-4 0h8" />,
+  zoom: <path d="M10.5 4a6.5 6.5 0 110 13 6.5 6.5 0 010-13zM20 20l-4.8-4.8M10.5 8v5M8 10.5h5" />,
 };
 
-export function ToolGlyph({ id, size = 22 }: { id: ToolId; size?: number }) {
+export function Glyph({ id, size = 22 }: { id: AchievementId | "tour"; size?: number }) {
   return (
     <svg
       width={size}
@@ -31,7 +29,7 @@ export function ToolGlyph({ id, size = 22 }: { id: ToolId; size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden

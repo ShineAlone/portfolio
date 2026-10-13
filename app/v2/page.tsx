@@ -10,11 +10,11 @@ const unbounded = Unbounded({
 });
 
 export const metadata: Metadata = {
-  title: "Мастерская — прототип",
+  title: "Портфолио v2 — прототип",
   robots: { index: false, follow: false },
 };
 
-export default function StudioPage() {
+export default function V2Page() {
   return (
     <div className={unbounded.variable}>
       <StudioApp />

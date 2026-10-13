@@ -2,65 +2,84 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { LINKS } from "@/lib/content";
-import { MAX_Z, MIN_Z, clamp, createCameraStore, type Cam } from "./camera";
+import { MAX_Z, MIN_Z, clamp, createCameraStore, type Cam, type CameraStore } from "./camera";
 import {
-  DECK_SLIDES,
+  ACHIEVEMENTS,
+  DECKS,
   FRAMES,
   ISLANDS,
-  TOOLS,
   WORLD,
   frameById,
   islandById,
+  type AchievementId,
   type Rect,
-  type ToolId,
 } from "./data";
-import { ToolGlyph } from "./glyphs";
-import { HERO_CHARS, World } from "./World";
+import { Glyph } from "./glyphs";
+import { CHAT, NAME_CHARS, World } from "./World";
 
 const BASE_BG = "#ECEAE4";
-const BRAND = ["#FEFE78", "#86DDFF", "#FFB6E1", "#ACF9A2", "#C791FF", "#FFC7B6"];
+const STORAGE_KEY = "ak-achievements";
+const MAP_W = 172;
 
-type Shape = { id: number; x: number; y: number; size: number; color: string; points: string; rot: number };
-type GenCard = { id: number; name: string; x: number; y: number; date: string };
 type Agent = { x: number; y: number; visible: boolean; bubble: string | null };
-type Pattern = { url: string; size: number; bg: string };
+type Toast = { text: string; id?: AchievementId };
 
 const pad = (r: Rect, p: number): Rect => ({ x: r.x - p, y: r.y - p, w: r.w + p * 2, h: r.h + p * 2 });
 
-function makeShapePoints() {
-  const n = 5 + Math.floor(Math.random() * 4);
-  const pts: string[] = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
-    const r = 26 + Math.random() * 22;
-    pts.push(`${(50 + Math.cos(a) * r).toFixed(1)},${(50 + Math.sin(a) * r).toFixed(1)}`);
-  }
-  return pts.join(" ");
+function ZoomLabel({ camera }: { camera: CameraStore }) {
+  const z = useSyncExternalStore(
+    camera.subscribe,
+    () => Math.round(camera.get().z * 100),
+    () => 100
+  );
+  return <b>{z}%</b>;
 }
 
-// Генератор фирменного паттерна: случайная плитка из фигур палитры тегов.
-function makePattern(): Pattern {
-  const [c1, c2] = [...BRAND].sort(() => Math.random() - 0.5);
-  const kind = Math.floor(Math.random() * 5);
-  const t = 120;
-  const body = [
-    `<circle cx="30" cy="30" r="12" fill="${c1}"/><circle cx="90" cy="90" r="20" fill="${c2}"/>`,
-    `<rect x="8" y="20" width="64" height="26" rx="13" fill="${c1}" transform="rotate(-18 40 33)"/><rect x="58" y="74" width="52" height="22" rx="11" fill="${c2}" transform="rotate(14 84 85)"/>`,
-    `<path d="M30 14v32M14 30h32" stroke="${c1}" stroke-width="10" stroke-linecap="round"/><path d="M90 74v32M74 90h32" stroke="${c2}" stroke-width="10" stroke-linecap="round"/>`,
-    `<path d="M0 40q30-28 60 0t60 0" fill="none" stroke="${c1}" stroke-width="10"/><path d="M0 98q30-28 60 0t60 0" fill="none" stroke="${c2}" stroke-width="10"/>`,
-    `<path d="M30 12l20 34H10z" fill="${c1}"/><path d="M90 70l20 34H70z" fill="${c2}"/>`,
-  ][kind];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${t}" height="${t}" viewBox="0 0 ${t} ${t}">${body}</svg>`;
-  return { url: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, size: t, bg: "#F4F2ED" };
+// Награда за все достижения: та самая крутящаяся фигура из кадров.
+function SpinFigure() {
+  const [f, setF] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setF((v) => (v + 1) % 16), 75);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img className="st-win-figure" src={`/images/scroll/frame-${String(f + 1).padStart(2, "0")}.png`} alt="" />
+  );
 }
 
-const CHECKS: [ok: boolean, text: string][] = [
-  [true, "Все фреймы названы"],
-  [true, "Отступы выровнены"],
-  [true, "Тексты — в стилях"],
-  [true, "Контраст в норме"],
-  [false, "2 пустых слота — ждут новых плагинов"],
-];
+function Confetti() {
+  const pieces = useMemo(
+    () =>
+      Array.from({ length: 70 }, (_, i) => ({
+        left: Math.random() * 100,
+        color: ["#FEFE78", "#86DDFF", "#FFB6E1", "#ACF9A2", "#C791FF", "#FFC7B6"][i % 6],
+        delay: Math.random() * 0.6,
+        dur: 1.8 + Math.random() * 1.4,
+        size: 8 + Math.random() * 10,
+        round: i % 3 === 0,
+      })),
+    []
+  );
+  return (
+    <div className="st-confetti" aria-hidden>
+      {pieces.map((p, i) => (
+        <i
+          key={i}
+          style={{
+            left: `${p.left}%`,
+            background: p.color,
+            width: p.size,
+            height: p.round ? p.size : p.size * 0.5,
+            borderRadius: p.round ? "50%" : 2,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.dur}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function StudioApp() {
   const camera = useMemo(createCameraStore, []);
@@ -71,47 +90,44 @@ export function StudioApp() {
   const miniViewRef = useRef<HTMLDivElement>(null);
   const animRef = useRef(0);
   const farRef = useRef(false);
-  const patternRef = useRef<Pattern | null>(null);
-  const applyRef = useRef<() => void>(() => {});
   const introTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const [ready, setReady] = useState(false);
   const [intro, setIntro] = useState(0);
   const [typed, setTyped] = useState(0);
+  const [chatStep, setChatStep] = useState(0);
   const [agent, setAgent] = useState<Agent>(() => {
     const h = frameById("hero");
-    return { x: h.x + h.w + 260, y: h.y + h.h + 140, visible: false, bubble: null };
+    return { x: h.x + h.w + 220, y: h.y + h.h, visible: false, bubble: null };
   });
   const [selected, setSelected] = useState<string | null>(null);
   const [spread, setSpread] = useState(false);
-  const [deckOrder, setDeckOrder] = useState(() => DECK_SLIDES.map((_, i) => i));
-  const [deckFlying, setDeckFlying] = useState<number | null>(null);
-  const [tool, setTool] = useState<ToolId | null>(null);
+  const [deck, setDeck] = useState(0);
+  const [slide, setSlide] = useState(0);
+  const [slideDir, setSlideDir] = useState<"next" | "prev">("next");
   const [spaceHeld, setSpaceHeld] = useState(false);
-  const [shapes, setShapes] = useState<Shape[]>([]);
-  const [cards, setCards] = useState<GenCard[]>([]);
-  const [cardName, setCardName] = useState("");
-  const [hasPattern, setHasPattern] = useState(false);
   const [tour, setTour] = useState(-1);
-  const [checkStep, setCheckStep] = useState(-1);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
   const [activeIsland, setActiveIsland] = useState("about");
+  const [earned, setEarned] = useState<AchievementId[]>([]);
+  const [openAch, setOpenAch] = useState<AchievementId | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
 
   const introDone = intro >= 6;
-  const toolRef = useRef(tool);
-  toolRef.current = tool;
   const tourRef = useRef(tour);
   tourRef.current = tour;
-  const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const spaceRef = useRef(spaceHeld);
   spaceRef.current = spaceHeld;
+  const activeRef = useRef(activeIsland);
+  activeRef.current = activeIsland;
+  const introDoneRef = useRef(introDone);
+  introDoneRef.current = introDone;
 
   /* ---------- камера ---------- */
 
   const vpSize = useCallback(() => {
     const r = viewportRef.current!.getBoundingClientRect();
-    return { w: r.width, h: r.height, left: r.left, top: r.top };
+    return { w: r.width, h: r.height };
   }, []);
 
   const clampCam = useCallback(
@@ -144,9 +160,8 @@ export function StudioApp() {
       const from = camera.get();
       const fc = { x: (w / 2 - from.x) / from.z, y: (h / 2 - from.y) / from.z };
       const tc = { x: (w / 2 - target.x) / target.z, y: (h / 2 - target.y) / target.z };
-      // Дуга «отъехать и приехать», как перелёт камеры: на середине пути чуть отдаляемся.
-      const dist = Math.hypot(tc.x - fc.x, tc.y - fc.y);
-      const dip = clamp(dist / 4000, 0, 0.45);
+      // Дуга «отъехать и приехать»: на середине длинного перелёта камера чуть отдаляется.
+      const dip = clamp(Math.hypot(tc.x - fc.x, tc.y - fc.y) / 4000, 0, 0.45);
       const t0 = performance.now();
       const step = (now: number) => {
         const p = Math.min(1, (now - t0) / ms);
@@ -192,12 +207,50 @@ export function StudioApp() {
   );
   const showAll = useCallback(() => animateTo(fit(WORLD, 30), 900), [animateTo, fit]);
 
-  const showToast = useCallback((t: string) => {
+  const showToast = useCallback((t: Toast) => {
     setToast(t);
-    setTimeout(() => setToast((cur) => (cur === t ? null : cur)), 3200);
+    setTimeout(() => setToast((cur) => (cur === t ? null : cur)), 3000);
   }, []);
 
-  // Камера → DOM: трансформация мира, фон, «дальний» режим, мини-карта, активный остров.
+  /* ---------- достижения ---------- */
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const ids = (JSON.parse(raw) as string[]).filter((id): id is AchievementId =>
+          ACHIEVEMENTS.some((a) => a.id === id)
+        );
+        setEarned(ids);
+      }
+    } catch {
+      // хранилище недоступно — просто начинаем с нуля
+    }
+  }, []);
+
+  const earnedRef = useRef(earned);
+  earnedRef.current = earned;
+  const earn = useCallback(
+    (id: AchievementId) => {
+      if (earnedRef.current.includes(id)) return;
+      const next = [...earnedRef.current, id];
+      earnedRef.current = next;
+      setEarned(next);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // без сохранения прогресс просто не переживёт перезагрузку
+      }
+      const a = ACHIEVEMENTS.find((x) => x.id === id)!;
+      showToast({ text: `Достижение «${a.name}»`, id });
+      if (next.length === ACHIEVEMENTS.length) setTimeout(() => setCelebrate(true), 900);
+    },
+    [showToast]
+  );
+  const earnRef = useRef(earn);
+  earnRef.current = earn;
+
+  // Камера → DOM: трансформация мира, фон, дальний план, мини-карта, активный остров.
   useEffect(() => {
     const apply = () => {
       const { x, y, z } = camera.get();
@@ -207,26 +260,21 @@ export function StudioApp() {
       w.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${z})`;
       w.style.setProperty("--z", String(z));
 
-      const pat = patternRef.current;
-      if (pat) {
-        v.style.backgroundColor = pat.bg;
-        v.style.backgroundImage = pat.url;
-        v.style.backgroundSize = `${pat.size * z}px ${pat.size * z}px`;
-      } else {
-        v.style.backgroundColor = BASE_BG;
-        v.style.backgroundImage = z < 0.35 ? "none" : "radial-gradient(rgba(0,0,0,.13) 1.1px, transparent 1.4px)";
-        v.style.backgroundSize = `${28 * z}px ${28 * z}px`;
-      }
+      v.style.backgroundColor = BASE_BG;
+      v.style.backgroundImage = z < 0.35 ? "none" : "radial-gradient(rgba(0,0,0,.13) 1.1px, transparent 1.4px)";
+      v.style.backgroundSize = `${28 * z}px ${28 * z}px`;
       v.style.backgroundPosition = `${x}px ${y}px`;
 
-      if (!farRef.current && z < 0.26) farRef.current = true;
-      else if (farRef.current && z > 0.3) farRef.current = false;
+      if (!farRef.current && z < 0.26) {
+        farRef.current = true;
+        if (introDoneRef.current) earnRef.current("map");
+      } else if (farRef.current && z > 0.3) farRef.current = false;
       w.classList.toggle("is-far", farRef.current);
 
       const r = v.getBoundingClientRect();
       const mv = miniViewRef.current;
       if (mv) {
-        const s = 180 / WORLD.w;
+        const s = MAP_W / WORLD.w;
         mv.style.left = `${(-x / z) * s}px`;
         mv.style.top = `${(-y / z) * s}px`;
         mv.style.width = `${(r.width / z) * s}px`;
@@ -236,57 +284,56 @@ export function StudioApp() {
       const cx = (r.width / 2 - x) / z;
       const cy = (r.height / 2 - y) / z;
       const isl = ISLANDS.find((i) => cx >= i.x && cx <= i.x + i.w && cy >= i.y && cy <= i.y + i.h);
-      if (isl) setActiveIsland((cur) => (cur === isl.id ? cur : isl.id));
+      if (isl) {
+        setActiveIsland((cur) => (cur === isl.id ? cur : isl.id));
+        if (isl.id === "proj" && z >= 0.95) earnRef.current("zoom");
+      }
     };
-    applyRef.current = apply;
     apply();
     return camera.subscribe(apply);
   }, [camera]);
 
-  /* ---------- интро: Арсений собирает первый экран на глазах ---------- */
+  /* ---------- интро: Арсений собирает приветствие на глазах ---------- */
 
   const finishIntro = useCallback(() => {
     introTimers.current.forEach(clearTimeout);
     introTimers.current = [];
     setIntro(6);
-    setTyped(HERO_CHARS);
+    setTyped(NAME_CHARS);
     setAgent((a) => ({ ...a, visible: false, bubble: null }));
     flyTo(islandById("about"), 50);
   }, [flyTo]);
 
   useEffect(() => {
     const h = frameById("hero");
-    camera.set(fit(pad(h, 140), 40));
+    camera.set(fit(pad(h, 120), 40));
     setReady(true);
+    const to = (x: number, y: number, bubble: string | null = null) =>
+      setAgent((a) => ({ ...a, x: h.x + x, y: h.y + y, bubble }));
     const steps: [number, () => void][] = [
       [250, () => setAgent((a) => ({ ...a, visible: true }))],
-      [450, () => setAgent((a) => ({ ...a, x: h.x, y: h.y }))],
-      [1400, () => {
+      [450, () => to(40, 40)],
+      [1200, () => {
         setIntro(1);
-        setAgent((a) => ({ ...a, x: h.x + h.w, y: h.y + h.h }));
+        to(1150, 60);
       }],
-      [2500, () => {
+      [2300, () => {
         setIntro(2);
-        setAgent((a) => ({ ...a, x: h.x + 70, y: h.y + 150 }));
+        to(30, 270);
       }],
-      [4300, () => {
+      [3500, () => {
         setIntro(3);
-        setAgent((a) => ({ ...a, x: h.x + 960, y: h.y + 260 }));
+        to(880, 330);
       }],
-      [5100, () => {
+      [4400, () => {
         setIntro(4);
-        setAgent((a) => ({ ...a, x: h.x + 330, y: h.y + 640 }));
+        to(1180, 250);
       }],
-      [6000, () => {
+      [5400, () => {
         setIntro(5);
-        setAgent((a) => ({
-          ...a,
-          x: h.x + 680,
-          y: h.y + 300,
-          bubble: "Готово! Осмотрись. А внизу — мои плагины, их можно попробовать",
-        }));
+        to(520, 500, "Привет! Дальше по пространству — мои работы. А внизу можно собрать достижения");
       }],
-      [9600, () => finishIntro()],
+      [9200, () => finishIntro()],
     ];
     introTimers.current = steps.map(([t, fn]) => setTimeout(fn, t));
     return () => introTimers.current.forEach(clearTimeout);
@@ -296,19 +343,27 @@ export function StudioApp() {
 
   useEffect(() => {
     if (intro !== 2) return;
-    const id = setInterval(() => setTyped((t) => (t >= HERO_CHARS ? t : t + 1)), 62);
+    const id = setInterval(() => setTyped((t) => (t >= NAME_CHARS ? t : t + 1)), 62);
     return () => clearInterval(id);
   }, [intro]);
 
-  /* ---------- дайджест-экскурсия ---------- */
+  // Переписка в «Обо мне» оживает после интро: вопросы приходят быстро, ответы — после «печатает…».
+  useEffect(() => {
+    if (!introDone || chatStep >= CHAT.length) return;
+    const t = setTimeout(() => setChatStep((s) => s + 1), CHAT[chatStep].q ? 700 : 1600);
+    return () => clearTimeout(t);
+  }, [introDone, chatStep]);
+
+  /* ---------- экскурсия ---------- */
 
   const tourStops = useMemo(
     () => [
       { rect: frameById("hero"), text: "Это я — дизайнер широкого профиля, в дизайне с 2021 года" },
-      { rect: islandById("plugins"), text: "Плагины, которые я сделал с помощью вайб-кодинга. Все шесть работают в доке внизу" },
+      { rect: islandById("plugins"), text: "Плагины и сервисы, которые я сделал с помощью вайб-кодинга" },
       { rect: frameById("social"), text: "Больше 2000 постов. Разложил часть для тебя", arrive: () => setSpread(true) },
-      { rect: islandById("pres"), text: "Презентации — от отчётов до сцены. Кликни по стопке слайдов" },
-      { rect: islandById("proj"), text: "Сайты и брендинг. Наведи на окно браузера — страница пролистается" },
+      { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
+      { rect: islandById("pres"), text: "Презентации — листай стрелками, по порядку" },
+      { rect: islandById("proj"), text: "Лендинги целиком и айдентика «Кофе Культ»" },
     ],
     []
   );
@@ -322,7 +377,7 @@ export function StudioApp() {
   useEffect(() => {
     if (tour < 0) return;
     if (tour >= tourStops.length) {
-      setAgent((a) => ({ ...a, bubble: "Это был дайджест. Дальше — сам 🙂" }));
+      setAgent((a) => ({ ...a, bubble: "Это была экскурсия. Дальше — сам 🙂" }));
       const t = setTimeout(() => {
         setAgent((a) => ({ ...a, visible: false, bubble: null }));
         setTour(-1);
@@ -337,83 +392,37 @@ export function StudioApp() {
     return () => clearTimeout(t);
   }, [tour, tourStops, flyTo]);
 
-  /* ---------- плагины-инструменты ---------- */
+  /* ---------- интерактив работ ---------- */
 
-  const onTry = useCallback(
-    (t: ToolId) => {
-      setTool(t);
-      setCheckStep(-1);
-    },
-    []
-  );
+  const toggleSpread = useCallback(() => {
+    setSpread((s) => !s);
+    earnRef.current("pile");
+  }, []);
+  const onSticker = useCallback(() => earnRef.current("sticker"), []);
+  const onPhone = useCallback(() => earnRef.current("orbit"), []);
 
-  const spawnShape = (wx: number, wy: number) => {
-    const z = camera.get().z;
-    setShapes((s) => [
-      ...s.slice(-39),
-      {
-        id: Date.now() + Math.random(),
-        x: wx,
-        y: wy,
-        size: (140 + Math.random() * 120) / z,
-        color: BRAND[Math.floor(Math.random() * BRAND.length)],
-        points: makeShapePoints(),
-        rot: Math.random() * 360,
-      },
-    ]);
-  };
-
-  const createCard = () => {
-    const name = cardName.trim().slice(0, 24);
-    if (!name) return;
-    const { w, h } = vpSize();
-    const c = camera.get();
-    const card: GenCard = {
-      id: Date.now(),
-      name,
-      x: (w / 2 - c.x) / c.z - 220,
-      y: (h / 2 - c.y) / c.z - 220,
-      date: new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long" }),
-    };
-    setCards((cs) => [...cs, card]);
-    setCardName("");
-    setTool(null);
-    flyTo({ x: card.x, y: card.y, w: 440, h: 440 }, 120, 1);
-  };
-
-  const applyPattern = (p: Pattern | null) => {
-    patternRef.current = p;
-    setHasPattern(!!p);
-    applyRef.current();
-  };
+  const flipsRef = useRef(0);
+  const deckRef = useRef(deck);
+  deckRef.current = deck;
+  const onSlide = useCallback((delta: number) => {
+    const n = DECKS[deckRef.current].slides.length;
+    setSlideDir(delta >= 0 ? "next" : "prev");
+    setSlide((s) => (s + delta + n) % n);
+    flipsRef.current += 1;
+    if (flipsRef.current >= 5) earnRef.current("slides");
+  }, []);
+  const onDeck = useCallback((i: number) => {
+    setDeck(i);
+    setSlide(0);
+    setSlideDir("next");
+  }, []);
 
   const discuss = (name: string) => {
     const text = `Привет, Арсений! Пишу по поводу работы «${name}» с твоего сайта.`;
     navigator.clipboard?.writeText(text).catch(() => {});
     window.open(LINKS.telegram, "_blank", "noopener,noreferrer");
-    showToast("Текст сообщения скопирован — вставь его в чат");
+    showToast({ text: "Текст сообщения скопирован — вставь его в чат" });
   };
-
-  const runCheck = () => {
-    setCheckStep(0);
-    CHECKS.forEach((_, i) => setTimeout(() => setCheckStep(i + 1), 1500 + i * 380));
-  };
-
-  const toggleSpread = useCallback(() => setSpread((s) => !s), []);
-  const deckRef = useRef(deckOrder);
-  deckRef.current = deckOrder;
-  const flyingRef = useRef<number | null>(null);
-  const deckNext = useCallback(() => {
-    if (flyingRef.current !== null) return;
-    const top = deckRef.current[0];
-    flyingRef.current = top;
-    setDeckFlying(top);
-    setTimeout(() => {
-      setDeckOrder((o) => [...o.slice(1), o[0]]);
-      setDeckFlying(null);
-      flyingRef.current = null;
-    }, 420);
-  }, []);
 
   /* ---------- колесо, клавиши ---------- */
 
@@ -453,16 +462,13 @@ export function StudioApp() {
       }
       if (e.shiftKey && e.code === "Digit1") return showAll();
       if (e.shiftKey && e.code === "Digit0") return zoomCenter(1);
-      const digit = /^Digit([1-6])$/.exec(e.code);
-      if (digit && !e.shiftKey) {
-        const id = TOOLS[Number(digit[1]) - 1].id;
-        setTool((t) => (t === id ? null : id));
-        setCheckStep(-1);
+      if (activeRef.current === "pres" && (e.code === "ArrowRight" || e.code === "ArrowLeft")) {
+        onSlide(e.code === "ArrowRight" ? 1 : -1);
         return;
       }
       if (e.code === "Escape") {
         setSelected(null);
-        setTool(null);
+        setOpenAch(null);
         stopTour();
       }
       if (e.code === "Equal" || e.code === "NumpadAdd") zoomCenter(camera.get().z * 1.3);
@@ -477,7 +483,7 @@ export function StudioApp() {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [camera, showAll, stopTour, zoomCenter]);
+  }, [camera, onSlide, showAll, stopTour, zoomCenter]);
 
   /* ---------- мышь, тач, щипок ---------- */
 
@@ -499,10 +505,8 @@ export function StudioApp() {
     if (!c || e.pointerType !== "mouse") return;
     c.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
     c.classList.add("is-visible");
-    const target = e.target as HTMLElement;
-    const f = target.closest?.("[data-frame]") as HTMLElement | null;
-    const label =
-      toolRef.current === "geometry" && !f ? "+ фигура" : f?.dataset.name ?? "Ты";
+    const f = (e.target as HTMLElement).closest?.("[data-frame]") as HTMLElement | null;
+    const label = f?.dataset.name ?? "Ты";
     if (cursorLabelRef.current && cursorLabelRef.current.textContent !== label) {
       cursorLabelRef.current.textContent = label;
     }
@@ -575,38 +579,32 @@ export function StudioApp() {
     if (pointers.current.size < 2) pinch.current = null;
     const d = drag.current;
     if (d && d.id === e.pointerId) {
-      if (!d.moved && !d.forcePan && !d.ui) {
-        if (toolRef.current === "geometry" && !d.frameId) {
-          const r = viewportRef.current!.getBoundingClientRect();
-          const c = camera.get();
-          spawnShape((e.clientX - r.left - c.x) / c.z, (e.clientY - r.top - c.y) / c.z);
-        } else {
-          setSelected(d.frameId);
-        }
-      }
+      if (!d.moved && !d.forcePan && !d.ui) setSelected(d.frameId);
       drag.current = null;
       viewportRef.current!.classList.remove("is-panning");
     }
   };
 
-  const onMiniClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const onMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    const s = WORLD.w / 180;
+    const s = WORLD.w / MAP_W;
     const wx = (e.clientX - r.left) * s;
     const wy = (e.clientY - r.top) * s;
     const { w, h } = vpSize();
     const z = Math.max(camera.get().z, 0.45);
+    stopTour();
     animateTo(clampCam({ z, x: w / 2 - wx * z, y: h / 2 - wy * z }), 800);
   };
 
   const sel = selected ? FRAMES.find((f) => f.id === selected) ?? null : null;
-  const activeTool = TOOLS.find((t) => t.id === tool);
+  const ach = openAch ? ACHIEVEMENTS.find((a) => a.id === openAch)! : null;
+  const mapS = MAP_W / WORLD.w;
 
   return (
     <div className={`st-app${introDone ? " is-ready" : " is-intro"}`}>
       <main
         ref={viewportRef}
-        className={`st-viewport${spaceHeld ? " is-hand" : ""}${tool === "geometry" ? " is-geometry" : ""}`}
+        className={`st-viewport${spaceHeld ? " is-hand" : ""}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -618,44 +616,18 @@ export function StudioApp() {
           <World
             introStep={intro}
             typed={typed}
+            chatStep={chatStep}
             selected={selected}
             spread={spread}
             onToggleSpread={toggleSpread}
-            deckOrder={deckOrder}
-            deckFlying={deckFlying}
-            onDeckNext={deckNext}
-            onTry={onTry}
+            onSticker={onSticker}
+            onPhone={onPhone}
+            deck={deck}
+            slide={slide}
+            slideDir={slideDir}
+            onDeck={onDeck}
+            onSlide={onSlide}
           />
-
-          {shapes.map((s) => (
-            <svg
-              key={s.id}
-              className="st-shape"
-              viewBox="0 0 100 100"
-              style={{
-                left: s.x - s.size / 2,
-                top: s.y - s.size / 2,
-                width: s.size,
-                height: s.size,
-                rotate: `${s.rot}deg`,
-              }}
-            >
-              <polygon points={s.points} fill={s.color} />
-            </svg>
-          ))}
-
-          {cards.map((c) => (
-            <div key={c.id} className="st-gen" style={{ left: c.x, top: c.y }}>
-              <span className="st-gen__badge">Новости мастерской</span>
-              <div className="st-gen__text">
-                <span>{c.name}</span> в гостях у Арсения
-              </div>
-              <div className="st-gen__foot">
-                <span>{c.date}</span>
-                <span>сверстано плагином</span>
-              </div>
-            </div>
-          ))}
 
           {sel && (
             <div className="st-callout" data-ui style={{ left: sel.x + sel.w, top: sel.y }}>
@@ -676,10 +648,10 @@ export function StudioApp() {
                   <button type="button" className="st-btn st-btn--small" onClick={() => discuss(sel.name)}>
                     Обсудить в Telegram
                   </button>
-                  {sel.tool && (
-                    <button type="button" className="st-btn st-btn--ghost" onClick={() => onTry(sel.tool!)}>
-                      Попробовать
-                    </button>
+                  {sel.link && (
+                    <a className="st-btn st-btn--ghost" href={sel.link.href} target="_blank" rel="noopener noreferrer">
+                      {sel.link.label} ↗
+                    </a>
                   )}
                 </div>
               </div>
@@ -694,15 +666,13 @@ export function StudioApp() {
             {agent.bubble && <div className="st-agent__bubble">{agent.bubble}</div>}
           </div>
         </div>
-
-        {checkStep === 0 && <div className="st-scan" />}
       </main>
 
       {/* ---------- шапка ---------- */}
       <div className="st-brand">
         <span className="st-brand__logo">АК</span>
         <span>
-          Мастерская <b>Арсения Кононова</b>
+          <b>Арсений Кононов</b> дизайнер
         </span>
       </div>
 
@@ -728,162 +698,136 @@ export function StudioApp() {
         Написать
       </a>
 
-      {/* ---------- масштаб и мини-карта ---------- */}
-      <div className="st-zoom">
-        <button type="button" onClick={() => zoomCenter(camera.get().z / 1.3)} aria-label="Уменьшить">
-          −
-        </button>
-        <ZoomLabel camera={camera} />
-        <button type="button" onClick={() => zoomCenter(camera.get().z * 1.3)} aria-label="Увеличить">
-          +
-        </button>
-        <button type="button" className="st-zoom__all" onClick={showAll}>
-          Вся мастерская
-        </button>
-      </div>
-
-      <div className="st-mini" onClick={onMiniClick} aria-label="Мини-карта">
-        {ISLANDS.map((i) => {
-          const s = 180 / WORLD.w;
-          return (
-            <span
+      {/* ---------- карта ---------- */}
+      <div className="st-map">
+        <div className="st-map__head">
+          <span>Карта</span>
+          <ZoomLabel camera={camera} />
+        </div>
+        <div className="st-map__area" style={{ height: WORLD.h * mapS }} onClick={onMapClick}>
+          {ISLANDS.map((i) => (
+            <button
               key={i.id}
-              style={{ left: i.x * s, top: i.y * s, width: i.w * s, height: i.h * s, background: i.color }}
-            />
-          );
-        })}
-        <div ref={miniViewRef} className="st-mini__view" />
+              type="button"
+              className={`st-map__isl${activeIsland === i.id ? " is-active" : ""}`}
+              style={
+                {
+                  left: i.x * mapS,
+                  top: i.y * mapS,
+                  width: i.w * mapS,
+                  height: i.h * mapS,
+                  "--c": i.color,
+                } as React.CSSProperties
+              }
+              onClick={(e) => {
+                e.stopPropagation();
+                stopTour();
+                flyTo(i, 50);
+              }}
+            >
+              {i.name}
+            </button>
+          ))}
+          <div ref={miniViewRef} className="st-map__view" />
+        </div>
+        <div className="st-map__ctrl">
+          <button type="button" onClick={() => zoomCenter(camera.get().z / 1.3)} aria-label="Уменьшить">
+            −
+          </button>
+          <button type="button" onClick={() => zoomCenter(camera.get().z * 1.3)} aria-label="Увеличить">
+            +
+          </button>
+          <button type="button" className="is-wide" onClick={showAll}>
+            Показать всё
+          </button>
+        </div>
       </div>
 
-      {/* ---------- док с плагинами ---------- */}
-      {activeTool && (
-        <div className="st-pop" style={{ "--c": activeTool.color } as React.CSSProperties}>
+      {/* ---------- достижения ---------- */}
+      {ach && !celebrate && (
+        <div className="st-pop" style={{ "--c": ach.color } as React.CSSProperties}>
           <div className="st-pop__head">
-            <span className="st-pop__icon">
-              <ToolGlyph id={activeTool.id} size={20} />
+            <span className={`st-pop__icon${earned.includes(ach.id) ? "" : " is-locked"}`}>
+              <Glyph id={ach.id} size={20} />
             </span>
             <div>
-              <small>мой плагин</small>
-              <b>{activeTool.plugin}</b>
+              <small>достижение · {earned.length} из {ACHIEVEMENTS.length}</small>
+              <b>{ach.name}</b>
             </div>
-            <button type="button" className="st-pop__close" onClick={() => setTool(null)} aria-label="Закрыть">
+            <button type="button" className="st-pop__close" onClick={() => setOpenAch(null)} aria-label="Закрыть">
               ✕
             </button>
           </div>
-          <p>{activeTool.hint}</p>
-
-          {tool === "geometry" && (
+          <p>{earned.includes(ach.id) ? "Получено! Осталось найти остальные." : ach.hint}</p>
+          {!earned.includes(ach.id) && (
             <div className="st-pop__row">
-              <span>Фигур на холсте: {shapes.length}</span>
-              {shapes.length > 0 && (
-                <button type="button" className="st-btn st-btn--ghost" onClick={() => setShapes([])}>
-                  Очистить
-                </button>
-              )}
-            </div>
-          )}
-
-          {tool === "digest" && (
-            <div className="st-pop__row">
-              {tour < 0 ? (
-                <button type="button" className="st-btn" onClick={() => setTour(0)}>
-                  Собрать дайджест
-                </button>
-              ) : (
-                <button type="button" className="st-btn st-btn--ghost" onClick={stopTour}>
-                  Остановить
-                </button>
-              )}
-            </div>
-          )}
-
-          {tool === "card" && (
-            <form
-              className="st-pop__row"
-              onSubmit={(e) => {
-                e.preventDefault();
-                createCard();
-              }}
-            >
-              <input
-                className="st-input"
-                value={cardName}
-                maxLength={24}
-                placeholder="Как тебя зовут?"
-                onChange={(e) => setCardName(e.target.value)}
-              />
-              <button type="submit" className="st-btn" disabled={!cardName.trim()}>
-                Сверстать
+              <button
+                type="button"
+                className="st-btn st-btn--small"
+                onClick={() => {
+                  stopTour();
+                  flyTo(islandById(ach.island), 50);
+                  setOpenAch(null);
+                }}
+              >
+                Показать где
               </button>
-            </form>
-          )}
-
-          {tool === "pattern" && (
-            <div className="st-pop__row">
-              <button type="button" className="st-btn" onClick={() => applyPattern(makePattern())}>
-                {hasPattern ? "Ещё вариант" : "Сгенерировать"}
-              </button>
-              {hasPattern && (
-                <button type="button" className="st-btn st-btn--ghost" onClick={() => applyPattern(null)}>
-                  Вернуть фон
-                </button>
-              )}
             </div>
-          )}
-
-          {tool === "telegram" && (
-            <div className="st-pop__row">
-              {sel ? (
-                <button type="button" className="st-btn" onClick={() => discuss(sel.name)}>
-                  Обсудить «{sel.name}»
-                </button>
-              ) : (
-                <span className="st-pop__muted">Сначала кликни по любой работе</span>
-              )}
-            </div>
-          )}
-
-          {tool === "check" && (
-            <>
-              {checkStep < 0 ? (
-                <div className="st-pop__row">
-                  <button type="button" className="st-btn" onClick={runCheck}>
-                    Проверить мастерскую
-                  </button>
-                </div>
-              ) : (
-                <ul className="st-checks">
-                  {checkStep === 0 && <li className="is-wait">Сканирую холст…</li>}
-                  {CHECKS.slice(0, Math.max(0, checkStep)).map(([ok, text]) => (
-                    <li key={text} className={ok ? "is-ok" : "is-warn"}>
-                      {text}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
           )}
         </div>
       )}
 
-      <div className="st-dock" role="toolbar" aria-label="Плагины">
-        <span className="st-dock__caption">Мои плагины</span>
-        {TOOLS.map((t, i) => (
-          <button
-            key={t.id}
-            type="button"
-            className={tool === t.id ? "is-active" : ""}
-            style={{ "--c": t.color } as React.CSSProperties}
-            onClick={() => {
-              setTool((cur) => (cur === t.id ? null : t.id));
-              setCheckStep(-1);
-            }}
-            title={`${t.plugin} (${i + 1})`}
-          >
-            <ToolGlyph id={t.id} />
-            <span>{t.short}</span>
-          </button>
-        ))}
+      {celebrate && (
+        <>
+          <Confetti />
+          <div className="st-pop st-pop--win">
+            <SpinFigure />
+            <b>Все шесть достижений!</b>
+            <p>Ты посмотрел всё, что здесь есть. Самое время написать мне — обсудим твой проект.</p>
+            <div className="st-pop__row">
+              <a className="st-btn st-btn--small" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
+                Написать в Telegram
+              </a>
+              <button type="button" className="st-btn st-btn--ghost" onClick={() => setCelebrate(false)}>
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <div className="st-dock" role="toolbar" aria-label="Экскурсия и достижения">
+        <button
+          type="button"
+          className={`st-dock__tour${tour >= 0 ? " is-active" : ""}`}
+          onClick={() => (tour >= 0 ? stopTour() : setTour(0))}
+        >
+          <Glyph id="tour" size={18} />
+          {tour >= 0 ? "Стоп" : "Экскурсия"}
+        </button>
+        <span className="st-dock__sep" />
+        <span className="st-dock__caption">
+          Достижения
+          <b>
+            {earned.length}/{ACHIEVEMENTS.length}
+          </b>
+        </span>
+        {ACHIEVEMENTS.map((a) => {
+          const got = earned.includes(a.id);
+          return (
+            <button
+              key={a.id}
+              type="button"
+              className={`st-badge${got ? " is-earned" : ""}${openAch === a.id ? " is-open" : ""}`}
+              style={{ "--c": a.color } as React.CSSProperties}
+              onClick={() => setOpenAch((o) => (o === a.id ? null : a.id))}
+              title={a.name}
+            >
+              <Glyph id={a.id} size={20} />
+              {got && <i>✓</i>}
+            </button>
+          );
+        })}
       </div>
 
       {!introDone && (
@@ -892,7 +836,16 @@ export function StudioApp() {
         </button>
       )}
 
-      {toast && <div className="st-toast">{toast}</div>}
+      {toast && (
+        <div className="st-toast" style={toast.id ? ({ "--c": ACHIEVEMENTS.find((a) => a.id === toast.id)!.color } as React.CSSProperties) : undefined}>
+          {toast.id && (
+            <span className="st-toast__icon">
+              <Glyph id={toast.id} size={16} />
+            </span>
+          )}
+          {toast.text}
+        </div>
+      )}
 
       <div ref={cursorRef} className={`st-cursor${spaceHeld ? " is-hidden" : ""}`} aria-hidden>
         <svg width="22" height="24" viewBox="0 0 22 24">
@@ -904,13 +857,4 @@ export function StudioApp() {
       </div>
     </div>
   );
-}
-
-function ZoomLabel({ camera }: { camera: ReturnType<typeof createCameraStore> }) {
-  const z = useSyncExternalStore(
-    camera.subscribe,
-    () => Math.round(camera.get().z * 100),
-    () => 100
-  );
-  return <span className="st-zoom__val">{z}%</span>;
 }
