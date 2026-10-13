@@ -74,6 +74,34 @@ export const SITE_FRAMES = SITES.map(([id, name, src, h], i) => ({
   } as FrameMeta,
 }));
 
+/*
+ * Посты: «кирпичная кладка» из 8 колонок без обрезки.
+ * Пропорции исходников по рядам: второй ряд 640×770, последний — сторис 640×1067, остальные квадраты.
+ * Каждый пост встаёт в самую короткую колонку, поэтому низ сетки получается ровным.
+ */
+const SOCIAL_ROW_ASPECT = [1, 770 / 640, 1, 1, 1, 1, 1, 1067 / 640];
+const POST_W = 150;
+const POST_GAP = 12;
+const POST_COLS = 8;
+
+export const SOCIAL_LAYOUT = (() => {
+  const heights = Array(POST_COLS).fill(0);
+  const posts = SOCIAL.rows.flatMap((row, r) =>
+    row.map((src) => {
+      const h = Math.round(POST_W * SOCIAL_ROW_ASPECT[r]);
+      const col = heights.indexOf(Math.min(...heights));
+      const post = { src, x: col * (POST_W + POST_GAP), y: heights[col], w: POST_W, h };
+      heights[col] += h + POST_GAP;
+      return post;
+    })
+  );
+  return {
+    posts,
+    w: POST_COLS * POST_W + (POST_COLS - 1) * POST_GAP,
+    h: Math.max(...heights) - POST_GAP,
+  };
+})();
+
 // Плагины: сетка 3×3, карточки по центру острова.
 const PLUGIN_W = 640;
 const PLUGIN_H = 520;
@@ -132,9 +160,13 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "social",
     name: "Посты для соцсетей",
-    ...rel("social", 58, 230),
-    w: 1284,
-    h: 960,
+    ...rel(
+      "social",
+      Math.round((span(2) - SOCIAL_LAYOUT.w) / 2),
+      Math.round((ROW2.h - SOCIAL_LAYOUT.h) / 2) + 30
+    ),
+    w: SOCIAL_LAYOUT.w,
+    h: SOCIAL_LAYOUT.h,
     r: 0,
     text: SOCIAL.description,
     tags: [SOCIAL.subtitle],
@@ -206,7 +238,7 @@ export const FRAMES: FrameMeta[] = [
     name: "Мерч",
     ...rel("proj", 60 + 3 * SITE_STEP, 1400),
     w: 1050,
-    h: 400,
+    h: 960,
     r: 0,
     text: PROJECTS.description,
   },

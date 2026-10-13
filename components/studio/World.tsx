@@ -1,12 +1,13 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
-import { AUTOMATION, EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, STATS, TOOLS, WORK } from "@/lib/content";
+import { AUTOMATION, EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   DECKS,
   ISLANDS,
   PLUGIN_SLOTS,
   SITE_FRAMES,
+  SOCIAL_LAYOUT,
   frameById,
   islandById,
   narrowWallpapers,
@@ -348,17 +349,14 @@ function PluginCard({ index, selected }: { index: number; selected: boolean }) {
 
 /* ---------- Соцсети: стопка, которая раскладывается ---------- */
 
-const SOCIAL_IMAGES = SOCIAL.rows.flat();
-
 function SocialPile({ spread, selected }: { spread: boolean; selected: boolean }) {
   const meta = frameById("social");
+  const posts = SOCIAL_LAYOUT.posts;
   return (
     <Frame meta={meta} selected={selected} className={`st-social${spread ? " is-spread" : ""}`}>
-      {SOCIAL_IMAGES.map((src, i) => {
-        const gx = (i % 8) * 162;
-        const gy = Math.floor(i / 8) * 162;
-        const px = meta.w / 2 - 75 - gx + (rand(i * 3 + 1) - 0.5) * 780;
-        const py = meta.h / 2 - 75 - gy + (rand(i * 3 + 2) - 0.5) * 520;
+      {posts.map(({ src, x, y, w, h }, i) => {
+        const px = meta.w / 2 - w / 2 - x + (rand(i * 3 + 1) - 0.5) * 780;
+        const py = meta.h / 2 - h / 2 - y + (rand(i * 3 + 2) - 0.5) * 520;
         const rot = (rand(i * 3 + 3) - 0.5) * 56;
         return (
           <div
@@ -366,10 +364,12 @@ function SocialPile({ spread, selected }: { spread: boolean; selected: boolean }
             className="st-post"
             style={
               {
-                left: gx,
-                top: gy,
+                left: x,
+                top: y,
+                width: w,
+                height: h,
                 zIndex: i,
-                transitionDelay: `${(spread ? i : SOCIAL_IMAGES.length - i) * 14}ms`,
+                transitionDelay: `${(spread ? i : posts.length - i) * 14}ms`,
                 "--px": `${px}px`,
                 "--py": `${py}px`,
                 "--rot": `${rot}deg`,
@@ -667,7 +667,13 @@ function Projects({ selected }: { selected: string | null }) {
           <div
             key={src}
             className="st-print"
-            style={{ left: 10 + i * 268, "--rot": `${(i % 2 ? 1 : -1) * (4 + i * 1.5)}deg` } as React.CSSProperties}
+            style={
+              {
+                left: (i % 2) * 530 + 20,
+                top: Math.floor(i / 2) * 450 + (i % 2) * 30 + 20,
+                "--rot": `${[-4, 3, 2, -3][i]}deg`,
+              } as React.CSSProperties
+            }
           >
             <img src={src} alt="" loading="lazy" draggable={false} />
           </div>
