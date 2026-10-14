@@ -417,7 +417,7 @@ export function StudioApp() {
   // Переписка в «Обо мне» оживает после интро: вопросы приходят быстро, ответы — после «печатает…».
   useEffect(() => {
     if (!introDone || chatStep >= CHAT.length) return;
-    const t = setTimeout(() => setChatStep((s) => s + 1), CHAT[chatStep].q ? 700 : 1600);
+    const t = setTimeout(() => setChatStep((s) => s + 1), CHAT[chatStep].q ? 350 : 800);
     return () => clearTimeout(t);
   }, [introDone, chatStep]);
 
