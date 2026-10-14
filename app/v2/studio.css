@@ -2464,6 +2464,21 @@
   font-size: 14px;
 }
 
+/* возврат из холста в мобильную ленту */
+.st-feed {
+  position: fixed;
+  left: 12px;
+  bottom: 84px;
+  z-index: 31;
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: #fefe78 !important;
+  border: 2px solid #111 !important;
+  box-shadow: 3px 3px 0 #111;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* карта в стиле дока */
 .st-map {
   position: fixed;

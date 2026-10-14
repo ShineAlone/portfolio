@@ -22,7 +22,7 @@ import {
 
 export const NAME_LINES = ["я Арсений", "Кононов"];
 export const NAME_CHARS = NAME_LINES.join("").length;
-const HELLO = "Привет!";
+export const HELLO = "Привет!";
 
 // Округление обязательно: на сервере и в браузере Math.sin даёт разные хвосты после запятой.
 const rand = (seed: number) => {
@@ -65,7 +65,7 @@ function Frame({
   );
 }
 
-function CountUp({ value, run }: { value: string; run: boolean }) {
+export function CountUp({ value, run }: { value: string; run: boolean }) {
   const m = /^(\D*)(\d+)(.*)$/.exec(value);
   const target = m ? Number(m[2]) : 0;
   const [n, setN] = useState(0);
@@ -106,7 +106,7 @@ function HoverVideo({ video }: { video: string }) {
 
 type StickerShape = "circle" | "burst" | "pill" | "square";
 
-const STICKERS: { shape: StickerShape; x: number; y: number; w: number; h: number; rot: number; color: string }[] = [
+export const STICKERS: { shape: StickerShape; x: number; y: number; w: number; h: number; rot: number; color: string }[] = [
   { shape: "circle", x: 1110, y: 140, w: 180, h: 180, rot: 10, color: "#FEFE78" },
   { shape: "burst", x: 1090, y: 390, w: 210, h: 210, rot: -8, color: "#FFB6E1" },
   { shape: "pill", x: 560, y: 690, w: 250, h: 96, rot: -4, color: "#86DDFF" },
@@ -115,7 +115,7 @@ const STICKERS: { shape: StickerShape; x: number; y: number; w: number; h: numbe
   { shape: "pill", x: 220, y: 690, w: 270, h: 96, rot: 5, color: "#FFC7B6" },
 ];
 
-const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
+export const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
   const a = (i / 28) * Math.PI * 2;
   const r = i % 2 ? 41 : 49;
   return `${(50 + Math.cos(a) * r).toFixed(2)},${(50 + Math.sin(a) * r).toFixed(2)}`;
@@ -325,11 +325,20 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
 }
 
 function Chat({ step, selected }: { step: number; selected: boolean }) {
+  return (
+    <Frame meta={frameById("chat")} selected={selected} className="st-card stchat">
+      <ChatContent step={step} />
+    </Frame>
+  );
+}
+
+// Содержимое переписки — общее для холста и мобильной ленты.
+export function ChatContent({ step }: { step: number }) {
   const typing = step < CHAT.length && step > 0 && !CHAT[step].q;
   // реакции можно «докинуть» кликом — счётчик растёт, эмодзи подпрыгивает
   const [bumps, setBumps] = useState<Record<number, number>>({});
   return (
-    <Frame meta={frameById("chat")} selected={selected} className="st-card stchat">
+    <>
       <div className="stchat__head">
         <span className="stchat__avatar">
           <img src="/images/photo.png" alt="" draggable={false} />
@@ -376,14 +385,22 @@ function Chat({ step, selected }: { step: number; selected: boolean }) {
           </div>
         )}
       </div>
-    </Frame>
+    </>
   );
 }
 
 function History({ selected }: { selected: boolean }) {
   return (
     <Frame meta={frameById("history")} selected={selected} className="st-card">
-      <div className="stv">
+      <HistoryContent />
+    </Frame>
+  );
+}
+
+// История версий — общая для холста и мобильной ленты.
+export function HistoryContent() {
+  return (
+    <div className="stv">
         <div className="stv__head">
           <span>История версий</span>
           <small>опыт работы</small>
@@ -419,8 +436,7 @@ function History({ selected }: { selected: boolean }) {
             </a>
           </li>
         </ol>
-      </div>
-    </Frame>
+    </div>
   );
 }
 

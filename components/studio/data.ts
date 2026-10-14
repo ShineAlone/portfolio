@@ -34,6 +34,9 @@ export const ISLANDS: Island[] = [
 
 export const WORLD: Rect = { x: 0, y: -120, w: span(6), h: ROW3.y + ROW3.h + 120 };
 
+// Темп переписки «Обо мне»: вопрос приходит быстро, ответ — после «печатает…»
+export const CHAT_STEP_MS = { q: 350, a: 800 };
+
 export const islandById = (id: string) => ISLANDS.find((i) => i.id === id)!;
 
 const rel = (island: string, x: number, y: number) => ({

@@ -1,0 +1,613 @@
+/*
+ * Мобильная лента v2. Классы с префиксом m-; блоки, общие с холстом (переписка, история версий,
+ * наклейки), перестраиваются здесь под ширину телефона.
+ */
+
+.m-app {
+  --display: var(--font-display), var(--font-root);
+  --violet: #8b4dff;
+  min-height: 100vh;
+  padding-bottom: 40px;
+  background: #ecebe4 radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1.4px) 0 0 / 22px 22px;
+  font-family: var(--font-root);
+  color: #111;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(.m-app) button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.m-app a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- шапка и чипы ---------- */
+
+.m-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) 12px 6px;
+  background: rgba(236, 235, 228, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.m-top .st-brand__logo {
+  width: 38px;
+  height: 38px;
+  font-size: 13px;
+  box-shadow: 0 0 0 2px #111;
+}
+
+.m-top__name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.m-top__name b {
+  font-family: var(--display);
+  font-size: 14px;
+}
+
+.m-top__name small {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.m-top__write {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 22px;
+  background: #111;
+  color: #fff !important;
+  font-size: 14px;
+}
+
+.m-top__write i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #1fbf4b;
+  animation: st-blink 1.6s ease-in-out infinite;
+}
+
+/* чипы — навигация по острову и подсказка «где я», вместо мини-карты */
+.m-chips {
+  position: sticky;
+  top: calc(max(10px, env(safe-area-inset-top)) + 50px);
+  z-index: 19;
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: rgba(236, 235, 228, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.m-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.m-chips button {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 0 0 2px #111;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 0.25s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.m-chips button.is-active {
+  background: var(--c);
+  transform: scale(1.06);
+}
+
+.m-chips button.is-active.is-dark {
+  color: #fff;
+}
+
+/* ---------- острова ---------- */
+
+.m-island {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 14px 10px 0;
+  padding: 16px 12px 26px;
+  border-radius: 34px;
+  background: color-mix(in srgb, var(--c) 34%, #ecebe4);
+  scroll-margin-top: 112px;
+}
+
+.m-island.is-dark {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+.m-island__label {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 22px;
+  background: var(--c);
+  box-shadow: 0 0 0 2px #111;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.m-island.is-dark .m-island__label {
+  background: #fff;
+  color: #111;
+}
+
+/* «наезд камеры»: блок подлетает и проявляется, когда до него долистали */
+.m-reveal {
+  opacity: 0;
+  transform: translateY(46px) scale(0.92);
+  transition: opacity 0.5s, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.m-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- приветствие ---------- */
+
+.mh {
+  position: relative;
+  padding: 0 4px;
+}
+
+.mh__hello {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 17vw;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  white-space: nowrap;
+}
+
+.mh__hello span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(-120px) rotate(calc(var(--i) * 9deg - 24deg));
+  transition: transform 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 80ms),
+    opacity 0.3s calc(var(--i) * 80ms);
+}
+
+.mh__hello span:last-child {
+  color: var(--violet);
+}
+
+.mh.s1 .mh__hello span {
+  opacity: 1;
+  transform: none;
+}
+
+/* имя и фото — маленький коллаж: фото выезжает снизу справа и заходит под имя */
+.mh__stage {
+  position: relative;
+  height: 330px;
+  margin-top: 6px;
+}
+
+.mh__name {
+  position: relative;
+  z-index: 2;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 10.5vw;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+.mh__name span {
+  display: block;
+  white-space: pre;
+}
+
+.mh__photo {
+  position: absolute;
+  right: -14px;
+  bottom: 0;
+  z-index: 1;
+  width: 80%;
+  height: 300px;
+  opacity: 0;
+  transform: translateY(80px);
+  transition: opacity 0.4s, transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.mh.s3 .mh__photo {
+  opacity: 1;
+  transform: none;
+}
+
+.mh__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+  -webkit-mask-image: linear-gradient(#000 72%, transparent 98%);
+  mask-image: linear-gradient(#000 72%, transparent 98%);
+}
+
+.mh__note,
+.mh__cta {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mh.s5 .mh__note,
+.mh.s5 .mh__cta {
+  opacity: 1;
+  transform: none;
+}
+
+.mh__note {
+  position: relative;
+  z-index: 3;
+  margin-top: -30px;
+}
+
+.mh__note span {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 22px;
+  background: #fff;
+  border: 2px solid #111;
+  font-size: 16px;
+  rotate: -2deg;
+}
+
+.mh__cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  transition-delay: 0.15s;
+}
+
+.mh__cta .st-btn {
+  font-size: 15px;
+  padding: 13px 20px;
+}
+
+.mh__cta .sth__status {
+  font-size: 14px;
+}
+
+/* наклейки в два столбца, «таблетки» — во всю ширину; шлёпаются, когда до них долистали */
+.mh__stickers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 14px;
+  margin-top: 26px;
+  padding: 0 6px 6px;
+}
+
+.mh .mh__sticker {
+  position: relative;
+  width: auto;
+  height: auto;
+  aspect-ratio: 1;
+  opacity: 0;
+  transform: rotate(var(--rot)) scale(1.8);
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 110ms),
+    opacity 0.2s calc(var(--i) * 110ms);
+}
+
+.mh .mh__stickers.is-in .mh__sticker {
+  opacity: 1;
+  transform: rotate(var(--rot));
+}
+
+.mh .mh__sticker.st-sticker--pill {
+  grid-column: 1 / -1;
+  aspect-ratio: auto;
+  height: 86px;
+}
+
+.mh .mh__sticker b {
+  font-size: 36px;
+}
+
+.mh .mh__sticker.st-sticker--burst b {
+  font-size: 28px;
+}
+
+.mh .mh__sticker span {
+  font-size: 13px;
+}
+
+/* ---------- переписка ---------- */
+
+.m-chat {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.m-chat .stchat__head {
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.m-chat .stchat__head b {
+  font-size: 16px;
+}
+
+.m-chat .stchat__head small {
+  font-size: 13px;
+}
+
+.m-chat .stchat__avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.m-chat .stchat__body {
+  gap: 12px;
+  min-height: 160px;
+  padding: 16px 12px 26px;
+}
+
+.m-chat .stchat__msg {
+  max-width: 92%;
+  font-size: 16px;
+}
+
+/* время у вопроса — под текстом, чтобы короткий вопрос не переносился */
+.m-chat .stchat__msg.is-q {
+  padding: 11px 15px 22px;
+}
+
+.m-chat .stchat__msg.is-a {
+  max-width: 100%;
+  padding: 14px 14px 24px;
+  font-size: 17px;
+}
+
+.m-chat .stchat__chips {
+  gap: 8px;
+}
+
+.m-chat .stchat__chips span {
+  padding: 5px 11px;
+  font-size: 14px;
+}
+
+/* три шага — столбиком, наклейки чуть повёрнуты */
+.m-chat .stchat__how {
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.m-chat .stchat__how::before {
+  display: none;
+}
+
+.m-chat .stchat__step {
+  padding: 12px 14px 14px;
+  rotate: calc((var(--i) - 1) * 1deg);
+}
+
+.m-chat .stchat__step b {
+  font-size: 16px;
+}
+
+.m-chat .stchat__step small {
+  font-size: 13px;
+}
+
+.m-chat .stchat__icon {
+  font-size: 28px;
+}
+
+.m-chat .stchat__small {
+  font-size: 15px;
+}
+
+.m-chat .stchat__diploma {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.m-chat .stchat__diploma b {
+  font-size: 19px;
+}
+
+.m-chat .stchat__diploma span {
+  font-size: 15px;
+}
+
+.m-chat .stchat__diploma small {
+  font-size: 12px;
+}
+
+.m-chat .stchat__cap {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+
+.m-chat .stchat__tools {
+  flex-wrap: wrap;
+  gap: 10px 12px;
+}
+
+.m-chat .stchat__tool {
+  font-size: 12px;
+}
+
+.m-chat .stchat__tool i {
+  width: 44px;
+  height: 44px;
+}
+
+.m-chat .stchat__tools .is-boxed img {
+  width: 18px;
+  height: 27px;
+}
+
+.m-chat .stchat__react {
+  font-size: 14px !important;
+}
+
+/* ---------- история версий ---------- */
+
+.m-history {
+  border-radius: 28px;
+}
+
+.m-history .stv {
+  position: static;
+  padding: 24px 18px 28px;
+}
+
+.m-history .stv__head span {
+  font-size: 26px;
+  white-space: nowrap;
+}
+
+.m-history .stv ol {
+  justify-content: flex-start;
+  gap: 34px;
+  margin-top: 20px;
+}
+
+.m-history .stv li {
+  padding-left: 34px;
+}
+
+.m-history .stv li::before {
+  width: 18px;
+  height: 18px;
+  top: 3px;
+}
+
+.m-history .stv ol::before {
+  left: 8px;
+}
+
+.m-history .stv__ver {
+  font-size: 13px;
+}
+
+.m-history .stv__company {
+  font-size: 26px;
+}
+
+.m-history .stv__role {
+  font-size: 17px;
+}
+
+.m-history .stv p {
+  font-size: 15px;
+}
+
+.m-history .stv .st-tags span {
+  font-size: 13px;
+  padding: 5px 11px;
+}
+
+.m-history .stv__cta {
+  white-space: normal;
+  gap: 10px;
+  padding: 10px 18px 10px 10px;
+  font-size: 15px;
+  box-shadow: 4px 4px 0 #111;
+}
+
+.m-history .stv__plane {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+/* ---------- заглушки островов и пасхалка ---------- */
+
+.m-soon,
+.m-canvas__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 22px 20px;
+  border-radius: 28px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 0 0 2px #111;
+}
+
+.m-soon b,
+.m-canvas__card b {
+  font-family: var(--display);
+  font-size: 20px;
+}
+
+.m-soon p,
+.m-canvas__card p {
+  font-size: 15px;
+  line-height: 1.45;
+  opacity: 0.75;
+}
+
+.m-soon .st-btn,
+.m-canvas__card .st-btn {
+  margin-top: 6px;
+}
+
+.m-canvas {
+  margin: 22px 10px 0;
+}
+
+.m-canvas__card {
+  background: #111;
+  color: #fff;
+  box-shadow: 6px 6px 0 #fefe78, 6px 6px 0 2px #111;
+}
+
+.m-canvas__card .st-btn {
+  background: #fefe78;
+  color: #111 !important;
+}
+
+.m-canvas__kicker {
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: #fefe78;
+  color: #111;
+  font-size: 12px;
+}

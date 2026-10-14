@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Unbounded } from "next/font/google";
-import { StudioApp } from "@/components/studio/StudioApp";
+import { StudioEntry } from "@/components/studio/StudioEntry";
 import "./studio.css";
+import "./mobile.css";
 
 const unbounded = Unbounded({
   subsets: ["latin", "cyrillic"],
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export default function V2Page() {
   return (
     <div className={unbounded.variable}>
-      <StudioApp />
+      <StudioEntry />
     </div>
   );
 }

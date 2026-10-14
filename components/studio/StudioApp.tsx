@@ -12,6 +12,7 @@ import {
   SECRET_WORD,
   WORLD,
   CARS,
+  CHAT_STEP_MS,
   COLLIDERS,
   frameById,
   islandById,
@@ -135,7 +136,7 @@ function Confetti() {
   );
 }
 
-export function StudioApp() {
+export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
   const camera = useMemo(createCameraStore, []);
   const viewportRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -474,7 +475,7 @@ export function StudioApp() {
   // Переписка в «Обо мне» оживает после интро: вопросы приходят быстро, ответы — после «печатает…».
   useEffect(() => {
     if (!introDone || chatStep >= CHAT.length) return;
-    const t = setTimeout(() => setChatStep((s) => s + 1), CHAT[chatStep].q ? 350 : 800);
+    const t = setTimeout(() => setChatStep((s) => s + 1), CHAT[chatStep].q ? CHAT_STEP_MS.q : CHAT_STEP_MS.a);
     return () => clearTimeout(t);
   }, [introDone, chatStep]);
 
@@ -1296,6 +1297,13 @@ export function StudioApp() {
           </button>
         ))}
       </nav>
+
+      {onFeed && (
+        // на телефоне холст открыт по желанию — отсюда можно вернуться в ленту
+        <button type="button" className="st-feed" onClick={onFeed}>
+          ← Лента
+        </button>
+      )}
 
       <a className="st-contact" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
         <i />
