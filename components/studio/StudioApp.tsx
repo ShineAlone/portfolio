@@ -36,6 +36,57 @@ const DRIVE_MAX_Z = 1.4;
 const LAMPS: Record<string, [number, number]> = { sport: [0.26, 0.11], pickup: [0.23, 0.08], bug: [0.36, 0.1] };
 
 type Solid = Rect & { id: string; frame: boolean };
+type Stick = { x: number; y: number; on: boolean };
+
+// Экранный джойстик: стик отклоняется пальцем в пределах круга, значения от −1 до 1 уходят в цикл езды.
+function Joystick({ stick }: { stick: React.MutableRefObject<Stick> }) {
+  const baseRef = useRef<HTMLDivElement>(null);
+  const knobRef = useRef<HTMLDivElement>(null);
+  const pid = useRef<number | null>(null);
+  const move = (e: React.PointerEvent) => {
+    const r = baseRef.current!.getBoundingClientRect();
+    const R = r.width / 2;
+    let dx = e.clientX - (r.left + R);
+    let dy = e.clientY - (r.top + R);
+    const d = Math.hypot(dx, dy);
+    if (d > R) {
+      dx *= R / d;
+      dy *= R / d;
+    }
+    knobRef.current!.style.transform = `translate(${dx}px, ${dy}px)`;
+    stick.current = { x: dx / R, y: dy / R, on: true };
+  };
+  const end = (e: React.PointerEvent) => {
+    if (e.pointerId !== pid.current) return;
+    pid.current = null;
+    stick.current = { x: 0, y: 0, on: false };
+    knobRef.current!.style.transform = "";
+    baseRef.current!.classList.remove("is-active");
+  };
+  return (
+    <div
+      ref={baseRef}
+      className="st-joy"
+      onPointerDown={(e) => {
+        pid.current = e.pointerId;
+        try {
+          // палец может уйти за пределы круга — стик всё равно его ведёт
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // указатель уже отпущен — просто ведём без захвата
+        }
+        e.currentTarget.classList.add("is-active");
+        move(e);
+      }}
+      onPointerMove={(e) => e.pointerId === pid.current && move(e)}
+      onPointerUp={end}
+      onPointerCancel={end}
+      aria-label="Джойстик: куда отклонишь — туда и поедет"
+    >
+      <div ref={knobRef} className="st-joy__knob" />
+    </div>
+  );
+}
 
 type Agent = { x: number; y: number; visible: boolean; bubble: string | null };
 type Toast = { text: string; id?: AchievementId };
@@ -132,6 +183,12 @@ export function StudioApp() {
   const mapCarRef = useRef<HTMLElement>(null);
   const carState = useRef({ x: 0, y: 0, a: 0, v: 0 });
   const keysRef = useRef(new Set<string>());
+  const stickRef = useRef<Stick>({ x: 0, y: 0, on: false });
+  // на сенсорных экранах вместо клавиш — джойстик
+  const [touch, setTouch] = useState(false);
+  useEffect(() => {
+    setTouch(window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0);
+  }, []);
   const hitAt = useRef(new Map<string, number>());
 
   const introDone = intro >= 6;
@@ -508,12 +565,14 @@ export function StudioApp() {
     cancelAnimationFrame(animRef.current);
     setCityOn(true);
     setCityNotice(true);
-    driveZRef.current = DRIVE_Z;
+    // на узком экране отдаляемся сильнее, чтобы впереди было видно дорогу
+    driveZRef.current = vpSize().w < 760 ? DRIVE_Z * 0.75 : DRIVE_Z;
+    stickRef.current = { x: 0, y: 0, on: false };
     zoomTouched.current = false;
     clearTimeout(noticeTimer.current);
     noticeTimer.current = setTimeout(() => setCityNotice(false), 4200);
     setDriving(true);
-  }, [stopDrive, stopTour]);
+  }, [stopDrive, stopTour, vpSize]);
 
   /* ---------- блоки, разбитые машинкой ---------- */
 
@@ -671,19 +730,31 @@ export function StudioApp() {
       last = now;
       const t = now / 1000;
       const k = keysRef.current;
-      const up = k.has("KeyW") || k.has("ArrowUp");
-      const down = k.has("KeyS") || k.has("ArrowDown");
+      let up = k.has("KeyW") || k.has("ArrowUp");
+      let down = k.has("KeyS") || k.has("ArrowDown");
       const left = k.has("KeyA") || k.has("ArrowLeft");
       const right = k.has("KeyD") || k.has("ArrowRight");
-      const steer = (right ? 1 : 0) - (left ? 1 : 0);
+      let steer = (right ? 1 : 0) - (left ? 1 : 0);
+      let gas = 1;
+      // Джойстик на телефоне: машинка разворачивается туда, куда отклонён стик, и едет;
+      // чем сильнее отклонение — тем быстрее. Пока разворот крутой, газ сбрасывается.
+      const st = stickRef.current;
+      const mag = Math.min(1, Math.hypot(st.x, st.y));
+      if (st.on && mag > 0.18) {
+        const diff = Math.atan2(Math.sin(Math.atan2(st.x, -st.y) - c.a), Math.cos(Math.atan2(st.x, -st.y) - c.a));
+        steer = clamp(diff * 2.5, -1, 1);
+        up = true;
+        down = false;
+        gas = mag * (Math.abs(diff) > 1.6 ? 0.35 : 1);
+      }
       const S = SURFACES[surf];
 
-      if (up) c.v += spec.accel * S.accel * (c.v < 0 ? 2.2 : 1) * dt;
+      if (up) c.v += spec.accel * S.accel * gas * (c.v < 0 ? 2.2 : 1) * dt;
       else if (down) c.v -= spec.accel * S.accel * (c.v > 0 ? 2.2 : 0.8) * dt;
       else c.v -= c.v * Math.min(1, 4 * dt);
       if (!up && !down && Math.abs(c.v) < 8) c.v = 0;
       // трава, грунт и вода не дают разогнаться: лишняя скорость плавно гасится
-      const vmax = spec.max * S.max;
+      const vmax = spec.max * S.max * Math.max(0.3, gas);
       if (c.v > vmax) c.v += (vmax - c.v) * Math.min(1, 4 * dt);
       if (c.v < -vmax * 0.45) c.v += (-vmax * 0.45 - c.v) * Math.min(1, 4 * dt);
       c.v = clamp(c.v, -spec.max * 0.45, spec.max);
@@ -766,8 +837,9 @@ export function StudioApp() {
       // следы: каждое колесо оставляет отрезок, как только сдвинулось на несколько пикселей
       const S2 = SURFACES[surf];
       const back = { x: -Math.sin(c.a), y: Math.cos(c.a) };
-      const spinning = steer !== 0 && Math.abs(c.v) < 60;
-      const skid = spinning || (steer !== 0 && Math.abs(c.v) > 420) || (down && c.v > 220);
+      const turning = Math.abs(steer) > 0.3;
+      const spinning = turning && Math.abs(c.v) < 60;
+      const skid = spinning || (turning && Math.abs(c.v) > 420) || (down && c.v > 220);
       wheels.forEach(([lx, ly], i) => {
         const p = toWorld(lx, ly);
         const L = lastWheel[i];
@@ -1020,8 +1092,16 @@ export function StudioApp() {
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    if (drivingRef.current) return;
     const p = pinch.current;
+    if (drivingRef.current) {
+      // за рулём щипок только меняет масштаб, камера по-прежнему держит машинку
+      if (p && pointers.current.size >= 2) {
+        const [a, b] = [...pointers.current.values()];
+        driveZRef.current = clamp((p.cam.z * Math.hypot(a.x - b.x, a.y - b.y)) / p.dist, DRIVE_MIN_Z, DRIVE_MAX_Z);
+        zoomTouched.current = true;
+      }
+      return;
+    }
     if (p && pointers.current.size >= 2) {
       const [a, b] = [...pointers.current.values()];
       const r = viewportRef.current!.getBoundingClientRect();
@@ -1391,6 +1471,8 @@ export function StudioApp() {
           </button>
         </div>
       )}
+
+      {driving && touch && <Joystick stick={stickRef} />}
 
       {cityNotice && (
         <div className="st-notice" role="status">
