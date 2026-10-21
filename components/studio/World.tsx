@@ -30,6 +30,8 @@ const rand = (seed: number) => {
   return Math.round((x - Math.floor(x)) * 1000) / 1000;
 };
 
+const QUIET_ISLANDS = ["plugins", "pres"];
+
 function Frame({
   meta,
   selected,
@@ -42,9 +44,11 @@ function Frame({
   children: React.ReactNode;
 }) {
   const color = islandById(meta.island).color;
+  // у этих блоков наведение не рисует рамку и подпись — они и так крупные и понятные
+  const quiet = QUIET_ISLANDS.includes(meta.island) || meta.id === "history";
   return (
     <div
-      className={`st-frame${selected ? " is-selected" : ""}${className ? ` ${className}` : ""}`}
+      className={`st-frame${quiet ? " is-quiet" : ""}${selected ? " is-selected" : ""}${className ? ` ${className}` : ""}`}
       data-frame={meta.id}
       data-name={meta.name}
       data-color={color}
@@ -97,7 +101,6 @@ function HoverVideo({ video }: { video: string }) {
     <div className="st-hv" onPointerEnter={() => setOn(true)} onPointerLeave={() => setOn(false)}>
       <img src={poster(video)} alt="" draggable={false} />
       {on && <video src={video} autoPlay muted loop playsInline />}
-      <span className="st-hv__hint">{on ? "▶ играет" : "наведи — оживёт"}</span>
     </div>
   );
 }
@@ -755,7 +758,8 @@ function Presenter({
   return (
     <Frame meta={frameById("deck")} selected={selected} className="st-free st-deck">
       <div className="stpr__tabs">
-        {DECKS.map((x, i) => (
+        {/* пока показываем только первую презентацию — вторая и третья ждут своей подачи */}
+        {DECKS.slice(0, 1).map((x, i) => (
           <button
             key={x.name}
             type="button"
@@ -894,12 +898,12 @@ function Crew({ active }: { active: boolean }) {
 // [x, y, ширина, поворот] — коллаж из презентации айдентики поверх фирменной волны
 const COFFEE_LAYOUT: [number, number, number, number][] = [
   [760, 60, 670, 2],
-  [60, 300, 360, -4],
-  [450, 320, 360, 3],
+  [60, 345, 360, -4],
+  [450, 360, 360, 3],
   [840, 480, 330, 4],
   [1150, 500, 300, -3],
-  [60, 580, 360, 3],
-  [450, 600, 360, -2],
+  [60, 625, 360, 3],
+  [450, 640, 360, -2],
   [840, 740, 330, -4],
   [1150, 760, 300, 3],
 ];
@@ -922,6 +926,14 @@ function Coffee({ selected }: { selected: boolean }) {
         <span>Айдентика</span>
         <b>Кофе Культ</b>
         <p>стаканчики · упаковка · меню · абонементы</p>
+      </div>
+      {/* честная пометка: это личный концепт, а не заказ бренда */}
+      <div className="stk__note">
+        <i aria-hidden>!</i>
+        <p>
+          <b>Некоммерческий концепт.</b> Делал для себя — в работу не пошёл. Логотип принадлежит сети «Кофе
+          Культ» и показан только для демонстрации идеи.
+        </p>
       </div>
       {COFFEE_LAYOUT.map(([x, y, w, rot], i) => (
         <div

@@ -349,6 +349,15 @@
   opacity: 1;
 }
 
+/* «тихие» блоки: при наведении без чёрной рамки и подписи (история версий, лаборатория, презентации) */
+.st-frame.is-quiet:hover:not(.is-selected)::after {
+  box-shadow: 0 0 0 calc(2px / var(--z)) transparent;
+}
+
+.st-frame.is-quiet:hover:not(.is-selected) .st-frame__label {
+  opacity: 0;
+}
+
 /* у коллажа-приветствия рамка при наведении только мешает */
 .sthg::after,
 .sthg .st-frame__label {
@@ -1339,8 +1348,9 @@
   flex-direction: column;
 }
 
+/* видео и картинки плагинов — целиком, в пропорции 1920×1080 */
 .stp__media {
-  height: 262px;
+  aspect-ratio: 16 / 9;
   flex-shrink: 0;
   border-radius: 20px;
   overflow: hidden;
@@ -1427,17 +1437,6 @@
   height: 100%;
   object-fit: cover;
   pointer-events: none;
-}
-
-.st-hv__hint {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  background: rgba(17, 17, 17, 0.75);
-  color: #fff;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 12px;
 }
 
 .st-slot {
@@ -1643,7 +1642,8 @@
 }
 
 .stpr__tabs button {
-  flex: 1;
+  /* вкладка не растягивается на всю ширину, если презентация одна */
+  flex: 0 1 380px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2095,6 +2095,49 @@
 .stk__title p {
   margin-top: 8px;
   font-size: 18px;
+}
+
+/* пометка о некоммерческом концепте — наклейка под заголовком */
+.stk__note {
+  position: absolute;
+  left: 60px;
+  top: 224px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 670px;
+  padding: 14px 20px 14px 14px;
+  border-radius: 20px;
+  background: #fff;
+  border: 3px solid #111;
+  box-shadow: 5px 5px 0 #111;
+  rotate: -1.2deg;
+}
+
+.stk__note i {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #111;
+  color: #ffd400;
+  font-family: var(--display);
+  font-style: normal;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.stk__note p {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.stk__note b {
+  font-family: var(--display);
+  font-weight: 700;
 }
 
 .stk__card {
