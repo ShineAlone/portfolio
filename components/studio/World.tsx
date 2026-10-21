@@ -7,6 +7,7 @@ import {
   DECKS,
   ISLANDS,
   LAB_CARDS,
+  PRES_SOON,
   SITE_FRAMES,
   SOCIAL_LAYOUT,
   frameById,
@@ -17,6 +18,8 @@ import {
   type CarSpec,
   type FrameMeta,
 } from "./data";
+import { Frame } from "./Frame";
+import { CaseHR } from "./CaseHR";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -29,45 +32,6 @@ const rand = (seed: number) => {
   const x = Math.sin(seed * 127.1) * 43758.5453;
   return Math.round((x - Math.floor(x)) * 1000) / 1000;
 };
-
-const QUIET_ISLANDS = ["plugins", "pres"];
-
-function Frame({
-  meta,
-  selected,
-  className,
-  children,
-}: {
-  meta: FrameMeta;
-  selected: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const color = islandById(meta.island).color;
-  // у этих блоков наведение не рисует рамку и подпись — они и так крупные и понятные
-  const quiet = QUIET_ISLANDS.includes(meta.island) || meta.id === "history";
-  return (
-    <div
-      className={`st-frame${quiet ? " is-quiet" : ""}${selected ? " is-selected" : ""}${className ? ` ${className}` : ""}`}
-      data-frame={meta.id}
-      data-name={meta.name}
-      data-color={color}
-      style={
-        {
-          left: meta.x,
-          top: meta.y,
-          width: meta.w,
-          height: meta.h,
-          "--r": `${meta.r}px`,
-          "--c": color,
-        } as React.CSSProperties
-      }
-    >
-      <div className="st-frame__label">{meta.name}</div>
-      {children}
-    </div>
-  );
-}
 
 export function CountUp({ value, run }: { value: string; run: boolean }) {
   const m = /^(\D*)(\d+)(.*)$/.exec(value);
@@ -829,6 +793,14 @@ function Presentations(p: {
           </div>
         </Frame>
       ))}
+      {/* первая презентация переехала в кейс; здесь появятся следующие */}
+      <div
+        className="st-soon"
+        style={{ left: PRES_SOON.x, top: PRES_SOON.y, width: PRES_SOON.w, height: PRES_SOON.h }}
+      >
+        <b>Скоро здесь</b>
+        <span>новые презентации — а первая уже живёт в «Кейсах» вместе с продуктом</span>
+      </div>
       <Presenter
         selected={p.selected === "deck"}
         deck={p.deck}
@@ -1119,7 +1091,7 @@ type WorldProps = {
   driving: boolean;
   onPickCar: (i: number) => void;
   onDrive: () => void;
-  /** камера сейчас на острове презентаций (и мы не за рулём) */
+  /** камера сейчас на острове кейсов, где стоит презентация (и мы не за рулём) */
   presView: boolean;
 };
 
@@ -1151,6 +1123,7 @@ export const World = memo(function World(p: WorldProps) {
         onDeck={p.onDeck}
         onSlide={p.onSlide}
       />
+      <CaseHR selected={p.selected} />
       <Crew active={p.presView && p.deck === 0} />
       <Projects selected={p.selected} />
       <Contact selected={p.selected === "contact"} />

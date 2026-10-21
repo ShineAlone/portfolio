@@ -16,6 +16,7 @@ import {
   COLLIDERS,
   frameById,
   islandById,
+  islandFocus,
   type AchievementId,
   type Rect,
 } from "./data";
@@ -487,7 +488,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       { rect: islandById("plugins"), text: "Лаборатория: плагины, сервисы и гараж — возьми машинку и прокатись по сайту" },
       { rect: frameById("social"), text: "Больше 2000 постов. Разложил часть для тебя", arrive: () => setSpread(true) },
       { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
-      { rect: islandById("pres"), text: "Презентации — листай стрелками, по порядку" },
+      { rect: islandFocus(islandById("cases")), text: "Кейсы: продукт целиком — экраны сотрудника и HR, презентация и даже аватары" },
       { rect: islandById("proj"), text: "Лендинги целиком и айдентика «Кофе Культ»" },
       { rect: frameById("contact"), text: "А здесь можно написать мне. Буду рад твоей задаче!" },
     ],
@@ -1005,7 +1006,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       }
       if (e.shiftKey && e.code === "Digit1") return showAll();
       if (e.shiftKey && e.code === "Digit0") return zoomCenter(1);
-      if (activeRef.current === "pres" && (e.code === "ArrowRight" || e.code === "ArrowLeft")) {
+      if (activeRef.current === "cases" && (e.code === "ArrowRight" || e.code === "ArrowLeft")) {
         onSlide(e.code === "ArrowRight" ? 1 : -1);
         return;
       }
@@ -1185,7 +1186,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
             driving={driving}
             onPickCar={setCarId}
             onDrive={startDrive}
-            presView={activeIsland === "pres" && !driving}
+            presView={activeIsland === "cases" && !driving}
           />
 
           {broken.length > 0 && (
@@ -1290,7 +1291,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
             style={{ "--c": i.color } as React.CSSProperties}
             onClick={() => {
               stopTour();
-              flyTo(i, 50);
+              flyTo(islandFocus(i), 50);
             }}
           >
             {i.name}
@@ -1334,7 +1335,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
               onClick={(e) => {
                 e.stopPropagation();
                 stopTour();
-                flyTo(i, 50);
+                flyTo(islandFocus(i), 50);
               }}
             >
               {i.name}
@@ -1379,7 +1380,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
                 className="st-btn st-btn--small"
                 onClick={() => {
                   stopTour();
-                  flyTo(islandById(ach.island), 50);
+                  flyTo(islandFocus(islandById(ach.island)), 50);
                   setOpenAch(null);
                 }}
               >

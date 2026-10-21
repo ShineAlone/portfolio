@@ -2,7 +2,8 @@ import { AUTOMATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, WALLPAPERS } 
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
-export type Island = Rect & { id: string; name: string; color: string; dark?: boolean };
+// focus — куда подлетать камере, если остров слишком велик, чтобы показать его целиком крупно
+export type Island = Rect & { id: string; name: string; color: string; dark?: boolean; focus?: Rect };
 
 /*
  * Модульная сетка: 6 колонок по 600 с промежутком 200 (ширина 4600).
@@ -18,9 +19,11 @@ const span = (n: number) => n * COL + (n - 1) * GAP;
 const ROW1 = { y: 0, h: 2260 };
 const ROW2 = { y: ROW1.y + ROW1.h + GAP, h: 1840 };
 const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 2500 };
+// кейсы — во всю ширину: каждому продукту нужен простор
+const ROW4 = { y: ROW3.y + ROW3.h + GAP, h: 3370 };
 
 // Сетка нужна городу: улицы продолжают промежутки между островами.
-export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3], colX, span };
+export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3, ROW4], colX, span };
 
 export const ISLANDS: Island[] = [
   { id: "about", name: "Обо мне", color: "#FEFE78", x: colX(0), y: ROW1.y, w: span(3), h: ROW1.h },
@@ -28,16 +31,27 @@ export const ISLANDS: Island[] = [
   { id: "social", name: "Соцсети", color: "#FFB6E1", x: colX(0), y: ROW2.y, w: span(2), h: ROW2.h },
   { id: "wall", name: "Обои", color: "#ACF9A2", x: colX(2), y: ROW2.y, w: span(2), h: ROW2.h },
   { id: "pres", name: "Презентации", color: "#C791FF", x: colX(4), y: ROW2.y, w: span(2), h: ROW2.h },
+  {
+    id: "cases",
+    name: "Кейсы",
+    color: "#B8C7FF",
+    x: colX(0),
+    y: ROW4.y,
+    w: span(6),
+    h: ROW4.h,
+    focus: { x: colX(0) + 100, y: ROW4.y + 40, w: span(6) - 200, h: 1450 },
+  },
   { id: "proj", name: "Проекты", color: "#FFC7B6", x: colX(0), y: ROW3.y, w: span(5), h: ROW3.h },
   { id: "contact", name: "Контакты", color: "#1E1E1E", dark: true, x: colX(5), y: ROW3.y, w: span(1), h: ROW3.h },
 ];
 
-export const WORLD: Rect = { x: 0, y: -120, w: span(6), h: ROW3.y + ROW3.h + 120 };
+export const WORLD: Rect = { x: 0, y: -120, w: span(6), h: ROW4.y + ROW4.h + 120 };
 
 // Темп переписки «Обо мне»: вопрос приходит быстро, ответ — после «печатает…»
 export const CHAT_STEP_MS = { q: 350, a: 800 };
 
 export const islandById = (id: string) => ISLANDS.find((i) => i.id === id)!;
+export const islandFocus = (i: Island): Rect => i.focus ?? i;
 
 const rel = (island: string, x: number, y: number) => ({
   island,
@@ -215,15 +229,81 @@ export const FRAMES: FrameMeta[] = [
       tagColor: card.tagColor,
     })
   ),
+  /* ---------- кейс: HR-платформа ---------- */
+  {
+    id: "case-hr-intro",
+    name: "HR-платформа",
+    ...rel("cases", 100, 100),
+    w: 1400,
+    h: 1350,
+    r: 36,
+    text: "Геймифицированная платформа для привлечения и адаптации сотрудников: сезоны, миссии, уровни и награды — и кабинет HR.",
+    tags: ["Продуктовый дизайн", "UX/UI", "Хакатон"],
+    tagColor: "#B8C7FF",
+  },
+  {
+    id: "case-hr-screens",
+    name: "Экраны продукта",
+    ...rel("cases", 1600, 100),
+    w: 1400,
+    h: 1350,
+    r: 36,
+    text: "Две стороны продукта: путь сотрудника и кабинет HR.",
+  },
   {
     id: "deck",
-    name: "Слайды",
-    ...rel("pres", 110, PRES_Y0 + 500),
+    name: "Презентация проекта",
+    ...rel("cases", 3210, 100),
     w: 1180,
     h: 794,
     r: 32,
-    text: PRESENTATIONS.description,
+    text: "Презентация с защиты: как устроены сезоны и почему адаптация становится игрой.",
     tags: [PRESENTATIONS.subtitle],
+  },
+  {
+    id: "case-hr-results",
+    name: "Итоги хакатона",
+    ...rel("cases", 3100, 994),
+    w: 1400,
+    h: 456,
+    r: 36,
+    text: "Результаты и отзывы жюри.",
+  },
+  {
+    id: "case-hr-problem",
+    name: "Задача и решение",
+    ...rel("cases", 100, 1530),
+    w: 1400,
+    h: 760,
+    r: 36,
+    text: "Какие проблемы адаптации решает платформа.",
+  },
+  {
+    id: "case-hr-avatar",
+    name: "Аватар-скины",
+    ...rel("cases", 1600, 1530),
+    w: 1400,
+    h: 760,
+    r: 36,
+    text: "В продукте аватар — это 3D-персонаж: скины выдаются за уровни и задания и продаются в магазине.",
+  },
+  {
+    id: "case-hr-loop",
+    name: "Как работает сезон",
+    ...rel("cases", 3100, 1530),
+    w: 1400,
+    h: 760,
+    r: 36,
+    text: "Цикл сезона: миссия → опыт → уровень → награда.",
+  },
+  {
+    id: "case-hr-levels",
+    name: "Награды за уровни",
+    ...rel("cases", 100, 2490),
+    w: 4400,
+    h: 780,
+    r: 36,
+    text: "Первые 15 уровней сезонного пропуска и награды за каждый.",
   },
   ...SITE_FRAMES.map((s) => s.meta),
   {
@@ -277,6 +357,9 @@ export const FRAMES: FrameMeta[] = [
 
 export const frameById = (id: string) => FRAMES.find((f) => f.id === id)!;
 
+// На месте просмотрщика в «Презентациях» — заготовка под следующие презентации.
+export const PRES_SOON: Rect = { ...rel("pres", 110, PRES_Y0 + 500), w: 1180, h: 794 };
+
 export const narrowWallpapers = WALLPAPERS.rows.flatMap((r) => r.images.filter((_, i) => r.cols[i] === 1));
 export const wideWallpapers = WALLPAPERS.rows.flatMap((r) => r.images.filter((_, i) => r.cols[i] === 2));
 
@@ -328,7 +411,7 @@ export const ACHIEVEMENTS: {
   { id: "drive", name: "Тест-драйв", hint: "Возьми машинку в гараже «Лаборатории» и врежься в любой блок", island: "plugins", color: "#86DDFF" },
   { id: "pile", name: "Ворох постов", hint: "Разложи стопку постов в «Соцсетях»", island: "social", color: "#FFB6E1" },
   { id: "orbit", name: "Смена обоев", hint: "Кликни по любому телефону в «Обоях»", island: "wall", color: "#ACF9A2" },
-  { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов в «Презентациях»", island: "pres", color: "#C791FF" },
+  { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов презентации в «Кейсах»", island: "cases", color: "#B8C7FF" },
   { id: "zoom", name: "Под лупой", hint: "Приблизь любой лендинг в «Проектах» до 100%", island: "proj", color: "#FFC7B6" },
 ];
 
