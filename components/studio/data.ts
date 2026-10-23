@@ -1,5 +1,6 @@
 import { AUTOMATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, WALLPAPERS } from "@/lib/content";
 import { HR_CASE_H, HR_DECK_OFFSET } from "./cases";
+import { TOUR_CASE_H } from "./casesTour";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
@@ -24,8 +25,8 @@ const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 2500 };
 // Сетка нужна городу: улицы продолжают промежутки между островами.
 export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3], colX, span };
 
-// Кейсы — справа от сетки, вертикальной лентой бордов, как проект на Behance.
-const CASES = { x: colX(6), w: span(3), h: HR_CASE_H + 200 };
+// Кейсы — справа от сетки: две вертикальные ленты бордов рядом, как проекты на Behance.
+const CASES = { x: colX(6), w: 4500, h: Math.max(HR_CASE_H, TOUR_CASE_H) + 200 };
 
 export const ISLANDS: Island[] = [
   { id: "about", name: "Обо мне", color: "#FEFE78", x: colX(0), y: ROW1.y, w: span(3), h: ROW1.h },
@@ -41,7 +42,7 @@ export const ISLANDS: Island[] = [
     y: 0,
     w: CASES.w,
     h: CASES.h,
-    // камера подлетает к обложке кейса, а не ко всей ленте
+    // камера подлетает к обложкам обоих кейсов, а не ко всей ленте
     focus: { x: CASES.x + 60, y: 40, w: CASES.w - 120, h: 1320 },
   },
   { id: "proj", name: "Проекты", color: "#FFC7B6", x: colX(0), y: ROW3.y, w: span(5), h: ROW3.h },
@@ -242,6 +243,17 @@ export const FRAMES: FrameMeta[] = [
     r: 40,
     text: "Геймифицированная платформа для привлечения и адаптации сотрудников: сезоны, миссии, уровни, награды — и кабинет HR.",
     tags: ["Продуктовый дизайн", "UX/UI", "Геймификация"],
+    tagColor: "#B8C7FF",
+  },
+  {
+    id: "case-tour",
+    name: "Кейс: Шагай и точка",
+    ...rel("cases", 2400, 100),
+    w: 2000,
+    h: TOUR_CASE_H,
+    r: 40,
+    text: "Мой стартап: мобильный гид по Туле, который собирает персональный маршрут по интересам. Проект выиграл грант.",
+    tags: ["Стартап", "Мобильное приложение", "Туризм"],
     tagColor: "#B8C7FF",
   },
   {

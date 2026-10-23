@@ -4,6 +4,7 @@ import { StudioEntry } from "@/components/studio/StudioEntry";
 import "./studio.css";
 import "./mobile.css";
 import "./case.css";
+import "./tour.css";
 
 const unbounded = Unbounded({
   subsets: ["latin", "cyrillic"],

@@ -3,6 +3,7 @@ import { Montserrat, Unbounded } from "next/font/google";
 import { CasePreview } from "@/components/studio/CasePreview";
 import "../studio.css";
 import "../case.css";
+import "../tour.css";
 
 // Служебная страница: кейс отдельно от холста — для проверки вёрстки. В навигации её нет.
 const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], weight: ["500", "700", "800"], variable: "--font-display" });

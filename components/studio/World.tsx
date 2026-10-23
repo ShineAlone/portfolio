@@ -20,6 +20,7 @@ import {
 } from "./data";
 import { Frame } from "./Frame";
 import { CaseHR } from "./CaseHR";
+import { CaseTour } from "./CaseTour";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -1072,6 +1073,7 @@ export const World = memo(function World(p: WorldProps) {
         onSlide={p.onSlide}
       />
       <CaseHR selected={p.selected} active={p.presView} />
+      <CaseTour selected={p.selected} />
       <Projects selected={p.selected} />
       <Contact selected={p.selected === "contact"} />
     </>
