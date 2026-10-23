@@ -813,58 +813,6 @@ function Presentations(p: {
   );
 }
 
-/*
- * Экипаж первой презентации: пока её смотрят, персонажи из неё выглядывают из-за экрана —
- * то сбоку, то выпадают снизу, — немного стоят и уходят по своим делам.
- * Окно с overflow: hidden прилегает к краю экрана, поэтому кажется, что они выходят из-за блока.
- */
-const CREW = Array.from({ length: 14 }, (_, i) => `/images/crew/crew-${String(i + 1).padStart(2, "0")}.webp`);
-const CREW_LIFE = 5200;
-type Mate = { id: number; src: string; side: "left" | "right" | "bottom"; at: number; dir: 1 | -1 };
-
-function Crew({ active }: { active: boolean }) {
-  const [mates, setMates] = useState<Mate[]>([]);
-  useEffect(() => {
-    if (!active || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let id = 0;
-    let last = -1;
-    let t: ReturnType<typeof setTimeout>;
-    const spawn = () => {
-      // один и тот же персонаж не выходит дважды подряд
-      let k = Math.floor(Math.random() * CREW.length);
-      if (k === last) k = (k + 1) % CREW.length;
-      last = k;
-      const side = (["left", "right", "bottom", "bottom"] as const)[Math.floor(Math.random() * 4)];
-      const mate: Mate = { id: id++, src: CREW[k], side, at: 0.15 + Math.random() * 0.7, dir: Math.random() < 0.5 ? 1 : -1 };
-      setMates((m) => [...m.slice(-2), mate]);
-      setTimeout(() => setMates((m) => m.filter((x) => x.id !== mate.id)), CREW_LIFE);
-      t = setTimeout(spawn, 2400 + Math.random() * 1800);
-    };
-    t = setTimeout(spawn, 900);
-    return () => {
-      clearTimeout(t);
-      setMates([]);
-    };
-  }, [active]);
-
-  const deck = frameById("deck");
-  return (
-    <div className="st-crew" style={{ left: deck.x, top: deck.y + 104, width: deck.w, height: deck.h - 104 }} aria-hidden>
-      {mates.map((m) => (
-        <div
-          key={m.id}
-          className={`st-crew__window is-${m.side}`}
-          style={{ "--at": m.at, "--dir": m.dir } as React.CSSProperties}
-        >
-          <div className="st-crew__mate">
-            <img src={m.src} alt="" draggable={false} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ---------- Проекты ---------- */
 
 // [x, y, ширина, поворот] — коллаж из презентации айдентики поверх фирменной волны
@@ -1123,8 +1071,7 @@ export const World = memo(function World(p: WorldProps) {
         onDeck={p.onDeck}
         onSlide={p.onSlide}
       />
-      <CaseHR selected={p.selected} />
-      <Crew active={p.presView && p.deck === 0} />
+      <CaseHR selected={p.selected} active={p.presView} />
       <Projects selected={p.selected} />
       <Contact selected={p.selected === "contact"} />
     </>

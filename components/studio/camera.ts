@@ -1,7 +1,8 @@
 export type Cam = { x: number; y: number; z: number };
 
 // Дальше 200% картинки в текущем разрешении начинают мылить.
-export const MIN_Z = 0.12;
+// ниже — чтобы целиком помещалась лента кейсов справа от сетки
+export const MIN_Z = 0.08;
 export const MAX_Z = 2;
 
 export const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));

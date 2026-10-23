@@ -1,4 +1,5 @@
 import { AUTOMATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, WALLPAPERS } from "@/lib/content";
+import { HR_CASE_H, HR_DECK_OFFSET } from "./cases";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
@@ -19,11 +20,12 @@ const span = (n: number) => n * COL + (n - 1) * GAP;
 const ROW1 = { y: 0, h: 2260 };
 const ROW2 = { y: ROW1.y + ROW1.h + GAP, h: 1840 };
 const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 2500 };
-// кейсы — во всю ширину: каждому продукту нужен простор
-const ROW4 = { y: ROW3.y + ROW3.h + GAP, h: 3370 };
 
 // Сетка нужна городу: улицы продолжают промежутки между островами.
-export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3, ROW4], colX, span };
+export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3], colX, span };
+
+// Кейсы — справа от сетки, вертикальной лентой бордов, как проект на Behance.
+const CASES = { x: colX(6), w: span(3), h: HR_CASE_H + 200 };
 
 export const ISLANDS: Island[] = [
   { id: "about", name: "Обо мне", color: "#FEFE78", x: colX(0), y: ROW1.y, w: span(3), h: ROW1.h },
@@ -35,17 +37,18 @@ export const ISLANDS: Island[] = [
     id: "cases",
     name: "Кейсы",
     color: "#B8C7FF",
-    x: colX(0),
-    y: ROW4.y,
-    w: span(6),
-    h: ROW4.h,
-    focus: { x: colX(0) + 100, y: ROW4.y + 40, w: span(6) - 200, h: 1450 },
+    x: CASES.x,
+    y: 0,
+    w: CASES.w,
+    h: CASES.h,
+    // камера подлетает к обложке кейса, а не ко всей ленте
+    focus: { x: CASES.x + 60, y: 40, w: CASES.w - 120, h: 1320 },
   },
   { id: "proj", name: "Проекты", color: "#FFC7B6", x: colX(0), y: ROW3.y, w: span(5), h: ROW3.h },
   { id: "contact", name: "Контакты", color: "#1E1E1E", dark: true, x: colX(5), y: ROW3.y, w: span(1), h: ROW3.h },
 ];
 
-export const WORLD: Rect = { x: 0, y: -120, w: span(6), h: ROW4.y + ROW4.h + 120 };
+export const WORLD: Rect = { x: 0, y: -120, w: CASES.x + CASES.w, h: CASES.h + 120 };
 
 // Темп переписки «Обо мне»: вопрос приходит быстро, ответ — после «печатает…»
 export const CHAT_STEP_MS = { q: 350, a: 800 };
@@ -229,81 +232,27 @@ export const FRAMES: FrameMeta[] = [
       tagColor: card.tagColor,
     })
   ),
-  /* ---------- кейс: HR-платформа ---------- */
+  /* ---------- кейс: HR-платформа — одна лента бордов ---------- */
   {
-    id: "case-hr-intro",
-    name: "HR-платформа",
+    id: "case-hr",
+    name: "Кейс: HR-платформа",
     ...rel("cases", 100, 100),
-    w: 1400,
-    h: 1350,
-    r: 36,
-    text: "Геймифицированная платформа для привлечения и адаптации сотрудников: сезоны, миссии, уровни и награды — и кабинет HR.",
-    tags: ["Продуктовый дизайн", "UX/UI", "Хакатон"],
+    w: 2000,
+    h: HR_CASE_H,
+    r: 40,
+    text: "Геймифицированная платформа для привлечения и адаптации сотрудников: сезоны, миссии, уровни, награды — и кабинет HR.",
+    tags: ["Продуктовый дизайн", "UX/UI", "Геймификация"],
     tagColor: "#B8C7FF",
-  },
-  {
-    id: "case-hr-screens",
-    name: "Экраны продукта",
-    ...rel("cases", 1600, 100),
-    w: 1400,
-    h: 1350,
-    r: 36,
-    text: "Две стороны продукта: путь сотрудника и кабинет HR.",
   },
   {
     id: "deck",
     name: "Презентация проекта",
-    ...rel("cases", 3210, 100),
+    ...rel("cases", 100 + HR_DECK_OFFSET.x, 100 + HR_DECK_OFFSET.y),
     w: 1180,
     h: 794,
     r: 32,
     text: "Презентация с защиты: как устроены сезоны и почему адаптация становится игрой.",
     tags: [PRESENTATIONS.subtitle],
-  },
-  {
-    id: "case-hr-results",
-    name: "Итоги хакатона",
-    ...rel("cases", 3100, 994),
-    w: 1400,
-    h: 456,
-    r: 36,
-    text: "Результаты и отзывы жюри.",
-  },
-  {
-    id: "case-hr-problem",
-    name: "Задача и решение",
-    ...rel("cases", 100, 1530),
-    w: 1400,
-    h: 760,
-    r: 36,
-    text: "Какие проблемы адаптации решает платформа.",
-  },
-  {
-    id: "case-hr-avatar",
-    name: "Аватар-скины",
-    ...rel("cases", 1600, 1530),
-    w: 1400,
-    h: 760,
-    r: 36,
-    text: "В продукте аватар — это 3D-персонаж: скины выдаются за уровни и задания и продаются в магазине.",
-  },
-  {
-    id: "case-hr-loop",
-    name: "Как работает сезон",
-    ...rel("cases", 3100, 1530),
-    w: 1400,
-    h: 760,
-    r: 36,
-    text: "Цикл сезона: миссия → опыт → уровень → награда.",
-  },
-  {
-    id: "case-hr-levels",
-    name: "Награды за уровни",
-    ...rel("cases", 100, 2490),
-    w: 4400,
-    h: 780,
-    r: 36,
-    text: "Первые 15 уровней сезонного пропуска и награды за каждый.",
   },
   ...SITE_FRAMES.map((s) => s.meta),
   {
