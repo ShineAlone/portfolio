@@ -163,15 +163,7 @@ function About() {
   );
 }
 
-/* ---------- 03. большой мокап с летающими кусочками интерфейса ---------- */
-
-const FLOATERS: { src: string; cls: string; depth: number }[] = [
-  { src: hrUi("level-card"), cls: "is-level", depth: 40 },
-  { src: hrUi("tracks"), cls: "is-tracks", depth: 26 },
-  { src: hrUi("boot"), cls: "is-boot", depth: 60 },
-  { src: hrUi("skin-speed"), cls: "is-skin", depth: 70 },
-  { src: hrUi("rating-col"), cls: "is-rating", depth: 34 },
-];
+/* ---------- 03. главная сезона в окне браузера, поворачивается за курсором ---------- */
 
 function Mockup() {
   const p = useParallax();
@@ -200,11 +192,6 @@ function Mockup() {
           <img src={hrImg("emp-main@2x")} alt="Главная сезона" loading="lazy" draggable={false} />
         </div>
       </div>
-      {FLOATERS.map((f) => (
-        <div key={f.cls} className={`hb-float ${f.cls}`} style={{ "--d": f.depth } as React.CSSProperties}>
-          <img src={f.src} alt="" loading="lazy" draggable={false} />
-        </div>
-      ))}
     </section>
   );
 }
@@ -675,7 +662,7 @@ function CaseCrew({ active, root }: { active: boolean; root: React.RefObject<HTM
 export function CaseHR({ selected, active }: { selected: string | null; active: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   return (
-    <Frame meta={frameById("case-hr")} selected={selected === "case-hr"} className="hb-case">
+    <Frame meta={frameById("case-hr")} selected={selected === "case-hr"} className="hb-case" noSelect>
       <div ref={root} className="hb-case__boards">
         {HR_BOARDS.map((b) => (
           <div key={b.id} data-board={b.id} className="hb-case__slot">

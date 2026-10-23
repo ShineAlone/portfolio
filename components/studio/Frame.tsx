@@ -8,11 +8,14 @@ export function Frame({
   meta,
   selected,
   className,
+  noSelect,
   children,
 }: {
   meta: FrameMeta;
   selected: boolean;
   className?: string;
+  /** клик не выделяет фрейм (например, длинная лента кейса — внутри свои кнопки) */
+  noSelect?: boolean;
   children: React.ReactNode;
 }) {
   const color = islandById(meta.island).color;
@@ -21,6 +24,7 @@ export function Frame({
     <div
       className={`st-frame${quiet ? " is-quiet" : ""}${selected ? " is-selected" : ""}${className ? ` ${className}` : ""}`}
       data-frame={meta.id}
+      data-ui={noSelect ? "" : undefined}
       data-name={meta.name}
       data-color={color}
       style={

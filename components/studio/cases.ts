@@ -24,12 +24,12 @@ export const HR_COLORS = {
 
 export const HR_BOARDS = [
   { id: "hero", h: 1200 },
-  { id: "about", h: 900 },
+  { id: "about", h: 640 },
   { id: "mockup", h: 1250 },
   { id: "play", h: 1150 },
   { id: "employee", h: 1200 },
   { id: "hr", h: 1200 },
-  { id: "avatar", h: 1100 },
+  { id: "avatar", h: 1160 },
   { id: "rewards", h: 700 },
   { id: "system", h: 900 },
   { id: "outro", h: 1300 },

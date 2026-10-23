@@ -267,7 +267,7 @@
   display: grid;
   grid-template-columns: 720px 1fr;
   gap: 60px;
-  padding: 110px 80px;
+  padding: 80px 80px;
   background: #f4f2ee;
 }
 
@@ -277,10 +277,10 @@
 }
 
 .hb-statement {
-  margin-top: 40px;
+  margin-top: 30px;
   font-family: var(--display);
   font-weight: 700;
-  font-size: 46px;
+  font-size: 42px;
   line-height: 1.15;
   letter-spacing: -0.02em;
 }
@@ -323,8 +323,8 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: 34px 30px;
-  border-radius: 32px;
+  padding: 28px 28px;
+  border-radius: 30px;
   border: 3px solid #111;
   backface-visibility: hidden;
 }
@@ -349,8 +349,8 @@
 }
 
 .hb-flip__icon {
-  margin-top: 40px;
-  font-size: 92px;
+  margin-top: 20px;
+  font-size: 64px;
   line-height: 1;
 }
 
@@ -365,9 +365,9 @@
 .hb-flip__check {
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
-  margin-top: 30px;
+  width: 56px;
+  height: 56px;
+  margin-top: auto;
   border-radius: 50%;
   background: #111;
   color: #fff;
@@ -375,8 +375,8 @@
 }
 
 .hb-flip__face.is-back b {
-  margin-top: 40px;
-  font-size: 28px;
+  margin-top: 22px;
+  font-size: 26px;
 }
 
 /* ---------- 03. большой мокап ---------- */
@@ -413,8 +413,8 @@
 .hb-mockup__scene {
   position: absolute;
   left: 50%;
-  top: 300px;
-  width: 1180px;
+  top: 225px;
+  width: 1290px;
   perspective: 2600px;
   transform: translateX(-50%);
 }
@@ -431,78 +431,6 @@
 .hb-mockup__window img {
   display: block;
   width: 100%;
-}
-
-/* кусочки интерфейса летают на своей глубине */
-.hb-float {
-  position: absolute;
-  z-index: 4;
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: 0 40px 60px -24px rgba(0, 0, 0, 0.7);
-  transform: translate(calc(var(--mx) * var(--d) * 1px), calc(var(--my) * var(--d) * 1px)) rotate(var(--rot, 0deg));
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  animation: hb-bob 7s ease-in-out infinite;
-}
-
-.hb-float img {
-  display: block;
-  width: 100%;
-}
-
-@keyframes hb-bob {
-  50% {
-    translate: 0 -14px;
-  }
-}
-
-.hb-float.is-level {
-  right: 70px;
-  top: 150px;
-  width: 470px;
-  --rot: 4deg;
-}
-
-.hb-float.is-tracks {
-  left: 70px;
-  bottom: 90px;
-  width: 520px;
-  --rot: -5deg;
-  animation-delay: -2s;
-}
-
-.hb-float.is-boot {
-  left: 120px;
-  top: 360px;
-  width: 210px;
-  border-radius: 28px;
-  --rot: -9deg;
-  animation-delay: -4s;
-}
-
-.hb-float.is-skin {
-  right: 130px;
-  top: 470px;
-  width: 230px;
-  border-radius: 28px;
-  --rot: 7deg;
-  animation-delay: -1s;
-}
-
-.hb-float.is-rating {
-  right: 60px;
-  bottom: 40px;
-  width: 360px;
-  --rot: -4deg;
-  animation-delay: -3s;
-}
-
-.hb-float.is-badge {
-  left: 660px;
-  bottom: 60px;
-  width: 340px;
-  --rot: 5deg;
-  animation-delay: -5s;
 }
 
 /* ---------- 04. попробуй сезон ---------- */
@@ -1137,7 +1065,7 @@
 /* сцена: рендер на светлом студийном фоне, края растворяются в подложке */
 .hb-avatar__stage {
   position: relative;
-  height: 640px;
+  height: 680px;
   border-radius: 40px;
   background: #f6f7f7;
   box-shadow: 0 0 0 10px color-mix(in srgb, var(--c) 55%, #fff), 0 50px 80px -40px rgba(0, 0, 0, 0.45);
@@ -1145,20 +1073,19 @@
   transition: box-shadow 0.5s;
 }
 
+/* рендер заполняет сцену целиком (пропорции совпадают): фон и тень на полу не обрезаются */
 .hb-avatar__stage img {
   position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 500px;
-  height: auto;
-  transform: translateX(-50%);
-  animation: hb-skin-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: hb-skin-in 0.35s ease backwards;
 }
 
 @keyframes hb-skin-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(40px) scale(0.9);
   }
 }
 
@@ -1645,4 +1572,9 @@
   to {
     transform: translateY(-10px) rotate(5deg);
   }
+}
+
+/* просмотрщик презентации стоит поверх ленты кейса, в окне финального борда */
+.st-world > .st-deck {
+  z-index: 7;
 }
