@@ -39,7 +39,6 @@ import {
 
 const LEGS = legsData as unknown as Legs;
 const H = Object.fromEntries(TOUR_BOARDS.map((b) => [b.id, b.h])) as Record<TourBoardId, number>;
-const SCREEN_W = 412;
 
 function Label({ n, children, light }: { n: string; children: React.ReactNode; light?: boolean }) {
   return (
@@ -146,7 +145,8 @@ function Phone({ screen, scroll, bezel, className }: { screen: string; scroll?: 
 
 /* ---------- конструктор маршрута внутри телефона ---------- */
 
-function Builder({ onDone, onBack }: { onDone: (stops: number[]) => void; onBack: () => void }) {
+// Собранный маршрут сразу уходит на карту; «Пройти маршрут» в телефоне запускает прогулку на карте
+function Builder({ onBuilt, onPlay, playing }: { onBuilt: (stops: number[]) => void; onPlay: () => void; playing: boolean }) {
   const [picked, setPicked] = useState<string[]>(["culture", "food"]);
   const [dur, setDur] = useState(1);
   const [budget, setBudget] = useState(1);
@@ -159,17 +159,22 @@ function Builder({ onDone, onBack }: { onDone: (stops: number[]) => void; onBack
     setTimeout(() => {
       setStops(r);
       setPhase("done");
-    }, 1500);
+      onBuilt(r);
+    }, 1300);
   };
   const w = walk(stops);
   return (
     <div className="tb-builder">
       <div className="tb-builder__top">
-        <button type="button" data-ui onClick={phase === "done" ? () => setPhase("form") : onBack} aria-label="Назад">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 5l-7 7 7 7" />
-          </svg>
-        </button>
+        {phase === "done" ? (
+          <button type="button" data-ui onClick={() => setPhase("form")} aria-label="Изменить маршрут">
+            <svg viewBox="0 0 24 24">
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
+          </button>
+        ) : (
+          <span />
+        )}
         <b>{phase === "done" ? "Ваш маршрут" : "Новый маршрут"}</b>
         <span />
       </div>
@@ -252,78 +257,17 @@ function Builder({ onDone, onBack }: { onDone: (stops: number[]) => void; onBack
               </li>
             ))}
           </ol>
-          <button type="button" data-ui className="tb-builder__cta" onClick={() => onDone(stops)}>
-            Показать на карте
-          </button>
+          <div className="tb-builder__actions">
+            <button type="button" data-ui className={`tb-builder__cta${playing ? " is-stop" : ""}`} onClick={onPlay}>
+              {playing ? "Остановить прогулку" : "Пройти маршрут"}
+            </button>
+            <button type="button" data-ui className="tb-builder__ghost" onClick={() => setPhase("form")}>
+              Изменить
+            </button>
+          </div>
         </div>
       )}
     </div>
-  );
-}
-
-/* ---------- живой телефон ---------- */
-
-function LivePhone({
-  screen,
-  dir,
-  onGo,
-  onBack,
-  onRoute,
-  hint,
-}: {
-  screen: string;
-  dir: "fwd" | "back";
-  onGo: (to: string) => void;
-  onBack: () => void;
-  onRoute: (stops: number[]) => void;
-  hint: boolean;
-}) {
-  const s = PHONE_SCREENS[screen];
-  const view = useOwnWheel<HTMLDivElement>();
-  const [flash, setFlash] = useState(false);
-  useEffect(() => {
-    view.current?.scrollTo({ top: 0 });
-  }, [screen, view]);
-  return (
-    <Device bezel="silver" className="is-live" light={s.photo}>
-      <div ref={view} className={`tb-device__view is-scroll${s.photo ? "" : " is-bar"}`}>
-        <div key={screen} className={`tb-device__page is-${dir}`}>
-          {screen === "builder" ? (
-            <Builder onBack={onBack} onDone={onRoute} />
-          ) : (
-            <div
-              className="tb-device__img"
-              onClick={() => {
-                // нажали мимо — подсказываем, где кнопки
-                setFlash(true);
-                setTimeout(() => setFlash(false), 700);
-              }}
-            >
-              <img src={tourImg(screen)} alt={s.title} draggable={false} />
-              {s.taps.map((t) => (
-                <button
-                  key={t.label + t.y}
-                  type="button"
-                  data-ui
-                  className={`tb-tap${hint || flash ? " is-hint" : ""}`}
-                  style={{
-                    left: `${(t.x / SCREEN_W) * 100}%`,
-                    top: `${(t.y / s.h) * 100}%`,
-                    width: `${(t.w / SCREEN_W) * 100}%`,
-                    height: `${(t.h / s.h) * 100}%`,
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onGo(t.to);
-                  }}
-                  aria-label={t.label}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </Device>
   );
 }
 
@@ -424,24 +368,6 @@ function Steps() {
 const fmtDist = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} м` : `${(m / 1000).toFixed(1).replace(".", ",")} км`);
 
 function RouteBoard() {
-  // телефон
-  const [stack, setStack] = useState<{ s: string; dir: "fwd" | "back" }>({ s: "builder", dir: "fwd" });
-  const history = useRef<string[]>(["home"]);
-  const [hint, setHint] = useState(false);
-  const go = (to: string) => {
-    if (to === stack.s) return;
-    history.current.push(stack.s);
-    setStack({ s: to, dir: "fwd" });
-  };
-  const back = () => {
-    const prev = history.current.pop();
-    if (prev) setStack({ s: prev, dir: "back" });
-  };
-  const home = () => {
-    history.current = [];
-    setStack({ s: "home", dir: "back" });
-  };
-
   // маршрут
   const [custom, setCustom] = useState<number[] | null>(null);
   const [sel, setSel] = useState<string>(PRESETS[0].id);
@@ -462,6 +388,12 @@ function RouteBoard() {
   const list = useOwnWheel<HTMLOListElement>();
   const options = [...(custom ? [{ id: "custom", name: "Твой маршрут" }] : []), ...PRESETS];
   const title = options.find((o) => o.id === sel)?.name ?? "";
+  const phoneView = useOwnWheel<HTMLDivElement>();
+  const togglePlay = () => {
+    setPassed(-1);
+    setHover(null);
+    setPlaying((v) => !v);
+  };
   // подсказка «что делать дальше»: телефон → карта → прогулка
   const step = playing ? 2 : sel === "custom" || passed >= 0 ? 1 : 0;
 
@@ -492,7 +424,7 @@ function RouteBoard() {
         <Label n="02">Маршрут</Label>
         <h3>Маршрут под&nbsp;тебя — за&nbsp;минуту</h3>
         <ol className="tb-route__how">
-          {["Собери маршрут в телефоне", "Смотри его на карте", "Пройди по улицам"].map((x, i) => (
+          {["Настрой в телефоне", "Смотри его на карте", "Пройди по улицам"].map((x, i) => (
             <li key={x} className={step === i ? "is-on" : step > i ? "is-done" : ""}>
               <em>{step > i ? "✓" : i + 1}</em>
               {x}
@@ -557,12 +489,7 @@ function RouteBoard() {
               );
             })}
           </ol>
-          <button type="button" data-ui className={`tb-route__play${playing ? " is-on" : ""}`} onClick={() => {
-              setPassed(-1);
-              setHover(null);
-              setPlaying((v) => !v);
-            }}
-          >
+          <button type="button" data-ui className={`tb-route__play${playing ? " is-on" : ""}`} onClick={togglePlay}>
             <i />
             {playing ? "Остановить прогулку" : "Пройти маршрут"}
           </button>
@@ -570,29 +497,19 @@ function RouteBoard() {
       </div>
 
       <div className="tb-route__phone">
-        <span className="tb-route__tip">Телефон живой — нажимай</span>
-        <LivePhone
-          screen={stack.s}
-          dir={stack.dir}
-          onGo={go}
-          onBack={back}
-          onRoute={(r) => {
-            setCustom(r);
-            setSel("custom");
-          }}
-          hint={hint}
-        />
-        <div className="tb-route__nav">
-          <button type="button" data-ui onClick={back} disabled={!history.current.length}>
-            Назад
-          </button>
-          <button type="button" data-ui onClick={home}>
-            Главная
-          </button>
-          <button type="button" data-ui className={hint ? "is-on" : ""} onClick={() => setHint((v) => !v)}>
-            Где нажимать
-          </button>
-        </div>
+        <span className="tb-route__tip">Настрой маршрут здесь</span>
+        <Device bezel="silver" className="is-live">
+          <div ref={phoneView} className="tb-device__view is-scroll is-bar">
+            <Builder
+              onBuilt={(r) => {
+                setCustom(r);
+                setSel("custom");
+              }}
+              onPlay={togglePlay}
+              playing={playing}
+            />
+          </div>
+        </Device>
       </div>
     </section>
   );

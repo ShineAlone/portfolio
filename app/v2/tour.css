@@ -181,32 +181,6 @@
   }
 }
 
-.tb-device__page {
-  animation: tb-push 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-}
-
-.tb-device__page.is-back {
-  animation-name: tb-pop;
-}
-
-@keyframes tb-push {
-  from {
-    opacity: 0;
-    transform: translateX(22%);
-  }
-}
-
-@keyframes tb-pop {
-  from {
-    opacity: 0;
-    transform: translateX(-22%);
-  }
-}
-
-.tb-device__img {
-  position: relative;
-}
-
 /* статус-бар iOS поверх экрана */
 .tb-status {
   position: absolute;
@@ -264,31 +238,7 @@
   background: currentColor;
 }
 
-.tb-tap {
-  position: absolute;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.tb-tap:hover {
-  background: rgba(23, 113, 217, 0.12) !important;
-}
-
-/* подсказка «где нажимать» */
-.tb-tap.is-hint {
-  background: rgba(23, 113, 217, 0.16) !important;
-  box-shadow: inset 0 0 0 3px var(--t-blue);
-  animation: tb-hint 1s ease-in-out infinite alternate;
-}
-
-@keyframes tb-hint {
-  to {
-    box-shadow: inset 0 0 0 3px var(--t-blue), 0 0 0 6px rgba(23, 113, 217, 0.25);
-  }
-}
-
-/* ---------- конструктор маршрута (внутри телефона, в стиле приложения) ---------- */
+/* ---------- конструктор маршрута (внутри телефона, в стиле приложения; крупно — на нём настраивают маршрут) ---------- */
 
 .tb-builder {
   min-height: 841px;
@@ -300,10 +250,10 @@
 
 .tb-builder__top {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 46px 1fr 46px;
   align-items: center;
-  height: 56px;
-  padding: 0 14px;
+  height: 60px;
+  padding: 0 16px;
   border-bottom: 1px solid #eef0f4;
   text-align: center;
 }
@@ -311,8 +261,8 @@
 .tb-builder__top button {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #f2f4f8 !important;
   cursor: pointer;
@@ -330,26 +280,27 @@
 }
 
 .tb-builder__top b {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .tb-builder__form {
-  padding: 18px 20px;
+  padding: 20px 22px;
 }
 
 .tb-builder h4 {
-  margin-top: 24px;
-  font-size: 22px;
+  margin-top: 26px;
+  font-size: 25px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .tb-builder h4:first-child {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .tb-builder__form p {
   margin-top: 4px;
-  font-size: 15px;
+  font-size: 16px;
   color: #8a91a0;
 }
 
@@ -363,18 +314,22 @@
 .tb-chips button {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  border-radius: 20px;
+  gap: 9px;
+  padding: 11px 16px;
+  border-radius: 24px;
   border: 1.5px solid #d6dce6 !important;
-  font: 500 15px var(--font-root) !important;
+  font: 600 17px var(--font-root) !important;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.tb-chips button:hover {
+  border-color: var(--c) !important;
+}
+
 .tb-chips button i {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--c);
 }
@@ -384,8 +339,8 @@
 }
 
 .tb-chips button.is-on {
-  background: var(--t-blue) !important;
-  border-color: var(--t-blue) !important;
+  background: var(--c) !important;
+  border-color: var(--c) !important;
   color: #fff !important;
 }
 
@@ -399,14 +354,14 @@
   gap: 6px;
   margin-top: 12px;
   padding: 5px;
-  border-radius: 16px;
+  border-radius: 18px;
   background: #f2f4f8;
 }
 
 .tb-seg button {
-  padding: 11px 4px;
-  border-radius: 12px;
-  font: 500 15px var(--font-root) !important;
+  padding: 14px 4px;
+  border-radius: 14px;
+  font: 600 17px var(--font-root) !important;
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
 }
@@ -421,13 +376,13 @@
   display: block;
   width: 100%;
   margin-top: 30px;
-  padding: 16px;
-  border-radius: 26px;
+  padding: 19px;
+  border-radius: 28px;
   background: var(--t-blue) !important;
   color: #fff !important;
-  font: 700 17px var(--font-root) !important;
+  font: 700 20px var(--font-root) !important;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.2s, transform 0.2s, background 0.2s;
 }
 
 .tb-builder__cta:disabled {
@@ -437,6 +392,10 @@
 
 .tb-builder__cta:hover:not(:disabled) {
   transform: translateY(-2px);
+}
+
+.tb-builder__cta.is-stop {
+  background: var(--t-red) !important;
 }
 
 .tb-builder__loading {
@@ -449,11 +408,11 @@
 }
 
 .tb-builder__spinner {
-  width: 54px;
-  height: 54px;
+  width: 60px;
+  height: 60px;
   margin-bottom: 14px;
   border-radius: 50%;
-  border: 5px solid #e3ecf9;
+  border: 6px solid #e3ecf9;
   border-top-color: var(--t-blue);
   animation: tb-spin 0.8s linear infinite;
 }
@@ -465,16 +424,16 @@
 }
 
 .tb-builder__loading b {
-  font-size: 19px;
+  font-size: 22px;
 }
 
 .tb-builder__loading span {
-  font-size: 15px;
+  font-size: 17px;
   color: #8a91a0;
 }
 
 .tb-builder__done {
-  padding: 18px 20px;
+  padding: 18px 22px;
 }
 
 .tb-builder__summary {
@@ -484,32 +443,33 @@
 }
 
 .tb-builder__summary div {
-  padding: 14px 12px;
+  padding: 14px 14px;
   border-radius: 18px;
   background: #eef5ff;
 }
 
 .tb-builder__summary b {
   display: block;
-  font-size: 24px;
+  font-size: 30px;
   color: var(--t-blue);
 }
 
 .tb-builder__summary span {
-  font-size: 13px;
+  font-size: 15px;
   color: #5b6475;
 }
 
 .tb-builder__done ol {
   list-style: none;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .tb-builder__done li {
   position: relative;
   display: flex;
+  align-items: center;
   gap: 14px;
-  padding: 11px 0;
+  padding: 10px 0;
   animation: tb-stop-in 0.4s calc(var(--i) * 0.08s) ease backwards;
 }
 
@@ -517,9 +477,9 @@
 .tb-builder__done li:not(:last-child)::after {
   content: "";
   position: absolute;
-  left: 15px;
-  top: 45px;
-  bottom: -9px;
+  left: 17px;
+  top: 50px;
+  bottom: -12px;
   border-left: 2px dashed #c4d0e3;
 }
 
@@ -534,27 +494,47 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--c);
   color: #fff;
   font-style: normal;
   font-weight: 700;
+  font-size: 17px;
 }
 
 .tb-builder__done li b {
   display: block;
-  font-size: 17px;
+  font-size: 19px;
+  line-height: 1.2;
 }
 
 .tb-builder__done li span {
   display: block;
   margin-top: 2px;
-  font-size: 14px;
+  font-size: 15px;
   color: #8a91a0;
 }
 
+.tb-builder__actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.tb-builder__actions .tb-builder__cta {
+  margin-top: 0;
+}
+
+.tb-builder__ghost {
+  padding: 0 22px;
+  border-radius: 28px;
+  background: #f2f4f8 !important;
+  font: 700 18px var(--font-root) !important;
+  cursor: pointer;
+}
 /* ---------- 01. обложка ---------- */
 
 .tb-hero {
@@ -1117,17 +1097,17 @@
 
 .tb-route__phone {
   position: absolute;
-  right: 100px;
+  right: 110px;
   top: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 22px;
   transform: translateY(-50%);
 }
 
 .tb-route__phone .tb-device {
-  --s: 0.95;
+  --s: 1.08;
   --shadow: 0 60px 90px -30px rgba(20, 27, 45, 0.6);
 }
 
@@ -1139,38 +1119,6 @@
   font: 700 20px var(--font-root);
   rotate: -2deg;
   box-shadow: 0 12px 24px -12px rgba(20, 27, 45, 0.5);
-}
-
-.tb-route__nav {
-  display: flex;
-  gap: 8px;
-  padding: 7px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 16px 30px -18px rgba(20, 27, 45, 0.5);
-}
-
-.tb-route__nav button {
-  padding: 13px 22px;
-  border-radius: 18px;
-  font: 700 19px var(--font-root) !important;
-  color: var(--t-ink) !important;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.tb-route__nav button:hover:not(:disabled) {
-  background: rgba(20, 27, 45, 0.07) !important;
-}
-
-.tb-route__nav button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.tb-route__nav button.is-on {
-  background: var(--t-yellow) !important;
 }
 
 /* карта */
