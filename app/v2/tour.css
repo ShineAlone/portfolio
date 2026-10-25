@@ -805,271 +805,315 @@
   opacity: 0.88;
 }
 
-/* ---------- 03. живой телефон ---------- */
+/* ---------- 02. маршрут: карта на весь борд, панель маршрута и живой телефон ---------- */
 
-.tb-try {
-  display: grid;
-  grid-template-columns: 1fr 520px;
-  align-items: center;
-  gap: 100px;
-  padding: 80px 150px 80px 100px;
-  background: radial-gradient(70% 80% at 78% 50%, #2f8bf0 0%, var(--t-blue) 52%, #0d4fa3 100%);
-  color: #fff;
+.tb-route {
+  background: #f3eee5;
 }
 
-.tb-try__side h3 {
-  margin-top: 30px;
+.tb-route .tb-mapbox {
+  position: absolute;
+  inset: 0;
 }
 
-.tb-try__lead {
-  margin-top: 22px;
-  font-size: 22px;
-  opacity: 0.88;
+/* бумага слева и сверху плавно переходит в карту — под панелью и заголовком */
+.tb-route__fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(243, 238, 229, 0.97) 0%, rgba(243, 238, 229, 0.9) 24%, rgba(243, 238, 229, 0) 42%),
+    linear-gradient(180deg, rgba(243, 238, 229, 0.55) 0%, rgba(243, 238, 229, 0) 14%),
+    linear-gradient(270deg, rgba(243, 238, 229, 0.6) 0%, rgba(243, 238, 229, 0) 18%);
 }
 
-.tb-try__scenarios {
-  list-style: none;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 26px;
-}
-
-.tb-try__scenarios button {
-  display: flex;
-  gap: 16px;
-  width: 100%;
-  height: 100%;
-  padding: 20px 22px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #fff !important;
-  text-align: left;
-  font: 400 16px/1.4 var(--font-root) !important;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.tb-try__scenarios button:hover {
-  background: rgba(255, 255, 255, 0.16) !important;
-  transform: translateY(-3px);
-}
-
-.tb-try__scenarios button.is-on {
-  background: #fff !important;
-  color: var(--t-ink) !important;
-}
-
-.tb-try__scenarios em {
-  font: 800 20px var(--display);
-  font-style: normal;
-  opacity: 0.55;
-}
-
-.tb-try__scenarios button.is-on em {
-  color: var(--t-blue);
-  opacity: 1;
-}
-
-.tb-try__scenarios b {
-  display: block;
-  margin-bottom: 4px;
-  font: 700 20px var(--display);
-}
-
-.tb-try__scenarios span {
-  opacity: 0.85;
-}
-
-.tb-try__now {
-  margin-top: 26px;
-  padding: 22px 26px;
-  border-radius: 24px;
-  background: rgba(8, 18, 40, 0.22);
-}
-
-.tb-try__now small {
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  opacity: 0.7;
-}
-
-.tb-try__now b {
-  display: block;
-  margin-top: 6px;
-  font-family: var(--display);
-  font-size: 30px;
-}
-
-.tb-try__now span {
-  display: block;
-  margin-top: 6px;
-  font-size: 19px;
-  line-height: 1.4;
-  opacity: 0.9;
-}
-
-.tb-try__stage {
+.tb-route__side {
+  position: absolute;
+  left: 90px;
+  top: 90px;
+  bottom: 90px;
+  width: 640px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 26px;
 }
 
-.tb-try__stage .tb-device {
-  --shadow: 0 60px 90px -30px rgba(4, 20, 50, 0.7);
+.tb-route__side h3 {
+  margin-top: 28px;
+  font-size: 60px;
 }
 
-.tb-try__nav {
-  display: flex;
-  gap: 10px;
-}
-
-.tb-try__nav button {
-  padding: 12px 22px;
-  border-radius: 22px;
-  background: rgba(8, 18, 40, 0.28) !important;
-  color: #fff !important;
-  font: 600 17px var(--font-root) !important;
-  cursor: pointer;
-}
-
-.tb-try__nav button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.tb-try__nav button.is-on {
-  background: var(--t-yellow) !important;
-  color: var(--t-ink) !important;
-}
-
-/* ---------- 04. карта ---------- */
-
-.tb-map {
-  display: grid;
-  grid-template-columns: 1fr 1240px;
-  gap: 60px;
-  align-items: center;
-  padding: 0 80px 0 100px;
-  background: #fff;
-}
-
-.tb-map__side h3 {
-  margin-top: 26px;
-  font-size: 46px;
-}
-
-.tb-map__side p {
-  margin-top: 16px;
-  font-size: 18px;
+.tb-route__lead {
+  margin-top: 20px;
+  font-size: 22px;
   line-height: 1.45;
+  color: #4d5466;
+}
+
+.tb-route__card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 34px;
+  padding: 26px 26px 22px;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: 0 40px 80px -40px rgba(20, 27, 45, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.tb-route__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 22px;
+  background: rgba(20, 27, 45, 0.06);
+}
+
+.tb-route__tabs button {
+  flex: 1 1 auto;
+  padding: 12px 16px;
+  border-radius: 17px;
+  font: 700 17px var(--font-root) !important;
+  color: var(--t-ink) !important;
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+}
+
+.tb-route__tabs button:hover {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+.tb-route__tabs button.is-on {
+  background: var(--t-blue) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 20px -10px rgba(23, 113, 217, 0.9);
+}
+
+.tb-route__head {
+  margin-top: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(20, 27, 45, 0.1);
+}
+
+.tb-route__head > b {
+  display: block;
+  font: 800 36px var(--display);
+  letter-spacing: -0.02em;
+}
+
+.tb-route__stats {
+  display: flex;
+  gap: 22px;
+  margin-top: 10px;
+  font-size: 18px;
   color: var(--t-grey);
 }
 
-.tb-map__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 26px;
-}
-
-.tb-map__tabs button {
-  padding: 11px 18px;
-  border-radius: 22px;
-  border: 1.5px solid #d6dce6 !important;
-  font: 600 16px var(--font-root) !important;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.tb-map__tabs button:hover {
-  border-color: var(--t-blue) !important;
-}
-
-.tb-map__tabs button.is-on {
-  background: var(--t-blue) !important;
-  border-color: var(--t-blue) !important;
-  color: #fff !important;
-}
-
-.tb-map__stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.tb-map__stats div {
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: var(--t-paper);
-}
-
-.tb-map__stats b {
-  display: block;
-  font: 800 36px var(--display);
+.tb-route__stats b {
+  margin-right: 3px;
+  font: 800 26px var(--display);
   color: var(--t-blue);
 }
 
-.tb-map__stats span {
-  font-size: 14px;
-  color: var(--t-grey);
-}
-
-.tb-map__list {
+.tb-route__stops {
+  flex: 1;
+  min-height: 0;
   list-style: none;
-  margin-top: 16px;
+  margin: 8px -8px 0;
+  padding: 0 8px 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+  mask-image: linear-gradient(180deg, #000 calc(100% - 40px), transparent);
 }
 
-.tb-map__list li {
+.tb-route__stops li {
+  position: relative;
+}
+
+/* отрезок пешком между точками */
+.tb-route__leg {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 7px 10px;
-  border-radius: 14px;
+  gap: 8px;
+  height: 30px;
+  padding-left: 58px;
+  font: 600 15px var(--font-root);
+  color: #8a8173;
+}
+
+.tb-route__leg::before {
+  content: "";
+  position: absolute;
+  left: 27px;
+  top: -6px;
+  height: 42px;
+  border-left: 3px dotted rgba(20, 27, 45, 0.22);
+}
+
+.tb-route__leg svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+.tb-route__stops button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 10px 12px 10px 8px;
+  border-radius: 20px;
+  text-align: left;
+  cursor: pointer;
   transition: background 0.2s;
 }
 
-.tb-map__list li.is-on {
-  background: var(--t-paper);
+.tb-route__stops li.is-on button {
+  background: #fff !important;
+  box-shadow: 0 12px 24px -14px rgba(20, 27, 45, 0.5);
 }
 
-.tb-map__list em {
+.tb-route__stops em {
   display: grid;
   place-items: center;
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--c);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent);
   color: #fff;
-  font: 700 14px var(--display);
+  font: 800 17px var(--display);
   font-style: normal;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.tb-map__list b {
+.tb-route__stops li.is-on em {
+  transform: scale(1.12);
+}
+
+.tb-route__stops li.is-passed em {
+  background: var(--t-red);
+}
+
+.tb-route__stops b {
   display: block;
-  font-size: 17px;
+  font: 700 21px/1.2 var(--font-root);
+  color: var(--t-ink);
 }
 
-.tb-map__list span {
-  font-size: 13px;
+.tb-route__stops small {
+  display: block;
+  margin-top: 3px;
+  font: 400 16px var(--font-root);
   color: var(--t-grey);
 }
 
-.tb-map__card {
-  border-radius: 34px;
-  box-shadow: 0 50px 80px -40px rgba(20, 27, 45, 0.45);
+.tb-route__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--t-ink) !important;
+  color: #fff !important;
+  font: 700 21px var(--font-root) !important;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
 }
 
+.tb-route__play:hover {
+  transform: translateY(-2px);
+}
+
+.tb-route__play.is-on {
+  background: var(--t-red) !important;
+}
+
+/* значок: треугольник «играть» / квадрат «стоп» */
+.tb-route__play i {
+  width: 0;
+  height: 0;
+  border-left: 16px solid currentColor;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+}
+
+.tb-route__play.is-on i {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.tb-route__phone {
+  position: absolute;
+  right: 110px;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transform: translateY(-50%);
+}
+
+.tb-route__phone .tb-device {
+  --s: 0.86;
+  --shadow: 0 60px 90px -30px rgba(20, 27, 45, 0.6);
+}
+
+.tb-route__tip {
+  padding: 10px 18px;
+  border-radius: 20px;
+  background: var(--t-yellow);
+  color: var(--t-ink);
+  font: 700 17px var(--font-root);
+  rotate: -2deg;
+  box-shadow: 0 12px 24px -12px rgba(20, 27, 45, 0.5);
+}
+
+.tb-route__nav {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 30px -18px rgba(20, 27, 45, 0.5);
+}
+
+.tb-route__nav button {
+  padding: 11px 18px;
+  border-radius: 17px;
+  font: 700 16px var(--font-root) !important;
+  color: var(--t-ink) !important;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tb-route__nav button:hover:not(:disabled) {
+  background: rgba(20, 27, 45, 0.07) !important;
+}
+
+.tb-route__nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tb-route__nav button.is-on {
+  background: var(--t-yellow) !important;
+}
+
+/* карта */
+
 .tb-mapbox {
-  position: relative;
   overflow: hidden;
-  border-radius: 34px;
-  background: var(--t-paper);
+  background: #f3eee5;
   cursor: pointer;
 }
 
@@ -1087,20 +1131,20 @@
 .tb-mapbox__hint {
   position: absolute;
   left: 50%;
-  bottom: 22px;
+  bottom: 34px;
   z-index: 2;
-  padding: 11px 18px;
-  border-radius: 20px;
-  background: rgba(20, 27, 45, 0.82);
+  padding: 12px 20px;
+  border-radius: 22px;
+  background: rgba(20, 27, 45, 0.84);
   color: #fff;
-  font: 600 15px var(--font-root);
-  transform: translateX(-50%);
+  font: 600 16px var(--font-root);
+  transform: translateX(-30%);
   pointer-events: none;
   transition: opacity 0.3s;
 }
 
 .tb-mapbox.is-active .tb-mapbox__hint {
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
 .tb-mapbox__load {
@@ -1108,14 +1152,23 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font: 600 20px var(--font-root);
+  font: 600 22px var(--font-root);
   color: var(--t-grey);
 }
 
-/* метка точки на карте (у элемента MapLibre свой transform — анимируем детей) */
+.tb-route .maplibregl-ctrl-bottom-right {
+  right: 12px;
+  bottom: 8px;
+}
+
+.tb-route .maplibregl-ctrl-attrib {
+  font-size: 11px;
+}
+
+/* метка точки (у элемента MapLibre свой transform — анимируем детей) */
 .tb-mk {
-  width: 44px;
-  height: 44px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
 }
 
@@ -1123,61 +1176,70 @@
   z-index: 5;
 }
 
-.tb-mk::before {
-  content: "";
+.tb-mk i {
   position: absolute;
-  inset: -9px 0 9px;
-  border-radius: 50% 50% 50% 8%;
-  background: var(--c);
-  box-shadow: 0 0 0 3px #fff, 0 10px 18px -6px rgba(20, 27, 45, 0.5);
-  rotate: -45deg;
-  animation: tb-mk-in 0.5s calc(0.25s + var(--i) * 0.12s) cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-  transition: scale 0.2s;
-}
-
-.tb-mk b {
-  position: absolute;
-  inset: -9px 0 9px;
+  inset: 0;
   display: grid;
   place-items: center;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 3px #fff, 0 6px 14px -4px rgba(20, 27, 45, 0.55);
   color: #fff;
-  font: 800 16px var(--display);
-  animation: tb-mk-in 0.5s calc(0.25s + var(--i) * 0.12s) cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  font: 800 13px var(--display);
+  font-style: normal;
+  animation: tb-mk-in 0.5s calc(0.2s + var(--i) * 0.1s) cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  transition: scale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes tb-mk-in {
   from {
     opacity: 0;
-    scale: 0.3;
+    scale: 0.2;
   }
 }
 
-.tb-mk:hover::before,
-.tb-mk.is-on::before {
-  scale: 1.18;
+.tb-mk:hover i,
+.tb-mk.is-on i {
+  scale: 1.35;
 }
 
+/* подпись только у активной точки */
 .tb-mk span {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 22px);
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: var(--t-ink);
-  color: #fff;
-  font: 700 15px/1.3 var(--font-root);
+  bottom: calc(100% + 16px);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 30px -12px rgba(20, 27, 45, 0.45);
+  color: var(--t-ink);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, 6px);
-  transition: opacity 0.2s, transform 0.2s;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tb-mk span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  border: 8px solid transparent;
+  border-top-color: #fff;
+  transform: translateX(-50%);
+}
+
+.tb-mk b {
+  font: 700 17px var(--font-root);
 }
 
 .tb-mk small {
-  display: block;
-  font-weight: 400;
-  font-size: 13px;
-  opacity: 0.7;
+  margin-top: 2px;
+  font: 400 14px var(--font-root);
+  color: var(--t-grey);
 }
 
 .tb-mk:hover span,
@@ -1186,8 +1248,20 @@
   transform: translate(-50%, 0);
 }
 
-.tb-map .maplibregl-ctrl-attrib {
-  font-size: 11px;
+/* турист на прогулке */
+.tb-walker {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--t-red);
+  box-shadow: 0 0 0 5px #fff, 0 0 0 14px rgba(238, 93, 92, 0.25);
+  animation: tb-walker 1.2s ease-in-out infinite;
+}
+
+@keyframes tb-walker {
+  50% {
+    box-shadow: 0 0 0 5px #fff, 0 0 0 22px rgba(238, 93, 92, 0.1);
+  }
 }
 
 /* ---------- 05. экраны ---------- */

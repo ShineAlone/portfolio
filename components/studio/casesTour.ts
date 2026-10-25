@@ -25,8 +25,7 @@ export const TOUR_COLORS = {
 export const TOUR_BOARDS = [
   { id: "hero", h: 1250 },
   { id: "about", h: 1180 },
-  { id: "try", h: 1250 },
-  { id: "map", h: 1250 },
+  { id: "route", h: 1400 },
   { id: "screens", h: 1130 },
   { id: "social", h: 1200 },
   { id: "system", h: 850 },
@@ -129,14 +128,6 @@ export const PHONE_SCREENS: Record<string, PhoneScreen> = {
   settings: { id: "settings", title: "Профиль", text: "О себе, соцсети, публичная ссылка и приватность.", h: 969, taps: [] },
   builder: { id: "builder", title: "Конструктор маршрута", text: "Интересы, время и бюджет — и маршрут готов.", h: 900, taps: [] },
 };
-
-// сценарии рядом с живым телефоном
-export const SCENARIOS: { to: string; title: string; text: string }[] = [
-  { to: "builder", title: "Собрать свой маршрут", text: "Интересы, время, бюджет — и маршрут появится на карте ниже" },
-  { to: "route", title: "Пройти готовый маршрут", text: "Карточка маршрута, карта и место" },
-  { to: "menu", title: "Профиль и рейтинг", text: "Километры, история и таблица лидеров" },
-  { to: "onb-1", title: "Первый запуск", text: "Онбординг из трёх экранов" },
-];
 
 /* ---------- места и маршруты ---------- */
 
