@@ -462,6 +462,8 @@ function RouteBoard() {
   const list = useOwnWheel<HTMLOListElement>();
   const options = [...(custom ? [{ id: "custom", name: "Твой маршрут" }] : []), ...PRESETS];
   const title = options.find((o) => o.id === sel)?.name ?? "";
+  // подсказка «что делать дальше»: телефон → карта → прогулка
+  const step = playing ? 2 : sel === "custom" || passed >= 0 ? 1 : 0;
 
   return (
     <section className="tb tb-route" style={{ height: H.route }}>
@@ -488,11 +490,15 @@ function RouteBoard() {
 
       <div className="tb-route__side">
         <Label n="02">Маршрут</Label>
-        <h3>Собери прогулку — и&nbsp;пройди её по&nbsp;карте</h3>
-        <p className="tb-route__lead">
-          Выбери интересы в&nbsp;телефоне справа — приложение соберёт маршрут из&nbsp;реальных мест Тулы, и&nbsp;он
-          появится на&nbsp;карте.
-        </p>
+        <h3>Маршрут под&nbsp;тебя — за&nbsp;минуту</h3>
+        <ol className="tb-route__how">
+          {["Собери маршрут в телефоне", "Смотри его на карте", "Пройди по улицам"].map((x, i) => (
+            <li key={x} className={step === i ? "is-on" : step > i ? "is-done" : ""}>
+              <em>{step > i ? "✓" : i + 1}</em>
+              {x}
+            </li>
+          ))}
+        </ol>
 
         <div className="tb-route__card">
           <div className="tb-route__tabs">

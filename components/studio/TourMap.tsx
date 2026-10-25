@@ -10,15 +10,16 @@ import { KIND_COLOR, PLACES, legOf, type Legs } from "./casesTour";
  * без ключа и без рекламы. Карта в наклоне, с объёмными домами; маршрут — заранее посчитанные
  * пешеходные отрезки. «Пройти маршрут» ведёт камеру по улицам за точкой-туристом.
  *
- * Карта лежит внутри холста, а холст масштабируется transform-ом — MapLibre этого не понимает
- * и путает координаты мыши. Поэтому внутренний контейнер растягивается на масштаб холста
- * и сжимается обратно scale(1/z): итоговый масштаб карты всегда 1:1 к экрану.
+ * Карта масштабируется вместе с холстом, как любой другой борд (MapLibre сам учитывает CSS-масштаб
+ * контейнера), и рисуется в S раз крупнее — подписи улиц и метки читаются на общем плане.
  * Пока карту не «взяли» кликом, колесо и перетаскивание остаются у холста.
  */
 
 const STYLE = "https://tiles.openfreemap.org/styles/positron";
 const CENTER: [number, number] = [37.612, 54.197];
-const VIEW = { zoom: 14.2, pitch: 42, bearing: -16 };
+const VIEW = { zoom: 13.9, pitch: 42, bearing: -16 };
+// во сколько раз карта крупнее своих пикселей
+const S = 1.3;
 export type Pad = { top: number; bottom: number; left: number; right: number };
 
 type LngLat = [number, number];
@@ -111,14 +112,13 @@ export function TourMap({
   const mlRef = useRef<typeof import("maplibre-gl") | null>(null);
   const markers = useRef<Marker[]>([]);
   const route = useRef<{ coords: LngLat[]; stopAt: number[] }>({ coords: [], stopAt: [] });
-  const k = useRef(1);
   const cb = useRef({ onHover, onPlayStop, onPlayEnd });
   cb.current = { onHover, onPlayStop, onPlayEnd };
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState(false);
   const [seen, setSeen] = useState(false);
 
-  const padK = (): Pad => ({ top: pad.top * k.current, bottom: pad.bottom * k.current, left: pad.left * k.current, right: pad.right * k.current });
+  const padS = (): Pad => ({ top: pad.top / S, bottom: pad.bottom / S, left: pad.left / S, right: pad.right / S });
   const fit = (duration = 1100) => {
     const map = mapRef.current;
     const ml = mlRef.current;
@@ -126,40 +126,36 @@ export function TourMap({
     if (!map || !ml || !coords.length) return;
     const b = new ml.LngLatBounds();
     coords.forEach((c) => b.extend(c));
-    const cam = map.cameraForBounds(b, { padding: padK(), bearing: VIEW.bearing, maxZoom: 16 + Math.log2(k.current) });
+    const cam = map.cameraForBounds(b, { padding: padS(), bearing: VIEW.bearing, maxZoom: 15.6 });
     if (cam) map.easeTo({ ...cam, pitch: VIEW.pitch, bearing: VIEW.bearing, duration });
   };
 
-  // масштаб холста → размер внутреннего контейнера
+  // плотность пикселей следует за масштабом холста: отдалили — рисуем дешевле, приблизили — чётко
+  const pixelRatio = () => {
+    const world = outer.current?.closest<HTMLElement>(".st-world");
+    const z = world ? parseFloat(getComputedStyle(world).getPropertyValue("--z")) || 1 : 1;
+    return Math.min(3, (window.devicePixelRatio || 1) * Math.min(1.75, Math.max(0.4, z)) * S);
+  };
   useEffect(() => {
     const world = outer.current!.closest<HTMLElement>(".st-world");
+    if (!world || !ready) return;
+    let t = 0;
+    let last = 0;
     const apply = () => {
-      const z = world ? parseFloat(getComputedStyle(world).getPropertyValue("--z")) || 1 : 1;
-      const nk = Math.min(2, Math.max(0.3, z));
-      const el = inner.current!;
-      if (Math.abs(nk - k.current) < 0.02 && el.style.width) return;
-      const map = mapRef.current;
-      // при смене размера сохраняем видимый охват: зум сдвигается на log2 отношения
-      const dz = Math.log2(nk / k.current);
-      k.current = nk;
-      el.style.width = `${w * nk}px`;
-      el.style.height = `${h * nk}px`;
-      el.style.transform = `scale(${1 / nk})`;
-      if (map) {
-        map.resize();
-        map.jumpTo({ zoom: map.getZoom() + dz });
+      const pr = pixelRatio();
+      if (Math.abs(pr - last) > 0.05) {
+        last = pr;
+        mapRef.current?.setPixelRatio(pr);
       }
     };
-    apply();
-    let t = 0;
-    const mo = world ? new MutationObserver(() => (clearTimeout(t), (t = window.setTimeout(apply, 140)))) : null;
-    mo?.observe(world!, { attributes: true, attributeFilter: ["style"] });
+    const mo = new MutationObserver(() => (clearTimeout(t), (t = window.setTimeout(apply, 160))));
+    mo.observe(world, { attributes: true, attributeFilter: ["style"] });
     return () => {
-      mo?.disconnect();
+      mo.disconnect();
       clearTimeout(t);
     };
-  }, [w, h]);
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
   // карта поднимается, только когда борд впервые попал в кадр
   useEffect(() => {
     const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setSeen(true), { rootMargin: "400px" });
@@ -178,7 +174,8 @@ export function TourMap({
         container: inner.current,
         style: STYLE,
         center: CENTER,
-        zoom: VIEW.zoom + Math.log2(k.current),
+        zoom: VIEW.zoom,
+        pixelRatio: pixelRatio(),
         pitch: VIEW.pitch,
         bearing: VIEW.bearing,
         maxPitch: 70,
@@ -266,7 +263,7 @@ export function TourMap({
     if (focus === null) return;
     const p = PLACES[stops[focus]];
     if (!p) return;
-    map.easeTo({ center: [p.lon, p.lat], zoom: 16.4 + Math.log2(k.current), pitch: 56, bearing: VIEW.bearing + 10, padding: padK(), duration: 1100 });
+    map.easeTo({ center: [p.lon, p.lat], zoom: 16, pitch: 56, bearing: VIEW.bearing + 10, padding: padS(), duration: 1100 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus, ready]);
 
@@ -306,7 +303,7 @@ export function TourMap({
       let diff = ((target - bearing + 540) % 360) - 180;
       if (Math.abs(diff) < 0.5) diff = 0;
       bearing += diff * 0.05;
-      map.jumpTo({ center: pos, zoom: 16.6 + Math.log2(k.current), pitch: 60, bearing });
+      map.jumpTo({ center: pos, zoom: 16.2, pitch: 60, bearing, padding: padS() });
       walker.setLngLat(pos);
       trail.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [...coords.slice(0, i), pos] } });
       while (next < stopAt.length && stopAt[next] <= d + 1) cb.current.onPlayStop(next++);
@@ -352,7 +349,7 @@ export function TourMap({
       onPointerLeave={() => setActive(false)}
       onClick={() => setActive(true)}
     >
-      <div ref={inner} className="tb-mapbox__inner" />
+      <div ref={inner} className="tb-mapbox__inner" style={{ width: w / S, height: h / S, transform: `scale(${S})` }} />
       <span className="tb-mapbox__hint">
         {active ? "Колесо — масштаб, тяни — двигай, правой кнопкой — поворот" : "Нажми на карту, чтобы её двигать"}
       </span>
