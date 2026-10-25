@@ -2,42 +2,45 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LINKS } from "@/lib/content";
-import { DECKS, frameById } from "./data";
+import { frameById } from "./data";
 import { Frame } from "./Frame";
+import { TourMap } from "./TourMap";
+import legsData from "./tourLegs.json";
 import {
+  ABOUT_CARDS,
+  BEZEL,
   BUDGETS,
+  DECK,
   DURATIONS,
   INTERESTS,
-  PHONE_JUMPS,
+  KIND_COLOR,
   PHONE_SCREENS,
+  PLACES,
+  PRESETS,
+  SCENARIOS,
   TOUR_BOARDS,
   TOUR_PALETTE,
-  TOUR_STEPS,
   buildRoute,
+  deckSlide,
+  legOf,
+  orderStops,
   tourImg,
+  tourPhoto,
+  type Legs,
   type TourBoardId,
-  type TourPlace,
 } from "./casesTour";
 
 /* eslint-disable @next/next/no-img-element */
 
 /*
- * Кейс «Шагай и точка» — лента бордов в духе Behance, но в «туристическом» оформлении:
- * бумага, пунктир маршрутов, метки на карте, открытки. Главная фишка — живой телефон:
- * по экранам можно ходить, а «Построить маршрут» собирает маршрут по интересам,
- * и этот же маршрут прорисовывается на большой карте ниже.
+ * Кейс «Шагай и точка» — лента бордов в духе Behance: фото Тулы, экраны в рамке iPhone 17 Pro,
+ * живой телефон с конструктором маршрута и настоящая карта, на которой прорисовывается
+ * пешеходный маршрут — собранный в телефоне или один из готовых.
  */
 
+const LEGS = legsData as unknown as Legs;
 const H = Object.fromEntries(TOUR_BOARDS.map((b) => [b.id, b.h])) as Record<TourBoardId, number>;
-const PHONE_W = 412;
-const PHONE_H = 900;
-// кварталы на нарисованной карте: [x, y, w, h]
-const BLOCKS = [
-  [20, 30, 80, 120], [150, 40, 240, 110], [450, 50, 280, 100], [790, 60, 220, 90], [1080, 30, 140, 60],
-  [20, 220, 70, 260], [160, 230, 230, 250], [460, 290, 90, 190], [1000, 320, 210, 130], [1080, 520, 140, 140],
-  [30, 560, 60, 140], [560, 540, 120, 130], [820, 520, 110, 140], [1000, 720, 220, 120], [560, 730, 120, 110],
-  [260, 760, 140, 90], [30, 760, 180, 90], [780, 740, 150, 100],
-];
+const SCREEN_W = 412;
 
 function Label({ n, children, light }: { n: string; children: React.ReactNode; light?: boolean }) {
   return (
@@ -48,7 +51,19 @@ function Label({ n, children, light }: { n: string; children: React.ReactNode; l
   );
 }
 
-// Внутри холста колесо крутит камеру; в экране телефона — прокручивает сам экран.
+// длина и время пешком по заранее посчитанным отрезкам
+function walk(stops: number[]) {
+  let d = 0;
+  let t = 0;
+  for (let i = 1; i < stops.length; i++) {
+    const l = legOf(LEGS, stops[i - 1], stops[i]);
+    d += l.d;
+    t += l.t;
+  }
+  return { km: (d / 1000).toFixed(1).replace(".", ","), min: t };
+}
+
+// Внутри холста колесо двигает камеру; в экране телефона — прокручивает сам экран.
 function useOwnWheel<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   useEffect(() => {
@@ -63,66 +78,98 @@ function useOwnWheel<T extends HTMLElement>() {
   return ref;
 }
 
-/* ---------- корпус телефона ---------- */
+/* ---------- телефон в рамке iPhone 17 Pro ---------- */
 
-function PhoneShell({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function StatusBar({ light }: { light?: boolean }) {
   return (
-    <div className={`tb-phone ${className}`}>
-      <div className="tb-phone__screen">
-        <div className="tb-phone__status" aria-hidden>
-          <b>9:41</b>
-          <i className="tb-phone__island" />
-          <span>●●● 5G ▮</span>
-        </div>
-        {children}
-      </div>
+    <div className={`tb-status${light ? " is-light" : ""}`} aria-hidden>
+      <b>9:41</b>
+      <span>
+        <svg viewBox="0 0 18 12">
+          <rect x="0" y="8" width="3" height="4" rx="1" />
+          <rect x="5" y="5.5" width="3" height="6.5" rx="1" />
+          <rect x="10" y="3" width="3" height="9" rx="1" />
+          <rect x="15" y="0" width="3" height="12" rx="1" />
+        </svg>
+        <svg viewBox="0 0 16 12">
+          <path d="M8 2.2c2.3 0 4.4.9 6 2.4l1.2-1.3A10.4 10.4 0 0 0 8 .4C5.2.4 2.7 1.5.8 3.3L2 4.6a8.6 8.6 0 0 1 6-2.4Zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.3-1.3A6.8 6.8 0 0 0 8 4c-1.8 0-3.5.7-4.7 1.8l1.3 1.3c.9-.8 2.1-1.3 3.4-1.3Zm0 3.6c-.6 0-1.1.2-1.5.6L8 11.6l1.5-1.6c-.4-.4-.9-.6-1.5-.6Z" />
+        </svg>
+        <i />
+      </span>
     </div>
   );
 }
 
-// Статичный телефон с экраном; длинный экран может сам медленно листаться
-function StaticPhone({ screen, scroll, className }: { screen: string; scroll?: boolean; className?: string }) {
-  const s = PHONE_SCREENS[screen];
-  const ratio = s ? s.h / PHONE_H : 1;
+function Device({
+  children,
+  bezel = "silver",
+  className = "",
+  light,
+}: {
+  children: React.ReactNode;
+  bezel?: keyof typeof BEZEL;
+  className?: string;
+  light?: boolean;
+}) {
   return (
-    <PhoneShell className={className}>
-      <div className="tb-phone__view">
+    <div className={`tb-device ${className}`}>
+      <div className="tb-device__screen">
+        {/* экран свёрстан в размере макета (412 px) и масштабируется под рамку */}
+        <div className="tb-device__ui">
+          {children}
+          <StatusBar light={light} />
+        </div>
+      </div>
+      <img className="tb-device__frame" src={BEZEL[bezel]} alt="" draggable={false} />
+    </div>
+  );
+}
+
+// Статичный экран; длинный может сам медленно листаться
+function Phone({ screen, scroll, bezel, className }: { screen: string; scroll?: boolean; bezel?: keyof typeof BEZEL; className?: string }) {
+  const s = PHONE_SCREENS[screen];
+  const k = s.h / (s.photo ? 896 : 841);
+  return (
+    <Device bezel={bezel} className={className} light={s.photo}>
+      <div className={`tb-device__view${s.photo ? "" : " is-bar"}`}>
         <img
-          className={scroll && ratio > 1.05 ? "is-autoscroll" : ""}
-          style={{ "--k": ratio } as React.CSSProperties}
+          className={scroll && k > 1.05 ? "is-autoscroll" : ""}
+          style={{ "--k": k } as React.CSSProperties}
           src={tourImg(screen)}
-          alt=""
+          alt={s.title}
           loading="lazy"
           draggable={false}
         />
       </div>
-    </PhoneShell>
+    </Device>
   );
 }
 
 /* ---------- конструктор маршрута внутри телефона ---------- */
 
-function Builder({ onDone, onBack }: { onDone: (route: TourPlace[]) => void; onBack: () => void }) {
+function Builder({ onDone, onBack }: { onDone: (stops: number[]) => void; onBack: () => void }) {
   const [picked, setPicked] = useState<string[]>(["culture", "food"]);
   const [dur, setDur] = useState(1);
   const [budget, setBudget] = useState(1);
   const [phase, setPhase] = useState<"form" | "loading" | "done">("form");
-  const [route, setRoute] = useState<TourPlace[]>([]);
+  const [stops, setStops] = useState<number[]>([]);
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const build = () => {
     setPhase("loading");
-    const r = buildRoute(picked, DURATIONS[dur].stops);
+    const r = orderStops(LEGS, buildRoute(picked, DURATIONS[dur].stops));
     setTimeout(() => {
-      setRoute(r);
+      setStops(r);
       setPhase("done");
-    }, 1700);
+    }, 1500);
   };
-  const hours = DURATIONS[dur].name;
+  const w = walk(stops);
   return (
     <div className="tb-builder">
       <div className="tb-builder__top">
         <button type="button" data-ui onClick={phase === "done" ? () => setPhase("form") : onBack} aria-label="Назад">
-          ←
+          <svg viewBox="0 0 24 24">
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
         </button>
         <b>{phase === "done" ? "Ваш маршрут" : "Новый маршрут"}</b>
         <span />
@@ -139,9 +186,10 @@ function Builder({ onDone, onBack }: { onDone: (route: TourPlace[]) => void; onB
                 type="button"
                 data-ui
                 className={picked.includes(x.id) ? "is-on" : ""}
+                style={{ "--c": KIND_COLOR[x.id] } as React.CSSProperties}
                 onClick={() => toggle(x.id)}
               >
-                <span>{x.icon}</span>
+                <i />
                 {x.name}
               </button>
             ))}
@@ -170,37 +218,43 @@ function Builder({ onDone, onBack }: { onDone: (route: TourPlace[]) => void; onB
 
       {phase === "loading" && (
         <div className="tb-builder__loading">
-          <svg viewBox="0 0 200 120" aria-hidden>
-            <path d="M20 90 C 60 20, 110 120, 180 30" />
-          </svg>
-          <i className="tb-builder__pin">📍</i>
-          <b>Подбираем места под ваши интересы…</b>
-          <span>Учитываем время работы и расстояния</span>
+          <span className="tb-builder__spinner" />
+          <b>Подбираем места под ваши интересы</b>
+          <span>Учитываем часы работы и расстояния</span>
         </div>
       )}
 
       {phase === "done" && (
         <div className="tb-builder__done">
           <div className="tb-builder__summary">
-            <b>{route.length} мест</b>
-            <span>~{hours}</span>
-            <span>{BUDGETS[budget].toLowerCase()}</span>
+            <div>
+              <b>{stops.length}</b>
+              <span>мест</span>
+            </div>
+            <div>
+              <b>{w.km}</b>
+              <span>км пешком</span>
+            </div>
+            <div>
+              <b>{w.min}</b>
+              <span>мин в пути</span>
+            </div>
           </div>
           <ol>
-            {route.map((p, i) => (
-              <li key={p.name} style={{ "--i": i } as React.CSSProperties}>
+            {stops.map((id, i) => (
+              <li key={id} style={{ "--i": i, "--c": KIND_COLOR[PLACES[id].kind] } as React.CSSProperties}>
                 <em>{i + 1}</em>
                 <div>
-                  <b>{p.name}</b>
+                  <b>{PLACES[id].name}</b>
                   <span>
-                    {p.tag} · {p.time}
+                    {PLACES[id].tag} · {PLACES[id].time}
                   </span>
                 </div>
               </li>
             ))}
           </ol>
-          <button type="button" data-ui className="tb-builder__cta" onClick={() => onDone(route)}>
-            Начать маршрут
+          <button type="button" data-ui className="tb-builder__cta" onClick={() => onDone(stops)}>
+            Показать на карте
           </button>
         </div>
       )}
@@ -222,7 +276,7 @@ function LivePhone({
   dir: "fwd" | "back";
   onGo: (to: string) => void;
   onBack: () => void;
-  onRoute: (r: TourPlace[]) => void;
+  onRoute: (stops: number[]) => void;
   hint: boolean;
 }) {
   const s = PHONE_SCREENS[screen];
@@ -232,20 +286,14 @@ function LivePhone({
     view.current?.scrollTo({ top: 0 });
   }, [screen, view]);
   return (
-    <PhoneShell className="is-live">
-      <div ref={view} className="tb-phone__view is-scroll">
-        <div key={screen} className={`tb-phone__page is-${dir}`}>
+    <Device bezel="silver" className="is-live" light={s.photo}>
+      <div ref={view} className={`tb-device__view is-scroll${s.photo ? "" : " is-bar"}`}>
+        <div key={screen} className={`tb-device__page is-${dir}`}>
           {screen === "builder" ? (
-            <Builder
-              onBack={onBack}
-              onDone={(r) => {
-                onRoute(r);
-                onGo("map");
-              }}
-            />
+            <Builder onBack={onBack} onDone={onRoute} />
           ) : (
             <div
-              className="tb-phone__img"
+              className="tb-device__img"
               onClick={() => {
                 // нажали мимо — подсказываем, где кнопки
                 setFlash(true);
@@ -260,9 +308,9 @@ function LivePhone({
                   data-ui
                   className={`tb-tap${hint || flash ? " is-hint" : ""}`}
                   style={{
-                    left: `${(t.x / PHONE_W) * 100}%`,
+                    left: `${(t.x / SCREEN_W) * 100}%`,
                     top: `${(t.y / s.h) * 100}%`,
-                    width: `${(t.w / PHONE_W) * 100}%`,
+                    width: `${(t.w / SCREEN_W) * 100}%`,
                     height: `${(t.h / s.h) * 100}%`,
                   }}
                   onClick={(e) => {
@@ -276,33 +324,21 @@ function LivePhone({
           )}
         </div>
       </div>
-    </PhoneShell>
+    </Device>
   );
 }
 
 /* ---------- 01. обложка ---------- */
 
 function Hero() {
-  const [i, setI] = useState(0);
-  const slides = ["splash", "onb-2", "onb-3", "home"];
-  useEffect(() => {
-    const t = setInterval(() => setI((x) => (x + 1) % slides.length), 2600);
-    return () => clearInterval(t);
-  }, [slides.length]);
   return (
     <section className="tb tb-hero" style={{ height: H.hero }}>
-      <svg className="tb-hero__route" viewBox="0 0 2000 1200" preserveAspectRatio="none" aria-hidden>
-        <path d="M-40 980 C 300 860, 420 1040, 700 900 S 1100 640, 1300 760 S 1700 980, 2040 700" />
-      </svg>
-      <span className="tb-pin is-a" aria-hidden>1</span>
-      <span className="tb-pin is-b" aria-hidden>2</span>
-      <span className="tb-pin is-c" aria-hidden>3</span>
-      <i className="tb-walker" aria-hidden />
+      <img className="tb-hero__bg" src={tourPhoto("cathedral")} alt="Успенский собор Тульского кремля" draggable={false} />
+      <div className="tb-hero__shade" />
 
       <div className="tb-hero__text">
         <div className="tb-hero__chips">
           <span>Мой стартап</span>
-          <span className="is-grant">Выигран грант</span>
           <span>Мобильное приложение</span>
           <span>Туризм</span>
         </div>
@@ -311,55 +347,65 @@ function Hero() {
           <br />и точка
         </h2>
         <p>
-          Персональные маршруты по Туле. Расскажи, что тебе интересно, — приложение соберёт маршрут из
+          Персональные пешие маршруты по Туле. Расскажи, что тебе интересно, — приложение соберёт прогулку из
           реальных мест, посчитает время и поведёт по карте.
         </p>
         <dl>
           <div>
             <dt>Роль</dt>
-            <dd>Основатель и дизайнер продукта</dd>
+            <dd>Основатель, дизайнер продукта</dd>
+          </div>
+          <div>
+            <dt>Платформа</dt>
+            <dd>Мобильное приложение</dd>
           </div>
           <div>
             <dt>Город</dt>
-            <dd>Тула — оружейная столица</dd>
+            <dd>Тула</dd>
           </div>
         </dl>
       </div>
 
-      <div className="tb-hero__postcard">
-        <img src={tourImg("onb-1")} alt="Тульский кремль" draggable={false} />
-        <span className="tb-hero__stamp">
-          ТУЛА
-          <small>оружейная столица</small>
-        </span>
+      <div className="tb-hero__grant">
+        <b>Грант</b>
+        <span>стартап выиграл грантовый конкурс</span>
       </div>
-      <StaticPhone screen={slides[i]} className="tb-hero__phone" />
+
+      <div className="tb-hero__phones">
+        <Phone screen="route" className="tb-hero__back" />
+        <Phone screen="home" bezel="blue" className="tb-hero__front" />
+      </div>
+
+      <div className="tb-hero__foot">
+        <span>54°11′ с. ш. · 37°37′ в. д.</span>
+        <span>Тула — оружейная столица России</span>
+      </div>
     </section>
   );
 }
 
-/* ---------- 02. идея: три шага по пунктиру ---------- */
+/* ---------- 02. о проекте ---------- */
 
-function Idea() {
+function About() {
   return (
-    <section className="tb tb-idea" style={{ height: H.idea }}>
-      <div className="tb-idea__head">
-        <Label n="01">Идея</Label>
+    <section className="tb tb-about" style={{ height: H.about }}>
+      <div className="tb-about__head">
+        <Label n="01">О проекте</Label>
         <p className="tb-statement">
-          Приезжаешь в&nbsp;новый город — и&nbsp;полдня уходит на&nbsp;то, чтобы понять, куда идти. Мы&nbsp;сделали
-          гида, который за&nbsp;минуту собирает маршрут под&nbsp;тебя.
+          Приезжаешь в&nbsp;новый город — и&nbsp;не&nbsp;знаешь, с&nbsp;чего начать. «Шагай и&nbsp;точка» за&nbsp;минуту
+          собирает прогулку под&nbsp;твои интересы и&nbsp;ведёт по&nbsp;ней от&nbsp;точки к&nbsp;точке.
         </p>
       </div>
-      <div className="tb-steps">
-        <svg viewBox="0 0 1840 120" preserveAspectRatio="none" aria-hidden>
-          <path d="M40 60 C 300 0, 520 120, 920 60 S 1540 0, 1800 60" />
-        </svg>
-        {TOUR_STEPS.map((s, i) => (
-          <div key={s.n} className="tb-step" style={{ "--i": i } as React.CSSProperties}>
-            <span className="tb-step__pin">{s.n}</span>
-            <b>{s.title}</b>
-            <p>{s.text}</p>
-          </div>
+      <div className="tb-about__cards">
+        {ABOUT_CARDS.map((c) => (
+          <article key={c.label} className="tb-card">
+            <img src={tourPhoto(c.photo)} alt="" loading="lazy" draggable={false} />
+            <span className="tb-card__label">{c.label}</span>
+            <div className="tb-card__body">
+              <b>{c.title}</b>
+              <p>{c.text}</p>
+            </div>
+          </article>
         ))}
       </div>
     </section>
@@ -368,10 +414,11 @@ function Idea() {
 
 /* ---------- 03. живой телефон ---------- */
 
-function Try({ onRoute }: { onRoute: (r: TourPlace[]) => void }) {
+function Try({ onRoute }: { onRoute: (stops: number[]) => void }) {
   const [stack, setStack] = useState<{ s: string; dir: "fwd" | "back" }>({ s: "home", dir: "fwd" });
   const history = useRef<string[]>([]);
   const [hint, setHint] = useState(false);
+  const [built, setBuilt] = useState(false);
   const go = (to: string) => {
     if (to === stack.s) return;
     history.current.push(stack.s);
@@ -381,6 +428,10 @@ function Try({ onRoute }: { onRoute: (r: TourPlace[]) => void }) {
     const prev = history.current.pop();
     if (prev) setStack({ s: prev, dir: "back" });
   };
+  const jump = (to: string) => {
+    history.current = to === "home" ? [] : ["home"];
+    setStack({ s: to, dir: "fwd" });
+  };
   const s = PHONE_SCREENS[stack.s];
   return (
     <section className="tb tb-try" style={{ height: H.try }}>
@@ -388,51 +439,48 @@ function Try({ onRoute }: { onRoute: (r: TourPlace[]) => void }) {
         <Label n="02" light>
           Попробуй приложение
         </Label>
-        <h3>Телефон настоящий — по нему можно ходить</h3>
-        <p className="tb-try__lead">
-          Нажимай на экран, как в приложении. Начни с «Построить маршрут»: выбери интересы — и маршрут соберётся
-          из реальных мест Тулы.
-        </p>
+        <h3>Телефон настоящий — по&nbsp;нему можно ходить</h3>
+        <p className="tb-try__lead">Нажимай на экран, как в приложении, или выбери сценарий:</p>
+        <ol className="tb-try__scenarios">
+          {SCENARIOS.map((x, i) => (
+            <li key={x.to}>
+              <button type="button" data-ui className={x.to === stack.s ? "is-on" : ""} onClick={() => jump(x.to)}>
+                <em>{String(i + 1).padStart(2, "0")}</em>
+                <span>
+                  <b>{x.title}</b>
+                  {x.text}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
         <div className="tb-try__now">
           <small>Сейчас на экране</small>
           <b>{s.title}</b>
-          <span>{s.text}</span>
-        </div>
-        <div className="tb-try__jumps">
-          {PHONE_JUMPS.map((j) => (
-            <button
-              key={j.to}
-              type="button"
-              data-ui
-              className={j.to === stack.s ? "is-on" : ""}
-              onClick={() => {
-                history.current = [];
-                setStack({ s: j.to, dir: "fwd" });
-              }}
-            >
-              {j.label}
-            </button>
-          ))}
+          <span>{built && stack.s === "builder" ? "Маршрут уже на карте ниже — можно собрать ещё один." : s.text}</span>
         </div>
       </div>
       <div className="tb-try__stage">
-        <LivePhone screen={stack.s} dir={stack.dir} onGo={go} onBack={back} onRoute={onRoute} hint={hint} />
+        <LivePhone
+          screen={stack.s}
+          dir={stack.dir}
+          onGo={go}
+          onBack={back}
+          onRoute={(r) => {
+            setBuilt(true);
+            onRoute(r);
+          }}
+          hint={hint}
+        />
         <div className="tb-try__nav">
           <button type="button" data-ui onClick={back} disabled={!history.current.length}>
-            ← Назад
+            Назад
           </button>
-          <button
-            type="button"
-            data-ui
-            onClick={() => {
-              history.current = [];
-              setStack({ s: "home", dir: "back" });
-            }}
-          >
-            ⌂ Главная
+          <button type="button" data-ui onClick={() => jump("home")}>
+            Главная
           </button>
           <button type="button" data-ui className={hint ? "is-on" : ""} onClick={() => setHint((v) => !v)}>
-            ◎ Где нажимать
+            Где нажимать
           </button>
         </div>
       </div>
@@ -442,139 +490,121 @@ function Try({ onRoute }: { onRoute: (r: TourPlace[]) => void }) {
 
 /* ---------- 04. маршрут на карте ---------- */
 
-function MapBoard({ route, mine }: { route: TourPlace[]; mine: boolean }) {
+function MapBoard({ custom }: { custom: number[] | null }) {
+  const [sel, setSel] = useState<string>(PRESETS[0].id);
   const [hover, setHover] = useState<number | null>(null);
-  const W = 1240;
-  const Hh = 860;
-  // места в данных лежат плотно у центра — на карте разносим их шире
-  const at = (p: TourPlace) => ({
-    x: Math.min(0.92, Math.max(0.08, 0.5 + (p.x - 0.5) * 1.55)),
-    y: Math.min(0.9, Math.max(0.1, 0.48 + (p.y - 0.48) * 1.5)),
-  });
-  const pts = route.map((p) => [at(p).x * W, at(p).y * Hh]);
-  const d = pts.map(([x, y], i) => (i ? `L${x.toFixed(0)} ${y.toFixed(0)}` : `M${x.toFixed(0)} ${y.toFixed(0)}`)).join(" ");
-  const key = route.map((p) => p.name).join("|");
+  useEffect(() => {
+    if (custom) setSel("custom");
+  }, [custom]);
+  const stops = useMemo(() => {
+    if (sel === "custom" && custom) return custom;
+    return orderStops(LEGS, PRESETS.find((p) => p.id === sel)?.ids ?? PRESETS[0].ids);
+  }, [sel, custom]);
+  const w = walk(stops);
+  const options = [...(custom ? [{ id: "custom", name: "Твой маршрут" }] : []), ...PRESETS];
   return (
     <section className="tb tb-map" style={{ height: H.map }}>
       <div className="tb-map__side">
         <Label n="03">Маршрут на карте</Label>
-        <h3>{mine ? "Это маршрут, который ты собрал" : "Так выглядит маршрут"}</h3>
+        <h3>{sel === "custom" ? "Маршрут, который ты собрал" : "Готовые прогулки по Туле"}</h3>
         <p>
-          {mine
-            ? "Точки идут по кругу от центра, чтобы не петлять. Наведи на метку — увидишь, что там."
-            : "Собери свой маршрут в телефоне выше — и он прорисуется здесь."}
+          {custom
+            ? "Точки идут по порядку от ближайшей к ближайшей — без петель и лишних шагов."
+            : "Собери свой маршрут в телефоне выше — и он прорисуется здесь. А пока — готовые прогулки."}
         </p>
+        <div className="tb-map__tabs">
+          {options.map((o) => (
+            <button key={o.id} type="button" data-ui className={o.id === sel ? "is-on" : ""} onClick={() => setSel(o.id)}>
+              {o.name}
+            </button>
+          ))}
+        </div>
+        <div className="tb-map__stats">
+          <div>
+            <b>{stops.length}</b>
+            <span>мест</span>
+          </div>
+          <div>
+            <b>{w.km}</b>
+            <span>км пешком</span>
+          </div>
+          <div>
+            <b>{w.min}</b>
+            <span>мин в пути</span>
+          </div>
+        </div>
         <ol className="tb-map__list">
-          {route.map((p, i) => (
+          {stops.map((id, i) => (
             <li
-              key={p.name}
+              key={id}
               className={hover === i ? "is-on" : ""}
+              style={{ "--c": KIND_COLOR[PLACES[id].kind] } as React.CSSProperties}
               onPointerEnter={() => setHover(i)}
               onPointerLeave={() => setHover(null)}
             >
               <em>{i + 1}</em>
               <div>
-                <b>{p.name}</b>
-                <span>{p.tag}</span>
+                <b>{PLACES[id].name}</b>
+                <span>
+                  {PLACES[id].tag} · {PLACES[id].time}
+                </span>
               </div>
             </li>
           ))}
         </ol>
       </div>
       <div className="tb-map__card">
-        <svg viewBox={`0 0 ${W} ${Hh}`} className="tb-map__svg" aria-hidden>
-          {/* стилизованный центр Тулы: река Упа, парки, сетка улиц */}
-          <rect width={W} height={Hh} fill="#EFE8DA" />
-          <g stroke="#fff" strokeWidth="14" strokeLinecap="round" fill="none" opacity="0.9">
-            <path d="M0 180 L1240 260" />
-            <path d="M0 520 L1240 470" />
-            <path d="M120 0 L240 860" />
-            <path d="M420 0 L520 860" />
-            <path d="M760 0 L700 860" />
-            <path d="M1040 0 L960 860" />
-            <path d="M0 720 L1240 680" />
-          </g>
-          <g fill="#E6DCC8">
-            {BLOCKS.map(([x, y, w, h]) => (
-              <rect key={`${x}-${y}`} x={x} y={y} width={w} height={h} rx="10" />
-            ))}
-          </g>
-          <ellipse cx="300" cy="610" rx="170" ry="110" fill="#CFE6B8" />
-          <ellipse cx="760" cy="430" rx="110" ry="70" fill="#CFE6B8" />
-          <rect x="570" y="330" width="150" height="130" rx="18" fill="#E6C9B2" stroke="#C99A7A" strokeWidth="4" />
-          <path d="M1240 120 C 1000 220, 880 300, 800 420 S 700 640, 560 860" stroke="#9FD1F2" strokeWidth="46" fill="none" strokeLinecap="round" />
-          <text x="1010" y="230" className="tb-map__river">р. Упа</text>
-          <text x="600" y="318" className="tb-map__label">Кремль</text>
-          {pts.length > 1 && <path key={key} d={d} className="tb-map__line" pathLength={1} />}
-        </svg>
-        {route.map((p, i) => (
-          <button
-            key={p.name}
-            type="button"
-            data-ui
-            className={`tb-map__pin${hover === i ? " is-on" : ""}`}
-            style={{ left: `${at(p).x * 100}%`, top: `${at(p).y * 100}%`, "--i": i } as React.CSSProperties}
-            onPointerEnter={() => setHover(i)}
-            onPointerLeave={() => setHover(null)}
-          >
-            {i + 1}
-            <span className="tb-map__tip">
-              <b>{p.name}</b>
-              {p.tag} · {p.time}
-            </span>
-          </button>
+        <TourMap stops={stops} legs={LEGS} hover={hover} onHover={setHover} w={1240} h={1090} />
+      </div>
+    </section>
+  );
+}
+
+/* ---------- 05. экраны ---------- */
+
+function Screens() {
+  return (
+    <section className="tb tb-screens" style={{ height: H.screens }}>
+      <div className="tb-screens__head">
+        <Label n="04">Экраны</Label>
+        <h3>От первого знакомства до карточки места</h3>
+      </div>
+      <div className="tb-screens__row">
+        <figure className="tb-screens__onb">
+          <div className="tb-screens__fan">
+            <Phone screen="onb-1" bezel="blue" className="is-fan-1" />
+            <Phone screen="onb-2" bezel="blue" className="is-fan-2" />
+            <Phone screen="onb-3" bezel="blue" className="is-fan-3" />
+          </div>
+          <figcaption>Онбординг: город, простота, контроль</figcaption>
+        </figure>
+        {[
+          { s: "routes", t: "Все маршруты" },
+          { s: "route", t: "Маршрут" },
+          { s: "place", t: "Место" },
+        ].map((x) => (
+          <figure key={x.s}>
+            <Phone screen={x.s} bezel="blue" scroll />
+            <figcaption>{x.t}</figcaption>
+          </figure>
         ))}
       </div>
     </section>
   );
 }
 
-/* ---------- 05. экраны: онбординг и каталог ---------- */
-
-function Screens() {
-  return (
-    <section className="tb tb-screens" style={{ height: H.screens }}>
-      <div className="tb-screens__head">
-        <Label n="04" light>
-          Экраны
-        </Label>
-        <h3>От первого знакомства до карточки места</h3>
-      </div>
-      <div className="tb-screens__row">
-        <div className="tb-screens__fan">
-          <StaticPhone screen="onb-1" className="is-fan-1" />
-          <StaticPhone screen="onb-2" className="is-fan-2" />
-          <StaticPhone screen="onb-3" className="is-fan-3" />
-          <span className="tb-caption">Онбординг: город, простота, контроль</span>
-        </div>
-        <div className="tb-screens__scroll">
-          <figure>
-            <StaticPhone screen="routes" scroll />
-            <figcaption>Все маршруты</figcaption>
-          </figure>
-          <figure>
-            <StaticPhone screen="route" scroll />
-            <figcaption>Маршрут</figcaption>
-          </figure>
-          <figure>
-            <StaticPhone screen="place" scroll />
-            <figcaption>Место</figcaption>
-          </figure>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- 06. путешествия как игра: рейтинг и профиль ---------- */
+/* ---------- 06. путешествия как игра ---------- */
 
 function Social() {
   return (
     <section className="tb tb-social" style={{ height: H.social }}>
+      <img className="tb-social__bg" src={tourPhoto("romantsevo")} alt="" loading="lazy" draggable={false} />
       <div className="tb-social__head">
-        <Label n="05">Путешествия как игра</Label>
+        <Label n="05" light>
+          Путешествия как игра
+        </Label>
         <h3>Километры, места и рейтинг города</h3>
-        <p>За пройденные маршруты копятся баллы. Можно сравнить себя с другими туристами и вернуться за новыми точками.</p>
+        <p>За пройденные маршруты копятся баллы: можно сравнить себя с другими туристами и вернуться за новыми точками.</p>
       </div>
       <div className="tb-social__row">
         {[
@@ -582,10 +612,10 @@ function Social() {
           { s: "rating", t: "Таблица лидеров", badge: "6 место · 7 900" },
           { s: "history", t: "История маршрутов", badge: "оценки и даты" },
           { s: "settings", t: "Публичный профиль", badge: "соцсети и ссылка" },
-        ].map((x, i) => (
-          <figure key={x.s} style={{ "--i": i } as React.CSSProperties}>
+        ].map((x) => (
+          <figure key={x.s}>
             <span className="tb-badge">{x.badge}</span>
-            <StaticPhone screen={x.s} />
+            <Phone screen={x.s} />
             <figcaption>{x.t}</figcaption>
           </figure>
         ))}
@@ -603,22 +633,21 @@ function System() {
         <Label n="06">Дизайн</Label>
         <h3>Небо, купола и кирпич — цвета самой Тулы</h3>
       </div>
+      <div className="tb-palette">
+        {TOUR_PALETTE.map((p) => (
+          <div key={p.hex} className="tb-swatch" style={{ "--c": p.hex } as React.CSSProperties}>
+            <span>{p.hex}</span>
+            <b>{p.name}</b>
+            <small>{p.role}</small>
+          </div>
+        ))}
+      </div>
       <div className="tb-system__grid">
-        <div className="tb-palette">
-          {TOUR_PALETTE.map((p) => (
-            <div key={p.hex} className="tb-swatch" style={{ "--c": p.hex } as React.CSSProperties}>
-              <i />
-              <b>{p.name}</b>
-              <span>{p.hex}</span>
-              <small>{p.role}</small>
-            </div>
-          ))}
-        </div>
         <div className="tb-type">
           <span className="tb-type__aa">Аа</span>
           <div>
             <b>PT Root UI</b>
-            <span>спокойный гротеск с русскими корнями — читается на ходу и на солнце</span>
+            <span>Спокойный гротеск с русскими корнями — читается на ходу и на солнце.</span>
           </div>
         </div>
         <div className="tb-ui">
@@ -633,7 +662,12 @@ function System() {
           </div>
           <div className="tb-ui__row">
             <span className="tb-ui__rate">
-              ●●●●● <small>211 оценок</small>
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+              <small>211 оценок</small>
             </span>
             <span className="tb-ui__meta">5 мест · ~4 часа</span>
           </div>
@@ -646,11 +680,11 @@ function System() {
 /* ---------- 08. презентация стартапа и финал ---------- */
 
 function Outro() {
-  const deck = DECKS[1];
   const [i, setI] = useState(0);
-  const n = deck.slides.length;
+  const n = DECK.length;
   return (
     <section className="tb tb-outro" style={{ height: H.outro }}>
+      <img className="tb-outro__bg" src={tourPhoto("aerial")} alt="" loading="lazy" draggable={false} />
       <div className="tb-outro__head">
         <Label n="07" light>
           Презентация стартапа
@@ -658,27 +692,31 @@ function Outro() {
       </div>
       <div className="tb-deck">
         <div className="tb-deck__screen">
-          <img key={i} src={deck.slides[i]} alt={`Слайд ${i + 1}`} loading="lazy" draggable={false} />
+          <img key={i} src={deckSlide(DECK[i])} alt={`Слайд ${i + 1}`} loading="lazy" draggable={false} />
           <span className="tb-deck__count">
             {i + 1} / {n}
           </span>
           <button type="button" data-ui className="tb-deck__arrow is-prev" onClick={() => setI((x) => (x - 1 + n) % n)} aria-label="Предыдущий слайд">
-            ←
+            <svg viewBox="0 0 24 24">
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
           </button>
           <button type="button" data-ui className="tb-deck__arrow is-next" onClick={() => setI((x) => (x + 1) % n)} aria-label="Следующий слайд">
-            →
+            <svg viewBox="0 0 24 24">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
         <div className="tb-deck__strip">
-          {deck.slides.map((src, k) => (
-            <button key={src} type="button" data-ui className={k === i ? "is-on" : ""} onClick={() => setI(k)}>
-              <img src={src} alt="" loading="lazy" draggable={false} />
+          {DECK.map((num, k) => (
+            <button key={num} type="button" data-ui className={k === i ? "is-on" : ""} onClick={() => setI(k)}>
+              <img src={deckSlide(num, true)} alt="" loading="lazy" draggable={false} />
             </button>
           ))}
         </div>
       </div>
       <div className="tb-outro__end">
-        <b>Спасибо, что прошёл маршрут до конца!</b>
+        <b>Спасибо, что прошёл маршрут до конца</b>
         <a data-ui className="tb-outro__cta" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
           Обсудить проект ↗
         </a>
@@ -688,15 +726,14 @@ function Outro() {
 }
 
 export function CaseTour({ selected }: { selected: string | null }) {
-  const fallback = useMemo(() => buildRoute(["culture", "food"], 5), []);
-  const [route, setRoute] = useState<TourPlace[] | null>(null);
+  const [custom, setCustom] = useState<number[] | null>(null);
   return (
     <Frame meta={frameById("case-tour")} selected={selected === "case-tour"} className="tb-case" noSelect>
       <div className="tb-case__boards">
         <Hero />
-        <Idea />
-        <Try onRoute={setRoute} />
-        <MapBoard route={route ?? fallback} mine={!!route} />
+        <About />
+        <Try onRoute={setCustom} />
+        <MapBoard custom={custom} />
         <Screens />
         <Social />
         <System />
