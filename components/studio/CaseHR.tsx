@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LINKS } from "@/lib/content";
 import { frameById } from "./data";
+import { CaseDeck } from "./CaseDeck";
 import { Frame } from "./Frame";
 import {
   HR_ADMIN,
@@ -20,6 +21,8 @@ import {
   skinThumb,
   type HrBoardId,
   type ShowScreen,
+  HR_DECK,
+  HR_DECK_THUMBS,
 } from "./cases";
 
 /* eslint-disable @next/next/no-img-element */
@@ -163,39 +166,101 @@ function About() {
   );
 }
 
-/* ---------- 03. главная сезона в окне браузера, поворачивается за курсором ---------- */
+/* ---------- 03. главная сезона: экран разобран на блоки и собирается обратно ---------- */
+
+// блоки главной в координатах макета 1440×1024; dx/dy/r — куда блок отлетает в разобранном виде
+const MAIN_PARTS: { id: string; title: string; text: string; x: number; y: number; w: number; h: number; dx: number; dy: number; r: number }[] = [
+  { id: "season", title: "Сезон", text: "Название, даты и кнопка «Вперёд» к текущей миссии", x: 20, y: 20, w: 1400, h: 598, dx: -30, dy: -90, r: -1.5 },
+  { id: "goal", title: "Цель", text: "Одна фраза о том, что делать: миссии → уровень → возможности", x: 8, y: 616, w: 810, h: 138, dx: -120, dy: 0, r: 1.5 },
+  { id: "tracks", title: "Треки", text: "Ознакомительный, адаптационный и хакатон — этапы пути новичка", x: 846, y: 614, w: 594, h: 170, dx: 80, dy: -40, r: 2 },
+  { id: "special", title: "Спецзадание", text: "Разовая миссия недели: опрос, событие или челлендж", x: 20, y: 804, w: 453, h: 170, dx: -90, dy: 80, r: -2.5 },
+  { id: "shop", title: "Магазин", text: "Монеты за миссии тратятся на мерч и бонусы", x: 493, y: 804, w: 151, h: 220, dx: -20, dy: 120, r: 3 },
+  { id: "rating", title: "Рейтинг", text: "Место среди новичков своего потока", x: 667, y: 804, w: 151, h: 220, dx: 30, dy: 130, r: -3 },
+  { id: "profile", title: "Профиль", text: "Аватар-космонавт, скины и достижения", x: 846, y: 804, w: 574, h: 170, dx: 120, dy: 80, r: 1.5 },
+];
+const MAIN_W = 1240;
+const MAIN_K = MAIN_W / 1440;
 
 function Mockup() {
-  const p = useParallax();
+  const [built, setBuilt] = useState(false);
+  const [hover, setHover] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+  // пока никто не трогал — экран сам то собирается, то разбирается
+  useEffect(() => {
+    if (touched) return;
+    const t = setInterval(() => setBuilt((v) => !v), 3600);
+    return () => clearInterval(t);
+  }, [touched]);
+  const hot = (id: string | null) => {
+    setHover(id);
+    if (id) setTouched(true);
+  };
   return (
-    <section
-      ref={p.ref as React.RefObject<HTMLElement>}
-      className="hb hb-mockup"
-      style={{ height: H.mockup }}
-      onPointerMove={p.onPointerMove}
-      onPointerLeave={p.onPointerLeave}
-    >
-      <div className="hb-mockup__head">
-        <Label n="02" light>
-          Главная сезона
-        </Label>
-        <p>Всё, что нужно новичку, — на одном экране: сезон, треки, спецзадание, магазин, рейтинг и профиль.</p>
+    <section className="hb hb-mockup" style={{ height: H.mockup }}>
+      <div className="hb-mockup__side">
+        <Label n="02">Главная сезона</Label>
+        <h3>Всё для новичка — на&nbsp;одном экране</h3>
+        <ol className="hb-mockup__legend">
+          {MAIN_PARTS.map((p, i) => (
+            <li key={p.id} className={hover === p.id ? "is-on" : ""} onPointerEnter={() => hot(p.id)} onPointerLeave={() => hot(null)}>
+              <em>{String(i + 1).padStart(2, "0")}</em>
+              <span>
+                <b>{p.title}</b>
+                {p.text}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <button
+          type="button"
+          data-ui
+          className="hb-mockup__toggle"
+          onClick={() => {
+            setTouched(true);
+            setBuilt((v) => !v);
+          }}
+        >
+          {built ? "Разобрать экран" : "Собрать экран"}
+        </button>
       </div>
-      <div className="hb-mockup__scene">
-        <div className="hb-mockup__window">
-          <div className="hb-bar">
-            <i />
-            <i />
-            <i />
-            <span>app.technopolis.ru/season</span>
+
+      <div
+        className={`hb-mockup__scene${built ? " is-built" : ""}${hover ? " is-hover" : ""}`}
+        style={{ width: MAIN_W, height: 1024 * MAIN_K }}
+      >
+        <div className="hb-mockup__plate" />
+        {MAIN_PARTS.map((p, i) => (
+          <div
+            key={p.id}
+            className={`hb-part${hover === p.id ? " is-on" : ""}`}
+            style={
+              {
+                left: p.x * MAIN_K,
+                top: p.y * MAIN_K,
+                width: p.w * MAIN_K,
+                height: p.h * MAIN_K,
+                backgroundImage: `url(${hrImg("emp-main@2x")})`,
+                backgroundSize: `${MAIN_W}px auto`,
+                backgroundPosition: `${-p.x * MAIN_K}px ${-p.y * MAIN_K}px`,
+                "--dx": `${p.dx}px`,
+                "--dy": `${p.dy}px`,
+                "--r": `${p.r}deg`,
+                "--i": i,
+              } as React.CSSProperties
+            }
+            onPointerEnter={() => hot(p.id)}
+            onPointerLeave={() => hot(null)}
+          >
+            <span className="hb-part__tag">
+              <em>{String(i + 1).padStart(2, "0")}</em>
+              {p.title}
+            </span>
           </div>
-          <img src={hrImg("emp-main@2x")} alt="Главная сезона" loading="lazy" draggable={false} />
-        </div>
+        ))}
       </div>
     </section>
   );
 }
-
 /* ---------- 04. попробуй сезон: миссии → опыт → уровень → награда ---------- */
 
 function Play() {
@@ -556,7 +621,7 @@ function System() {
 
 /* ---------- 10. презентация и финал ---------- */
 
-function Outro() {
+function Outro({ slide, onSlide }: { slide?: number; onSlide?: (delta: number) => void }) {
   return (
     <section className="hb hb-outro" style={{ height: H.outro }}>
       <div className="hb-outro__head">
@@ -564,8 +629,12 @@ function Outro() {
           Презентация с защиты
         </Label>
       </div>
-      {/* сам просмотрщик — отдельный фрейм «deck», он стоит ровно в этом окне */}
-      <div className="hb-outro__deck" aria-hidden />
+      <CaseDeck
+        slides={HR_DECK}
+        thumbs={HR_DECK_THUMBS}
+        index={slide}
+        onGo={onSlide && slide !== undefined ? (k) => onSlide(k - slide) : undefined}
+      />
       <div className="hb-outro__end">
         <b>Спасибо, что досмотрел!</b>
         <a data-ui className="hb-outro__cta" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
@@ -631,7 +700,8 @@ function CaseCrew({ active, root }: { active: boolean; root: React.RefObject<HTM
           dir: Math.random() < 0.5 ? 1 : -1,
         };
         setRunners((rs) => [...rs.slice(-3), runner]);
-        setTimeout(() => setRunners((rs) => rs.filter((x) => x.id !== runner.id)), mode === "walk" ? 9000 : 5400);
+        // убираем по окончании анимации (onAnimationEnd), таймер — страховка, если вкладка спала
+        setTimeout(() => setRunners((rs) => rs.filter((x) => x.id !== runner.id)), mode === "walk" ? 12000 : 8000);
       }
       t = setTimeout(spawn, 1800 + Math.random() * 1600);
     };
@@ -650,7 +720,13 @@ function CaseCrew({ active, root }: { active: boolean; root: React.RefObject<HTM
           className={`hb-crew__runner is-${r.mode}`}
           style={{ top: r.top, "--dir": r.dir } as React.CSSProperties}
         >
-          <div className="hb-crew__body">
+          <div
+            className="hb-crew__body"
+            onAnimationEnd={(e) => {
+              // анимация самого тела закончилась — персонаж уже за краем ленты
+              if (e.target === e.currentTarget) setRunners((rs) => rs.filter((x) => x.id !== r.id));
+            }}
+          >
             <img src={r.src} alt="" draggable={false} />
           </div>
         </div>
@@ -659,7 +735,17 @@ function CaseCrew({ active, root }: { active: boolean; root: React.RefObject<HTM
   );
 }
 
-export function CaseHR({ selected, active }: { selected: string | null; active: boolean }) {
+export function CaseHR({
+  selected,
+  active,
+  slide,
+  onSlide,
+}: {
+  selected: string | null;
+  active: boolean;
+  slide?: number;
+  onSlide?: (delta: number) => void;
+}) {
   const root = useRef<HTMLDivElement>(null);
   return (
     <Frame meta={frameById("case-hr")} selected={selected === "case-hr"} className="hb-case" noSelect>
@@ -692,7 +778,7 @@ export function CaseHR({ selected, active }: { selected: string | null; active: 
             {b.id === "avatar" && <Avatar />}
             {b.id === "rewards" && <Rewards />}
             {b.id === "system" && <System />}
-            {b.id === "outro" && <Outro />}
+            {b.id === "outro" && <Outro slide={slide} onSlide={onSlide} />}
           </div>
         ))}
       </div>

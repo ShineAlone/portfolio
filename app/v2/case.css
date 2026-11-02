@@ -379,60 +379,183 @@
   font-size: 26px;
 }
 
-/* ---------- 03. большой мокап ---------- */
+/* ---------- 03. главная сезона: экран разобран на блоки ---------- */
 
 .hb-mockup {
-  background: radial-gradient(70% 60% at 50% 55%, #2a2a33 0%, var(--hr-dark) 70%);
-  color: #fff;
+  background: #ecebf1;
+  color: var(--hr-dark);
 }
 
-/* тонкая сетка на фоне — как на артбордах */
+/* точечная сетка — как на артборде, где раскладывают макет */
 .hb-mockup::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 80px 80px,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 80px 80px;
+  background: radial-gradient(rgba(22, 22, 22, 0.13) 1.4px, transparent 1.8px) 0 0 / 34px 34px;
 }
 
-.hb-mockup__head {
+.hb-mockup__side {
   position: absolute;
-  left: 80px;
-  top: 80px;
-  z-index: 3;
-  max-width: 560px;
+  left: 90px;
+  top: 90px;
+  bottom: 90px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  width: 480px;
 }
 
-.hb-mockup__head p {
-  margin-top: 22px;
-  font-size: 22px;
-  line-height: 1.45;
-  opacity: 0.8;
+.hb-mockup__side h3 {
+  margin-top: 26px;
+  font-size: 52px;
+  line-height: 1.05;
+}
+
+.hb-mockup__legend {
+  list-style: none;
+  margin-top: 30px;
+}
+
+.hb-mockup__legend li {
+  display: flex;
+  gap: 16px;
+  padding: 11px 14px;
+  border-radius: 18px;
+  cursor: default;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hb-mockup__legend li.is-on {
+  background: #fff;
+  box-shadow: 0 14px 28px -16px rgba(22, 22, 22, 0.45);
+  transform: translateX(6px);
+}
+
+.hb-mockup__legend em {
+  flex: none;
+  width: 34px;
+  font: 800 18px/1.4 var(--display);
+  font-style: normal;
+  color: var(--hr-red);
+}
+
+.hb-mockup__legend span {
+  font: 400 17px/1.4 var(--product);
+  color: #666;
+}
+
+.hb-mockup__legend b {
+  display: block;
+  margin-bottom: 2px;
+  font: 800 22px var(--product);
+  color: var(--hr-dark);
+}
+
+.hb-mockup__toggle {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 18px 30px;
+  border-radius: 30px;
+  background: var(--hr-dark) !important;
+  color: #fff !important;
+  font: 700 20px var(--product) !important;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 var(--hr-red);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+}
+
+.hb-mockup__toggle:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--hr-red);
 }
 
 .hb-mockup__scene {
   position: absolute;
-  left: 50%;
-  top: 225px;
-  width: 1290px;
-  perspective: 2600px;
-  transform: translateX(-50%);
+  left: 640px;
+  top: 190px;
+  z-index: 1;
 }
 
-.hb-mockup__window {
-  border-radius: 22px;
-  overflow: hidden;
+/* подложка экрана: видна, когда блоки собраны */
+.hb-mockup__plate {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: #161616;
+  box-shadow: 0 70px 110px -50px rgba(22, 22, 22, 0.7);
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 0.6s, transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.is-built .hb-mockup__plate {
+  opacity: 1;
+  transform: none;
+}
+
+.hb-part {
+  position: absolute;
+  border-radius: 20px;
+  background-repeat: no-repeat;
+  box-shadow: 0 34px 50px -24px rgba(22, 22, 22, 0.5);
+  transform: translate(var(--dx), var(--dy)) rotate(var(--r));
+  transition: transform 0.9s calc(var(--i) * 45ms) cubic-bezier(0.65, 0, 0.35, 1), box-shadow 0.6s, opacity 0.3s, scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.is-built .hb-part {
+  transform: none;
+  box-shadow: none;
+}
+
+.hb-mockup__scene.is-hover .hb-part:not(.is-on) {
+  opacity: 0.4;
+}
+
+.hb-part.is-on {
+  z-index: 3;
+  scale: 1.04;
+  box-shadow: 0 40px 60px -24px rgba(22, 22, 22, 0.6);
+}
+
+/* подпись блока — только в разобранном виде */
+.hb-part__tag {
+  position: absolute;
+  left: 14px;
+  top: -20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px 9px 9px;
+  border-radius: 20px;
   background: #fff;
-  box-shadow: 0 80px 120px -40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  transform: rotateX(calc(14deg + var(--my) * -4deg)) rotateY(calc(-14deg + var(--mx) * 6deg)) rotateZ(3deg);
-  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  color: var(--hr-dark);
+  font: 800 17px var(--product);
+  white-space: nowrap;
+  box-shadow: 0 10px 20px -10px rgba(22, 22, 22, 0.45);
+  transition: opacity 0.35s, transform 0.35s;
 }
 
-.hb-mockup__window img {
-  display: block;
-  width: 100%;
+.hb-part__tag em {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--hr-red);
+  color: #fff;
+  font: 800 13px var(--display);
+  font-style: normal;
 }
 
+.is-built .hb-part__tag {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.is-built .hb-part.is-on .hb-part__tag {
+  opacity: 1;
+  transform: none;
+}
 /* ---------- 04. попробуй сезон ---------- */
 
 .hb-play {
@@ -1385,23 +1508,15 @@
 
 .hb-outro__head {
   position: absolute;
-  left: 80px;
-  top: 90px;
-}
-
-.hb-outro__deck {
-  position: absolute;
-  left: 410px;
-  top: 230px;
-  width: 1180px;
-  height: 794px;
+  left: 100px;
+  top: 80px;
 }
 
 .hb-outro__end {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 90px;
+  bottom: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1411,7 +1526,7 @@
 .hb-outro__end b {
   font-family: var(--display);
   font-weight: 800;
-  font-size: 64px;
+  font-size: 52px;
   letter-spacing: -0.02em;
 }
 
@@ -1435,27 +1550,29 @@
 
 /* ---------- персонажи бегают по ленте ---------- */
 
+/* живут внутри ленты кейса: выглядывают из-за её края и прячутся обратно,
+   прохожие уходят за край — на соседние холсты не вылезают */
 .hb-crew {
   position: absolute;
   inset: 0;
   z-index: 5;
+  overflow: hidden;
+  border-radius: var(--r);
   pointer-events: none;
 }
 
 .hb-crew__runner {
   position: absolute;
   height: 280px;
-  overflow: hidden;
 }
 
-/* выглядывают из-за края ленты: окно прилегает к краю и обрезает по нему */
 .hb-crew__runner.is-peek-l {
-  right: 100%;
+  left: 0;
   width: 520px;
 }
 
 .hb-crew__runner.is-peek-r {
-  left: 100%;
+  right: 0;
   width: 520px;
 }
 
@@ -1464,7 +1581,6 @@
   right: 0;
   height: 230px;
   transform: translateY(-100%);
-  overflow: visible;
 }
 
 .hb-crew__body {
@@ -1484,16 +1600,16 @@
 }
 
 .is-peek-l .hb-crew__body {
-  right: 0;
+  left: 0;
   animation: hb-peek-l 5.4s cubic-bezier(0.45, 0, 0.3, 1) both;
 }
 
 .is-peek-r .hb-crew__body {
-  left: 0;
+  right: 0;
   animation: hb-peek-r 5.4s cubic-bezier(0.45, 0, 0.3, 1) both;
 }
 
-/* идут по нижнему краю борда поверх контента — слева направо или наоборот */
+/* идут по нижнему краю борда и уходят за край ленты — слева направо или наоборот */
 .is-walk .hb-crew__body {
   height: 200px;
   left: calc(50% - 80px);
@@ -1504,67 +1620,56 @@
   animation-delay: 0s;
 }
 
+/* выглянул из-за левого края, осмотрелся, вышел на шаг — и спрятался обратно */
 @keyframes hb-peek-l {
   0% {
-    transform: translateX(105%);
+    transform: translateX(-105%);
   }
   14%,
-  38% {
-    transform: translateX(50%) rotate(-11deg);
+  36% {
+    transform: translateX(-48%) rotate(11deg);
   }
-  26% {
-    transform: translateX(50%) rotate(-5deg);
+  25% {
+    transform: translateX(-48%) rotate(5deg);
   }
-  50% {
-    transform: translateX(0) rotate(0);
-  }
-  88% {
-    opacity: 1;
+  50%,
+  70% {
+    transform: translateX(12%) rotate(0);
   }
   100% {
-    transform: translateX(-400px);
-    opacity: 0;
+    transform: translateX(-110%) rotate(0);
   }
 }
 
 @keyframes hb-peek-r {
   0% {
-    transform: translateX(-105%);
+    transform: translateX(105%);
   }
   14%,
-  38% {
-    transform: translateX(-50%) rotate(11deg);
+  36% {
+    transform: translateX(48%) rotate(-11deg);
   }
-  26% {
-    transform: translateX(-50%) rotate(5deg);
+  25% {
+    transform: translateX(48%) rotate(-5deg);
   }
-  50% {
-    transform: translateX(0) rotate(0);
-  }
-  88% {
-    opacity: 1;
+  50%,
+  70% {
+    transform: translateX(-12%) rotate(0);
   }
   100% {
-    transform: translateX(400px);
-    opacity: 0;
+    transform: translateX(110%) rotate(0);
   }
 }
 
+/* 1200 px от центра — за краем ленты шириной 2000: персонаж целиком скрыт в начале и в конце */
 @keyframes hb-walk {
   0% {
-    transform: translateX(calc(var(--dir) * -1150px));
-    opacity: 0;
-  }
-  6%,
-  94% {
-    opacity: 1;
+    transform: translateX(calc(var(--dir) * -1200px));
   }
   100% {
-    transform: translateX(calc(var(--dir) * 1150px));
-    opacity: 0;
+    transform: translateX(calc(var(--dir) * 1200px));
   }
 }
-
 @keyframes hb-crew-bob {
   from {
     transform: rotate(-5deg);
@@ -1574,7 +1679,126 @@
   }
 }
 
-/* просмотрщик презентации стоит поверх ленты кейса, в окне финального борда */
-.st-world > .st-deck {
-  z-index: 7;
+/* ---------- просмотрщик презентации в финале кейса — общий для всех кейсов ---------- */
+
+.cd {
+  position: absolute;
+  left: 50%;
+  top: 180px;
+  z-index: 2;
+  width: 1560px;
+  transform: translateX(-50%);
+}
+
+.cd__screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 60px 100px -50px rgba(0, 0, 0, 0.85);
+}
+
+.st-world .cd__screen img,
+.cd__screen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: cd-slide 0.4s ease backwards;
+}
+
+@keyframes cd-slide {
+  from {
+    opacity: 0;
+  }
+}
+
+.cd__count {
+  position: absolute;
+  right: 22px;
+  top: 20px;
+  padding: 8px 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font: 700 18px var(--font-root);
+}
+
+.cd__arrow {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #111 !important;
+  transform: translateY(-50%);
+  cursor: pointer;
+  opacity: 0.8;
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.cd__arrow svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cd__screen:hover .cd__arrow {
+  opacity: 1;
+}
+
+.cd__arrow:hover {
+  transform: translateY(-50%) scale(1.08);
+}
+
+.cd__arrow.is-prev {
+  left: 24px;
+}
+
+.cd__arrow.is-next {
+  right: 24px;
+}
+
+.cd__strip {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.cd__strip button {
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 3px solid transparent !important;
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+
+.cd__strip button:hover {
+  opacity: 0.85;
+}
+
+.cd__strip button.is-on {
+  border-color: #fff !important;
+  opacity: 1;
+}
+
+.st-world .cd__strip img,
+.cd__strip img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }

@@ -4,7 +4,6 @@ import { memo, useEffect, useState } from "react";
 import { EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
-  DECKS,
   ISLANDS,
   LAB_CARDS,
   PRES_SOON,
@@ -685,100 +684,9 @@ function Orbit({ selected, onPhone }: { selected: boolean; onPhone: () => void }
   );
 }
 
-/* ---------- Презентации: просмотрщик по порядку ---------- */
+/* ---------- Презентации ---------- */
 
-// SVG вместо символа «→»: у шрифтовой стрелки метрики смещают её от центра кнопки.
-function ArrowIcon({ dir }: { dir: "prev" | "next" }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d={dir === "next" ? "M4 12h15M13 6l6 6-6 6" : "M20 12H5M11 6l-6 6 6 6"}
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function Presenter({
-  selected,
-  deck,
-  slide,
-  dir,
-  onDeck,
-  onSlide,
-}: {
-  selected: boolean;
-  deck: number;
-  slide: number;
-  dir: "next" | "prev";
-  onDeck: (i: number) => void;
-  onSlide: (delta: number) => void;
-}) {
-  const d = DECKS[deck];
-  const n = d.slides.length;
-  const start = Math.max(0, Math.min(slide - 4, n - 9));
-  return (
-    <Frame meta={frameById("deck")} selected={selected} className="st-free st-deck">
-      <div className="stpr__tabs">
-        {/* пока показываем только первую презентацию — вторая и третья ждут своей подачи */}
-        {DECKS.slice(0, 1).map((x, i) => (
-          <button
-            key={x.name}
-            type="button"
-            data-ui
-            className={i === deck ? "is-active" : ""}
-            style={{ "--c": x.color, "--tilt": `${[-2, 1.5, -1][i % 3]}deg` } as React.CSSProperties}
-            onClick={() => onDeck(i)}
-          >
-            {x.name}
-            <small>{x.slides.length}</small>
-          </button>
-        ))}
-      </div>
-      <div className="stpr">
-        <span className="stpr__count">
-          {slide + 1} / {n}
-        </span>
-        <div className="stpr__stage">
-          <button type="button" data-ui className="stpr__arrow" onClick={() => onSlide(-1)} aria-label="Предыдущий слайд">
-            <ArrowIcon dir="prev" />
-          </button>
-          <div className="stpr__screen">
-            <img key={`${deck}-${slide}`} src={d.slides[slide]} alt="" draggable={false} className={`is-${dir}`} />
-          </div>
-          <button type="button" data-ui className="stpr__arrow" onClick={() => onSlide(1)} aria-label="Следующий слайд">
-            <ArrowIcon dir="next" />
-          </button>
-        </div>
-        <div className="stpr__strip">
-          {d.slides.slice(start, start + 9).map((src, k) => (
-            <button
-              key={src}
-              type="button"
-              data-ui
-              className={start + k === slide ? "is-active" : ""}
-              onClick={() => onSlide(start + k - slide)}
-            >
-              <img src={src} alt="" loading="lazy" draggable={false} />
-            </button>
-          ))}
-        </div>
-      </div>
-    </Frame>
-  );
-}
-
-function Presentations(p: {
-  selected: string | null;
-  deck: number;
-  slide: number;
-  dir: "next" | "prev";
-  onDeck: (i: number) => void;
-  onSlide: (delta: number) => void;
-}) {
+function Presentations(p: { selected: string | null }) {
   return (
     <>
       {PRESENTATIONS.cards.map((card, i) => (
@@ -802,14 +710,6 @@ function Presentations(p: {
         <b>Скоро здесь</b>
         <span>новые презентации — а первая уже живёт в «Кейсах» вместе с продуктом</span>
       </div>
-      <Presenter
-        selected={p.selected === "deck"}
-        deck={p.deck}
-        slide={p.slide}
-        dir={p.dir}
-        onDeck={p.onDeck}
-        onSlide={p.onSlide}
-      />
     </>
   );
 }
@@ -1031,10 +931,8 @@ type WorldProps = {
   onToggleSpread: () => void;
   onSticker: () => void;
   onPhone: () => void;
-  deck: number;
+  /** слайд презентации HR-кейса: листается и в кейсе, и стрелками клавиатуры */
   slide: number;
-  slideDir: "next" | "prev";
-  onDeck: (i: number) => void;
   onSlide: (delta: number) => void;
   carId: number;
   driving: boolean;
@@ -1064,15 +962,8 @@ export const World = memo(function World(p: WorldProps) {
       />
       <SocialPile spread={p.spread} selected={p.selected === "social"} />
       <Orbit selected={p.selected === "wall"} onPhone={p.onPhone} />
-      <Presentations
-        selected={p.selected}
-        deck={p.deck}
-        slide={p.slide}
-        dir={p.slideDir}
-        onDeck={p.onDeck}
-        onSlide={p.onSlide}
-      />
-      <CaseHR selected={p.selected} active={p.presView} />
+      <Presentations selected={p.selected} />
+      <CaseHR selected={p.selected} active={p.presView} slide={p.slide} onSlide={p.onSlide} />
       <CaseTour selected={p.selected} />
       <Projects selected={p.selected} />
       <Contact selected={p.selected === "contact"} />

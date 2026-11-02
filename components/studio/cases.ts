@@ -32,7 +32,7 @@ export const HR_BOARDS = [
   { id: "avatar", h: 1160 },
   { id: "rewards", h: 700 },
   { id: "system", h: 900 },
-  { id: "outro", h: 1300 },
+  { id: "outro", h: 1450 },
 ] as const;
 export type HrBoardId = (typeof HR_BOARDS)[number]["id"];
 export const HR_CASE_H = HR_BOARDS.reduce((s, b) => s + b.h, 0);
@@ -44,8 +44,9 @@ export const boardTop = (id: HrBoardId) => {
   }
   return y;
 };
-// где на последнем борде стоит презентация (относительно начала ленты)
-export const HR_DECK_OFFSET = { x: (2000 - 1180) / 2, y: boardTop("outro") + 230 };
+// презентация с защиты — исходники в высоком разрешении
+export const HR_DECK = Array.from({ length: 18 }, (_, i) => `/images/cases/hr/deck/${String(i + 1).padStart(2, "0")}.webp`);
+export const HR_DECK_THUMBS = HR_DECK.map((s) => s.replace(".webp", "-t.webp"));
 
 /* ---------- о проекте: боль ↔ решение (карточки переворачиваются) ---------- */
 

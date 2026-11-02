@@ -1,5 +1,5 @@
 import { AUTOMATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, WALLPAPERS } from "@/lib/content";
-import { HR_CASE_H, HR_DECK_OFFSET } from "./cases";
+import { HR_CASE_H } from "./cases";
 import { TOUR_CASE_H } from "./casesTour";
 
 export type Rect = { x: number; y: number; w: number; h: number };
@@ -255,16 +255,6 @@ export const FRAMES: FrameMeta[] = [
     text: "Мой стартап: мобильный гид по Туле, который собирает персональный маршрут по интересам. Проект выиграл грант.",
     tags: ["Стартап", "Мобильное приложение", "Туризм"],
     tagColor: "#B8C7FF",
-  },
-  {
-    id: "deck",
-    name: "Презентация проекта",
-    ...rel("cases", 100 + HR_DECK_OFFSET.x, 100 + HR_DECK_OFFSET.y),
-    w: 1180,
-    h: 794,
-    r: 32,
-    text: "Презентация с защиты: как устроены сезоны и почему адаптация становится игрой.",
-    tags: [PRESENTATIONS.subtitle],
   },
   ...SITE_FRAMES.map((s) => s.meta),
   {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LINKS } from "@/lib/content";
 import { frameById } from "./data";
+import { CaseDeck } from "./CaseDeck";
 import { Frame } from "./Frame";
 import { TourMap } from "./TourMap";
 import legsData from "./tourLegs.json";
@@ -635,8 +636,6 @@ function System() {
 /* ---------- 08. презентация стартапа и финал ---------- */
 
 function Outro() {
-  const [i, setI] = useState(0);
-  const n = DECK.length;
   return (
     <section className="tb tb-outro" style={{ height: H.outro }}>
       <img className="tb-outro__bg" src={tourPhoto("aerial")} alt="" loading="lazy" draggable={false} />
@@ -645,31 +644,7 @@ function Outro() {
           Презентация стартапа
         </Label>
       </div>
-      <div className="tb-deck">
-        <div className="tb-deck__screen">
-          <img key={i} src={deckSlide(DECK[i])} alt={`Слайд ${i + 1}`} loading="lazy" draggable={false} />
-          <span className="tb-deck__count">
-            {i + 1} / {n}
-          </span>
-          <button type="button" data-ui className="tb-deck__arrow is-prev" onClick={() => setI((x) => (x - 1 + n) % n)} aria-label="Предыдущий слайд">
-            <svg viewBox="0 0 24 24">
-              <path d="M15 5l-7 7 7 7" />
-            </svg>
-          </button>
-          <button type="button" data-ui className="tb-deck__arrow is-next" onClick={() => setI((x) => (x + 1) % n)} aria-label="Следующий слайд">
-            <svg viewBox="0 0 24 24">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-        <div className="tb-deck__strip">
-          {DECK.map((num, k) => (
-            <button key={num} type="button" data-ui className={k === i ? "is-on" : ""} onClick={() => setI(k)}>
-              <img src={deckSlide(num, true)} alt="" loading="lazy" draggable={false} />
-            </button>
-          ))}
-        </div>
-      </div>
+      <CaseDeck slides={DECK.map((n) => deckSlide(n))} thumbs={DECK.map((n) => deckSlide(n, true))} />
       <div className="tb-outro__end">
         <b>Спасибо, что прошёл маршрут до конца</b>
         <a data-ui className="tb-outro__cta" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">

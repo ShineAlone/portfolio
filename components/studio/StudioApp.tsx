@@ -5,7 +5,6 @@ import { LINKS } from "@/lib/content";
 import { MAX_Z, MIN_Z, clamp, createCameraStore, type Cam, type CameraStore } from "./camera";
 import {
   ACHIEVEMENTS,
-  DECKS,
   FRAMES,
   ISLANDS,
   SECRET_DISCOUNT,
@@ -20,6 +19,7 @@ import {
   type AchievementId,
   type Rect,
 } from "./data";
+import { HR_DECK } from "./cases";
 import { Glyph } from "./glyphs";
 import { CarSvg, CHAT, NAME_CHARS, SpinFigure, World } from "./World";
 import { CityLayer } from "./CityLayer";
@@ -158,9 +158,8 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
   });
   const [selected, setSelected] = useState<string | null>(null);
   const [spread, setSpread] = useState(false);
-  const [deck, setDeck] = useState(0);
+  // слайд презентации HR-кейса: листается в кейсе и стрелками, пока камера на «Кейсах»
   const [slide, setSlide] = useState(0);
-  const [slideDir, setSlideDir] = useState<"next" | "prev">("next");
   const [spaceHeld, setSpaceHeld] = useState(false);
   const [tour, setTour] = useState(-1);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -529,19 +528,11 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
   const onPhone = useCallback(() => earnRef.current("orbit"), []);
 
   const flipsRef = useRef(0);
-  const deckRef = useRef(deck);
-  deckRef.current = deck;
   const onSlide = useCallback((delta: number) => {
-    const n = DECKS[deckRef.current].slides.length;
-    setSlideDir(delta >= 0 ? "next" : "prev");
+    const n = HR_DECK.length;
     setSlide((s) => (s + delta + n) % n);
     flipsRef.current += 1;
     if (flipsRef.current >= 5) earnRef.current("slides");
-  }, []);
-  const onDeck = useCallback((i: number) => {
-    setDeck(i);
-    setSlide(0);
-    setSlideDir("next");
   }, []);
 
   /* ---------- гараж: машинка на WASD ---------- */
@@ -1177,10 +1168,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
             onToggleSpread={toggleSpread}
             onSticker={onSticker}
             onPhone={onPhone}
-            deck={deck}
             slide={slide}
-            slideDir={slideDir}
-            onDeck={onDeck}
             onSlide={onSlide}
             carId={carId}
             driving={driving}
