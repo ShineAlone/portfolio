@@ -166,102 +166,7 @@ function About() {
   );
 }
 
-/* ---------- 03. главная сезона: экран разобран на блоки и собирается обратно ---------- */
-
-// блоки главной в координатах макета 1440×1024; dx/dy/r — куда блок отлетает в разобранном виде
-const MAIN_PARTS: { id: string; title: string; text: string; x: number; y: number; w: number; h: number; dx: number; dy: number; r: number }[] = [
-  { id: "season", title: "Сезон", text: "Название, даты и кнопка «Вперёд» к текущей миссии", x: 20, y: 20, w: 1400, h: 598, dx: -30, dy: -90, r: -1.5 },
-  { id: "goal", title: "Цель", text: "Одна фраза о том, что делать: миссии → уровень → возможности", x: 8, y: 616, w: 810, h: 138, dx: -120, dy: 0, r: 1.5 },
-  { id: "tracks", title: "Треки", text: "Ознакомительный, адаптационный и хакатон — этапы пути новичка", x: 846, y: 614, w: 594, h: 170, dx: 80, dy: -40, r: 2 },
-  { id: "special", title: "Спецзадание", text: "Разовая миссия недели: опрос, событие или челлендж", x: 20, y: 804, w: 453, h: 170, dx: -90, dy: 80, r: -2.5 },
-  { id: "shop", title: "Магазин", text: "Монеты за миссии тратятся на мерч и бонусы", x: 493, y: 804, w: 151, h: 220, dx: -20, dy: 120, r: 3 },
-  { id: "rating", title: "Рейтинг", text: "Место среди новичков своего потока", x: 667, y: 804, w: 151, h: 220, dx: 30, dy: 130, r: -3 },
-  { id: "profile", title: "Профиль", text: "Аватар-космонавт, скины и достижения", x: 846, y: 804, w: 574, h: 170, dx: 120, dy: 80, r: 1.5 },
-];
-const MAIN_W = 1240;
-const MAIN_K = MAIN_W / 1440;
-
-function Mockup() {
-  const [built, setBuilt] = useState(false);
-  const [hover, setHover] = useState<string | null>(null);
-  const [touched, setTouched] = useState(false);
-  // пока никто не трогал — экран сам то собирается, то разбирается
-  useEffect(() => {
-    if (touched) return;
-    const t = setInterval(() => setBuilt((v) => !v), 3600);
-    return () => clearInterval(t);
-  }, [touched]);
-  const hot = (id: string | null) => {
-    setHover(id);
-    if (id) setTouched(true);
-  };
-  return (
-    <section className="hb hb-mockup" style={{ height: H.mockup }}>
-      <div className="hb-mockup__side">
-        <Label n="02">Главная сезона</Label>
-        <h3>Всё для новичка — на&nbsp;одном экране</h3>
-        <ol className="hb-mockup__legend">
-          {MAIN_PARTS.map((p, i) => (
-            <li key={p.id} className={hover === p.id ? "is-on" : ""} onPointerEnter={() => hot(p.id)} onPointerLeave={() => hot(null)}>
-              <em>{String(i + 1).padStart(2, "0")}</em>
-              <span>
-                <b>{p.title}</b>
-                {p.text}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <button
-          type="button"
-          data-ui
-          className="hb-mockup__toggle"
-          onClick={() => {
-            setTouched(true);
-            setBuilt((v) => !v);
-          }}
-        >
-          {built ? "Разобрать экран" : "Собрать экран"}
-        </button>
-      </div>
-
-      <div
-        className={`hb-mockup__scene${built ? " is-built" : ""}${hover ? " is-hover" : ""}`}
-        style={{ width: MAIN_W, height: 1024 * MAIN_K }}
-      >
-        <div className="hb-mockup__plate" />
-        {MAIN_PARTS.map((p, i) => (
-          <div
-            key={p.id}
-            className={`hb-part${hover === p.id ? " is-on" : ""}`}
-            style={
-              {
-                left: p.x * MAIN_K,
-                top: p.y * MAIN_K,
-                width: p.w * MAIN_K,
-                height: p.h * MAIN_K,
-                backgroundImage: `url(${hrImg("emp-main@2x")})`,
-                backgroundSize: `${MAIN_W}px auto`,
-                backgroundPosition: `${-p.x * MAIN_K}px ${-p.y * MAIN_K}px`,
-                "--dx": `${p.dx}px`,
-                "--dy": `${p.dy}px`,
-                "--r": `${p.r}deg`,
-                "--i": i,
-              } as React.CSSProperties
-            }
-            onPointerEnter={() => hot(p.id)}
-            onPointerLeave={() => hot(null)}
-          >
-            <span className="hb-part__tag">
-              <em>{String(i + 1).padStart(2, "0")}</em>
-              {p.title}
-            </span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-/* ---------- 04. попробуй сезон: миссии → опыт → уровень → награда ---------- */
+/* ---------- 03. попробуй сезон: миссии → опыт → уровень → награда ---------- */
 
 function Play() {
   const [done, setDone] = useState<number[]>([]);
@@ -279,7 +184,7 @@ function Play() {
   return (
     <section className="hb hb-play" style={{ height: H.play }}>
       <div className="hb-play__head">
-        <Label n="03" light>
+        <Label n="02" light>
           Как работает сезон
         </Label>
         <h3>Попробуй сам: закрой первую неделю</h3>
@@ -367,7 +272,7 @@ function Play() {
   );
 }
 
-/* ---------- 05–06. экраны с хотспотами ---------- */
+/* ---------- 04–05. экраны с хотспотами ---------- */
 
 function Showcase({
   n,
@@ -476,7 +381,7 @@ function Showcase({
   );
 }
 
-/* ---------- 07. аватар ---------- */
+/* ---------- 06. аватар ---------- */
 
 function Avatar() {
   const [color, setColor] = useState(4);
@@ -485,7 +390,7 @@ function Avatar() {
   return (
     <section className="hb hb-avatar" style={{ height: H.avatar, "--c": c.color } as React.CSSProperties}>
       <div className="hb-avatar__head">
-        <Label n="06">Аватар</Label>
+        <Label n="05">Аватар</Label>
         <h3>Собери своего персонажа</h3>
         <p>
           В продукте аватар — это 3D-персонаж. 49 скинов в 7 коллекциях выдаются за уровни и задания и продаются
@@ -537,13 +442,13 @@ function Avatar() {
   );
 }
 
-/* ---------- 08. награды за уровни — бегущая лента ---------- */
+/* ---------- 07. награды за уровни — бегущая лента ---------- */
 
 function Rewards() {
   return (
     <section className="hb hb-rewards" style={{ height: H.rewards }}>
       <div className="hb-rewards__head">
-        <Label n="07" light>
+        <Label n="06" light>
           Сезонный пропуск
         </Label>
         <h3>Каждый уровень — награда</h3>
@@ -558,13 +463,13 @@ function Rewards() {
   );
 }
 
-/* ---------- 09. дизайн-система ---------- */
+/* ---------- 08. дизайн-система ---------- */
 
 function System() {
   return (
     <section className="hb hb-system" style={{ height: H.system }}>
       <div className="hb-system__head">
-        <Label n="08">Дизайн-система</Label>
+        <Label n="07">Дизайн-система</Label>
         <h3>Яркие цвета треков, мягкие формы, крупный Montserrat</h3>
       </div>
       <div className="hb-system__grid">
@@ -619,13 +524,13 @@ function System() {
   );
 }
 
-/* ---------- 10. презентация и финал ---------- */
+/* ---------- 09. презентация и финал ---------- */
 
 function Outro({ slide, onSlide }: { slide?: number; onSlide?: (delta: number) => void }) {
   return (
     <section className="hb hb-outro" style={{ height: H.outro }}>
       <div className="hb-outro__head">
-        <Label n="09" light>
+        <Label n="08" light>
           Презентация с защиты
         </Label>
       </div>
@@ -754,12 +659,11 @@ export function CaseHR({
           <div key={b.id} data-board={b.id} className="hb-case__slot">
             {b.id === "hero" && <Hero />}
             {b.id === "about" && <About />}
-            {b.id === "mockup" && <Mockup />}
             {b.id === "play" && <Play />}
             {b.id === "employee" && (
               <Showcase
                 board="employee"
-                n="04"
+                n="03"
                 title="Путь сотрудника"
                 text="Новичок проходит адаптацию как сезон: недели с миссиями, треки, пропуск с наградами, профиль и рейтинг. Наведи на цифры на экране."
                 screens={HR_EMPLOYEE}
@@ -768,7 +672,7 @@ export function CaseHR({
             {b.id === "hr" && (
               <Showcase
                 board="hr"
-                n="05"
+                n="04"
                 title="Кабинет HR"
                 text="Всё, что видит сотрудник, HR собирает сам: задания, награды и сезоны — и следит, кто застрял."
                 screens={HR_ADMIN}
