@@ -27,13 +27,16 @@ const RAD = Math.PI / 180;
 
 const TILES = (() => {
   const posts = SOCIAL_LAYOUT.posts;
-  const out: { src: string; lat: number; lon: number; h: number }[] = [];
+  const out: { src: string; lat: number; lon: number; w: number; h: number }[] = [];
   let n = 0;
   RINGS.forEach(([lat, count], r) => {
     for (let i = 0; i < count && n < posts.length; i++, n++) {
       const p = posts[n];
       // соседние кольца сдвинуты на полшага — посты стоят в шахматном порядке
-      out.push({ src: p.src, lat, lon: ((i + (r % 2) * 0.5) / count) * 360, h: Math.min(1.25, p.h / p.w) * TILE });
+      // пропорции поста сохраняются целиком; высокие сторис делаем уже, чтобы они не выпирали из сферы
+      const aspect = p.h / p.w;
+      const w = aspect > 1.3 ? TILE * 0.78 : TILE;
+      out.push({ src: p.src, lat, lon: ((i + (r % 2) * 0.5) / count) * 360, w, h: w * aspect });
     }
   });
   return out;
@@ -174,9 +177,9 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
                 key={t.src}
                 className="st-ball__tile"
                 style={{
-                  width: TILE,
+                  width: t.w,
                   height: t.h,
-                  margin: `${-t.h / 2}px 0 0 ${-TILE / 2}px`,
+                  margin: `${-t.h / 2}px 0 0 ${-t.w / 2}px`,
                   transform: `rotateY(${t.lon}deg) rotateX(${-t.lat}deg) translateZ(${R}px)`,
                 }}
               >
