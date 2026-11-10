@@ -27,7 +27,7 @@ const ABOUT_CALM = { w: 1240, h: 1120, k: 1.7 };
 // Во сколько раз крупнее показаны работы-картинки: обои и проекты свёрстаны в своём размере и увеличены целиком.
 const WALL_K = 1.6;
 const PROJ_K = 1.2;
-const CONTACT_K = 1.2;
+const CONTACT_K = 1.7;
 
 /*
  * Левая часть — четыре ряда, по высоте ровно с лентами кейсов: мир получается цельным прямоугольником.
@@ -306,7 +306,7 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "contact",
     name: "Связаться",
-    ...rel("contact", 150, Math.round((ROW4.h - 620 * CONTACT_K) / 2)),
+    ...rel("contact", 110, Math.round((ROW4.h - 620 * CONTACT_K) / 2)),
     w: 480 * CONTACT_K,
     h: 620 * CONTACT_K,
     k: CONTACT_K,

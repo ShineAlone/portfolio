@@ -788,11 +788,45 @@ export function SpinFigure({ className, ms = 75 }: { className?: string; ms?: nu
   );
 }
 
+/*
+ * Лента текста, которая крутится вокруг фигуры в 3D: буквы стоят по окружности и вращаются вокруг вертикальной оси.
+ * Чтобы текст проходил и перед фигурой, и за ней, кольцо рисуется дважды: «переднее» показывает только буквы,
+ * обращённые к зрителю, «заднее» лежит под фигурой и показывает дальнюю половину — зеркально, как на просвет.
+ */
+function TextRing({ text, radius, back, className = "" }: { text: string; radius: number; back?: boolean; className?: string }) {
+  const chars = [...text];
+  const step = 360 / chars.length;
+  // размер буквы подбирается так, чтобы текст ровно замкнул окружность
+  const size = Math.round(((2 * Math.PI * radius) / chars.length) * 1.12);
+  return (
+    <div className={`stx-ring${back ? " is-back" : ""} ${className}`} style={{ fontSize: size }} aria-hidden>
+      {chars.map((ch, i) => (
+        <span key={i} style={{ transform: `rotateY(${(i * step).toFixed(2)}deg) translateZ(${radius}px)` }}>
+          <b>{ch}</b>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const RING_MAIN = "НАПИШИ МНЕ • ОБСУДИМ ЗАДАЧУ • ";
+const RING_SUB = `TELEGRAM • @${LINKS.telegram.split("/").pop()!.toUpperCase()} • ОТКРЫТ ДЛЯ СОТРУДНИЧЕСТВА • `;
+
 function Contact({ selected }: { selected: boolean }) {
   const isl = islandById("contact");
+  const card = frameById("contact");
+  // сцена занимает всё место справа от карточки
+  const left = card.x + card.w + 200;
+  const stage = { x: left, y: isl.y, w: isl.x + isl.w - left - 200, h: isl.h };
+  const rings = (back: boolean) => (
+    <div className={`stx-rings${back ? " is-back" : ""}`}>
+      <TextRing text={RING_MAIN} radius={920} back={back} className="is-main" />
+      <TextRing text={RING_SUB} radius={760} back={back} className="is-sub" />
+    </div>
+  );
   return (
     <>
-      <Frame meta={frameById("contact")} selected={selected} className="stx">
+      <Frame meta={card} selected={selected} className="stx">
         <span className="stx__status">
           <i />
           {HERO.statusLabel}
@@ -803,14 +837,10 @@ function Contact({ selected }: { selected: boolean }) {
           Написать в Telegram ↗
         </a>
       </Frame>
-      {/* широкий финал: крупная надпись по центру и крутящаяся фигура справа */}
-      <div className="st-deco stx__big" style={{ left: isl.x + 1040, top: isl.y, width: isl.w - 1040 - 900, height: isl.h }}>
-        <span>напиши</span>
-        <span>мне</span>
-      </div>
-      <div className="st-deco stx__spin" style={{ left: isl.x + isl.w - 820, top: isl.y + isl.h / 2 - 370 }}>
-        <SpinFigure ms={110} />
-        <span>кручусь, пока ты решаешься</span>
+      <div className="st-deco stx-stage" style={{ left: stage.x, top: stage.y, width: stage.w, height: stage.h }}>
+        {rings(true)}
+        <SpinFigure className="stx-stage__me" ms={150} />
+        {rings(false)}
       </div>
     </>
   );
