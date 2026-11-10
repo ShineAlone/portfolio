@@ -94,7 +94,7 @@
   padding: 5px 16px;
   border-radius: 14px;
   background: #f1f1f4;
-  font-size: 15px;
+  font-size: 17px;
   color: #666;
 }
 
@@ -249,7 +249,7 @@
 }
 
 .hb-hero__meta dt {
-  font-size: 14px;
+  font-size: 17px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.7;
@@ -855,7 +855,7 @@
   border-radius: 18px;
   background: #111;
   color: #fff;
-  font: 400 16px/1.35 var(--font-root);
+  font: 400 18px/1.35 var(--font-root);
   text-align: left;
   opacity: 0;
   pointer-events: none;
@@ -1186,7 +1186,7 @@
 
 .hb-swatch small {
   margin-top: 6px;
-  font-size: 15px;
+  font-size: 17px;
   color: #888;
 }
 

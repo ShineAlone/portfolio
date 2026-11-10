@@ -609,7 +609,7 @@
 }
 
 .tb-hero__text dt {
-  font-size: 14px;
+  font-size: 17px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0.6;
@@ -684,7 +684,7 @@
   bottom: 52px;
   display: flex;
   justify-content: space-between;
-  font-size: 15px;
+  font-size: 17px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0.65;
@@ -757,7 +757,7 @@
   border-radius: 18px;
   background: #fff;
   color: var(--t-ink);
-  font: 700 15px var(--display);
+  font: 700 17px var(--display);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1472,7 +1472,7 @@
 
 .tb-swatch span {
   margin-bottom: auto;
-  font: 600 15px var(--font-root);
+  font: 600 17px var(--font-root);
   opacity: 0.8;
 }
 
@@ -1482,7 +1482,7 @@
 
 .tb-swatch small {
   margin-top: 4px;
-  font-size: 15px;
+  font-size: 17px;
   opacity: 0.85;
 }
 
@@ -1582,7 +1582,7 @@
 
 .tb-ui__rate small {
   margin-left: 6px;
-  font-size: 14px;
+  font-size: 17px;
   color: #8a91a0;
 }
 
