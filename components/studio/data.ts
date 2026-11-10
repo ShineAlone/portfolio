@@ -242,9 +242,10 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "wall",
     name: "Обои для телефонов и ПК",
-    ...rel("wall", Math.round((span(3) - 1220 * WALL_K) / 2), Math.round((ROW2.h - 1260 * WALL_K) / 2)),
-    w: 1220 * WALL_K,
-    h: 1260 * WALL_K,
+    // поле обоев занимает весь остров, с небольшим отступом от края
+    ...rel("wall", 60, 60),
+    w: span(3) - 120,
+    h: ROW2.h - 120,
     k: WALL_K,
     r: 0,
     text: WALLPAPERS.description,
@@ -366,7 +367,7 @@ export const ACHIEVEMENTS: {
   { id: "map", name: "Картограф", hint: "Отдались так, чтобы увидеть всё пространство целиком", island: "about", color: "#86DDFF" },
   { id: "drive", name: "Тест-драйв", hint: "Возьми машинку в гараже «Лаборатории» и врежься в любой блок", island: "plugins", color: "#86DDFF" },
   { id: "pile", name: "Сфера постов", hint: "Покрути сферу постов в «Соцсетях»", island: "social", color: "#FFB6E1" },
-  { id: "orbit", name: "Смена обоев", hint: "Кликни по любому телефону в «Обоях»", island: "wall", color: "#ACF9A2" },
+  { id: "orbit", name: "Смена обоев", hint: "Кликни по любым обоям в «Обоях»", island: "wall", color: "#ACF9A2" },
   { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов презентации в «Кейсах»", island: "cases", color: "#B8C7FF" },
   { id: "zoom", name: "Под лупой", hint: "Приблизь любой лендинг в «Проектах» до 100%", island: "proj", color: "#FFC7B6" },
 ];

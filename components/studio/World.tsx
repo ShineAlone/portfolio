@@ -9,14 +9,13 @@ import {
   SITE_FRAMES,
   frameById,
   islandById,
-  narrowWallpapers,
   poster,
-  wideWallpapers,
   type CarSpec,
   type FrameMeta,
 } from "./data";
 import { Frame } from "./Frame";
 import { SocialSphere } from "./SocialSphere";
+import { WallField } from "./WallField";
 import { AboutCalmBody } from "./AboutCalm";
 import { CaseHR } from "./CaseHR";
 import { CaseTour } from "./CaseTour";
@@ -564,102 +563,6 @@ function Garage({
   );
 }
 
-/* ---------- Обои: телефоны вращаются по часовой вокруг монитора ---------- */
-
-const ORBIT_N = 10;
-const ORBIT_SECONDS = 70;
-
-function OrbitPhone({ images, delay, style, onPick }: { images: string[]; delay: number; style: React.CSSProperties; onPick: () => void }) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    let id: ReturnType<typeof setInterval> | undefined;
-    const t = setTimeout(() => {
-      id = setInterval(() => setI((v) => (v + 1) % images.length), 3600);
-    }, delay);
-    return () => {
-      clearTimeout(t);
-      if (id) clearInterval(id);
-    };
-  }, [delay, images.length]);
-  return (
-    <button
-      type="button"
-      data-ui
-      className="st-phone"
-      style={style}
-      onClick={() => {
-        setI((v) => (v + 1) % images.length);
-        onPick();
-      }}
-    >
-      {images.map((src, k) => (
-        <img key={src} src={src} alt="" loading="lazy" draggable={false} className={k === i ? "is-on" : ""} />
-      ))}
-    </button>
-  );
-}
-
-function Monitor() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setI((v) => (v + 1) % wideWallpapers.length), 2600);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <div className="st-monitor__screen">
-      {wideWallpapers.map((src, k) => (
-        <img key={src} src={src} alt="" loading="lazy" draggable={false} className={k === i ? "is-on" : ""} />
-      ))}
-    </div>
-  );
-}
-
-function Orbit({ selected, onPhone }: { selected: boolean; onPhone: () => void }) {
-  const meta = frameById("wall");
-  // фрейм увеличен целиком (meta.k) — внутри считаем в исходных пикселях вёрстки
-  const k = meta.k ?? 1;
-  const cx = meta.w / k / 2;
-  const cy = meta.h / k / 2 + 20;
-  const rx = 520;
-  const ry = 480;
-  // Эллипс от верхней точки; флаг sweep=1 — движение по часовой стрелке.
-  const path = `path('M ${cx} ${cy - ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy + ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy - ry}')`;
-  // орбита анимируется в основном потоке — останавливаем её, когда остров не в кадре
-  const probe = useRef<HTMLSpanElement>(null);
-  const [seen, setSeen] = useState(true);
-  useEffect(() => {
-    const el = probe.current?.parentElement;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { rootMargin: "200px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return (
-    <Frame meta={meta} selected={selected} className={`st-free st-orbit${seen ? "" : " is-paused"}`}>
-      <span ref={probe} hidden />
-      {Array.from({ length: ORBIT_N }, (_, k) => (
-        <OrbitPhone
-          key={k}
-          images={narrowWallpapers.filter((_, n) => n % ORBIT_N === k)}
-          delay={k * 360}
-          onPick={onPhone}
-          style={{
-            offsetPath: path,
-            animationDelay: `${(-k * ORBIT_SECONDS) / ORBIT_N}s, ${-k * 0.5}s`,
-            animationDuration: `${ORBIT_SECONDS}s, 5s`,
-          }}
-        />
-      ))}
-      <div className="st-monitor" style={{ left: cx - 332, top: cy - 230 }}>
-        <Monitor />
-        <div className="st-monitor__neck" />
-        <div className="st-monitor__base" />
-        <span className="st-orbit__caption">Каждый месяц — новые обои</span>
-      </div>
-    </Frame>
-  );
-}
-
 /* ---------- Проекты ---------- */
 
 // [x, y, ширина, поворот] — коллаж из презентации айдентики поверх фирменной волны
@@ -931,7 +834,7 @@ export const World = memo(function World(p: WorldProps) {
         onDrive={p.onDrive}
       />
       <SocialSphere selected={p.selected === "social"} onSpin={p.onToggleSpread} />
-      <Orbit selected={p.selected === "wall"} onPhone={p.onPhone} />
+      <WallField selected={p.selected === "wall"} onPick={p.onPhone} />
       <CaseHR selected={p.selected} active={p.presView} slide={p.slide} onSlide={p.onSlide} />
       <CaseTour selected={p.selected} />
       <Projects selected={p.selected} />
