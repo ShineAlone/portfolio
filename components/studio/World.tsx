@@ -7,8 +7,6 @@ import {
   ISLANDS,
   LAB_CARDS,
   SITE_FRAMES,
-  POST_SCALE,
-  SOCIAL_LAYOUT,
   frameById,
   islandById,
   narrowWallpapers,
@@ -18,6 +16,7 @@ import {
   type FrameMeta,
 } from "./data";
 import { Frame } from "./Frame";
+import { SocialSphere } from "./SocialSphere";
 import { CaseHR } from "./CaseHR";
 import { CaseTour } from "./CaseTour";
 
@@ -564,43 +563,6 @@ function Garage({
   );
 }
 
-/* ---------- Соцсети: стопка, которая раскладывается ---------- */
-
-function SocialPile({ spread, selected }: { spread: boolean; selected: boolean }) {
-  const meta = frameById("social");
-  const posts = SOCIAL_LAYOUT.posts;
-  return (
-    <Frame meta={meta} selected={selected} className={`st-social${spread ? " is-spread" : ""}`}>
-      {posts.map(({ src, x, y, w, h }, i) => {
-        const px = meta.w / 2 - w / 2 - x + (rand(i * 3 + 1) - 0.5) * 780 * POST_SCALE;
-        const py = meta.h / 2 - h / 2 - y + (rand(i * 3 + 2) - 0.5) * 520 * POST_SCALE;
-        const rot = (rand(i * 3 + 3) - 0.5) * 56;
-        return (
-          <div
-            key={src}
-            className="st-post"
-            style={
-              {
-                left: x,
-                top: y,
-                width: w,
-                height: h,
-                zIndex: i,
-                transitionDelay: `${(spread ? i : posts.length - i) * 14}ms`,
-                "--px": `${px}px`,
-                "--py": `${py}px`,
-                "--rot": `${rot}deg`,
-              } as React.CSSProperties
-            }
-          >
-            <img src={src} alt="" loading="lazy" draggable={false} />
-          </div>
-        );
-      })}
-    </Frame>
-  );
-}
-
 /* ---------- Обои: телефоны вращаются по часовой вокруг монитора ---------- */
 
 const ORBIT_N = 10;
@@ -855,7 +817,7 @@ function Contact({ selected }: { selected: boolean }) {
 
 /* ---------- Острова ---------- */
 
-function Islands({ spread, onToggleSpread }: { spread: boolean; onToggleSpread: () => void }) {
+function Islands() {
   return (
     <>
       {ISLANDS.map((isl) => (
@@ -879,27 +841,6 @@ function Islands({ spread, onToggleSpread }: { spread: boolean; onToggleSpread: 
           >
             {isl.name}
           </div>
-          {isl.id === "social" && (
-            <div className="st-island__action">
-              <button
-                type="button"
-                data-ui
-                className={`st-spread${spread ? " is-open" : ""}`}
-                onClick={onToggleSpread}
-              >
-                {/* мини-колода: под курсором веером показывает, что произойдёт */}
-                <span className="st-spread__deck" aria-hidden>
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <span className="st-spread__text">
-                  <b>{spread ? "Собрать в стопку" : "Разложить посты"}</b>
-                  <small>{spread ? "вернуть как было" : `${SOCIAL_LAYOUT.posts.length} постов в стопке`}</small>
-                </span>
-              </button>
-            </div>
-          )}
         </div>
       ))}
     </>
@@ -929,7 +870,7 @@ type WorldProps = {
 export const World = memo(function World(p: WorldProps) {
   return (
     <>
-      <Islands spread={p.spread} onToggleSpread={p.onToggleSpread} />
+      <Islands />
       <Greeting step={p.introStep} typed={p.typed} selected={p.selected === "hero"} onSticker={p.onSticker} />
       <Chat step={p.chatStep} selected={p.selected === "chat"} />
       <History selected={p.selected === "history"} />
@@ -944,7 +885,7 @@ export const World = memo(function World(p: WorldProps) {
         onPick={p.onPickCar}
         onDrive={p.onDrive}
       />
-      <SocialPile spread={p.spread} selected={p.selected === "social"} />
+      <SocialSphere selected={p.selected === "social"} onSpin={p.onToggleSpread} />
       <Orbit selected={p.selected === "wall"} onPhone={p.onPhone} />
       <CaseHR selected={p.selected} active={p.presView} slide={p.slide} onSlide={p.onSlide} />
       <CaseTour selected={p.selected} />

@@ -3831,3 +3831,111 @@
     display: none;
   }
 }
+
+/* ---------- соцсети: сфера из постов ---------- */
+
+.st-ball {
+  position: absolute;
+  inset: 0;
+  perspective: 3400px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.st-ball.is-drag {
+  cursor: grabbing;
+}
+
+/* вся сфера слегка парит */
+.st-ball__float {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: st-ball-float 7s ease-in-out infinite;
+}
+
+@keyframes st-ball-float {
+  50% {
+    transform: translateY(-26px);
+  }
+}
+
+.st-ball__sphere {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.st-ball__tile {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+}
+
+.st-world .st-ball__tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 20px;
+  pointer-events: none;
+  box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.45);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s, box-shadow 0.35s;
+}
+
+/* пост под курсором выдвигается из сферы навстречу */
+.st-ball:not(.is-drag) .st-ball__tile:hover {
+  z-index: 2;
+}
+
+.st-ball:not(.is-drag) .st-ball__tile:hover img {
+  transform: translateZ(110px) scale(1.22);
+  box-shadow: 0 40px 60px -20px rgba(0, 0, 0, 0.55);
+}
+
+/* дальняя сторона видна сквозь просветы, но приглушена и не ловит курсор */
+.st-ball__tile.is-back {
+  pointer-events: none;
+}
+
+.st-ball__tile.is-back img {
+  filter: brightness(0.62) saturate(0.7);
+}
+
+.st-ball__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 90px;
+  width: 1200px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.28), transparent);
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: st-ball-shadow 7s ease-in-out infinite;
+}
+
+@keyframes st-ball-shadow {
+  50% {
+    transform: translateX(-50%) scale(0.9);
+    opacity: 0.7;
+  }
+}
+
+.st-ball__hint {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  padding: 10px 20px;
+  border-radius: 22px;
+  background: #fff;
+  border: 2px solid #111;
+  font-size: 20px;
+  white-space: nowrap;
+  transform: translateX(-50%) rotate(-2deg);
+  pointer-events: none;
+}

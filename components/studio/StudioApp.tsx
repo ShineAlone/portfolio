@@ -493,7 +493,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     () => [
       { rect: frameById("hero"), text: "Это я — дизайнер широкого профиля, в дизайне с 2021 года" },
       { rect: islandById("plugins"), text: "Лаборатория: плагины, сервисы и гараж — возьми машинку и прокатись по сайту" },
-      { rect: frameById("social"), text: "Больше 2000 постов. Разложил часть для тебя", arrive: () => setSpread(true) },
+      { rect: frameById("social"), text: "Больше 2000 постов. Часть собрал в сферу — покрути её мышкой" },
       { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
       { rect: islandFocus(islandById("cases")), text: "Кейсы: продукт целиком — экраны сотрудника и HR, презентация и даже аватары" },
       { rect: islandById("proj"), text: "Лендинги целиком и айдентика «Кофе Культ»" },
@@ -521,7 +521,6 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     const s = tourStops[tour];
     flyTo(s.rect, 90, 0.9);
     setAgent({ visible: true, x: s.rect.x + s.rect.w * 0.45, y: s.rect.y + 80, bubble: s.text });
-    s.arrive?.();
     const t = setTimeout(() => setTour((i) => i + 1), 4800);
     return () => clearTimeout(t);
   }, [tour, tourStops, flyTo]);

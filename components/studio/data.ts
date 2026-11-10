@@ -216,11 +216,11 @@ export const FRAMES: FrameMeta[] = [
     name: "Посты для соцсетей",
     ...rel(
       "social",
-      Math.round((span(3) - SOCIAL_LAYOUT.w) / 2),
-      Math.round((ROW2.h - SOCIAL_LAYOUT.h) / 2)
+      Math.round((span(3) - 2100) / 2),
+      Math.round((ROW2.h - 2200) / 2)
     ),
-    w: SOCIAL_LAYOUT.w,
-    h: SOCIAL_LAYOUT.h,
+    w: 2100,
+    h: 2200,
     r: 0,
     text: SOCIAL.description,
     tags: [SOCIAL.subtitle],
@@ -348,7 +348,7 @@ export const ACHIEVEMENTS: {
   { id: "sticker", name: "Знакомство", hint: "Кликни по любой наклейке рядом с моим фото", island: "about", color: "#FEFE78" },
   { id: "map", name: "Картограф", hint: "Отдались так, чтобы увидеть всё пространство целиком", island: "about", color: "#86DDFF" },
   { id: "drive", name: "Тест-драйв", hint: "Возьми машинку в гараже «Лаборатории» и врежься в любой блок", island: "plugins", color: "#86DDFF" },
-  { id: "pile", name: "Ворох постов", hint: "Разложи стопку постов в «Соцсетях»", island: "social", color: "#FFB6E1" },
+  { id: "pile", name: "Сфера постов", hint: "Покрути сферу постов в «Соцсетях»", island: "social", color: "#FFB6E1" },
   { id: "orbit", name: "Смена обоев", hint: "Кликни по любому телефону в «Обоях»", island: "wall", color: "#ACF9A2" },
   { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов презентации в «Кейсах»", island: "cases", color: "#B8C7FF" },
   { id: "zoom", name: "Под лупой", hint: "Приблизь любой лендинг в «Проектах» до 100%", island: "proj", color: "#FFC7B6" },
