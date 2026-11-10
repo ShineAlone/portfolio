@@ -177,7 +177,7 @@ function MChat() {
 
 /* ---------- лента ---------- */
 
-const ORDER = ["about", "plugins", "social", "wall", "pres", "cases", "proj", "contact"];
+const ORDER = ["about", "plugins", "social", "wall", "cases", "proj", "contact"];
 
 export function MobileApp({ onCanvas }: { onCanvas: () => void }) {
   const [active, setActive] = useState("about");

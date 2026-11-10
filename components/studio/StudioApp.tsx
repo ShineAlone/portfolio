@@ -13,6 +13,7 @@ import {
   CARS,
   CHAT_STEP_MS,
   COLLIDERS,
+  UNBREAKABLE,
   frameById,
   islandById,
   islandFocus,
@@ -23,7 +24,7 @@ import { HR_DECK } from "./cases";
 import { Glyph } from "./glyphs";
 import { CarSvg, CHAT, NAME_CHARS, SpinFigure, World } from "./World";
 import { CityLayer } from "./CityLayer";
-import { SURFACES, getCity, surfaceAt, type Surface } from "./city";
+import { SEA_LIMIT, SURFACES, getCity, seaDepth, surfaceAt, type Surface } from "./city";
 import { addParticle, drawFx, makeCrack, shatter, type Mark, type Particle } from "./effects";
 
 const BASE_BG = "#ECEAE4";
@@ -361,6 +362,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     // Пишем в DOM только то, что реально поменялось: при панорамировании меняется лишь сдвиг,
     // а переустановка --z и фона заставляла браузер пересчитывать стили сотен элементов каждый кадр.
     let lastZ = -1;
+    let lastZq = -1;
     let lastIsland = "";
     const apply = () => {
       const { x, y, z } = camera.get();
@@ -370,9 +372,15 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       w.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${z})`;
       v.style.backgroundPosition = `${x}px ${y}px`;
 
+      // За рулём масштаб плавно меняется почти каждый кадр, а от --z зависят стили сотен подписей и рамок:
+      // пока едем, обновляем его шагами по 4% — глазу не видно, а пересчёта стилей в разы меньше.
+      const zq = drivingRef.current ? Math.round(z * 25) / 25 : z;
+      if (zq !== lastZq) {
+        lastZq = zq;
+        w.style.setProperty("--z", String(zq));
+      }
       if (z !== lastZ) {
         lastZ = z;
-        w.style.setProperty("--z", String(z));
         v.style.backgroundColor = BASE_BG;
         v.style.backgroundImage = z < 0.35 ? "none" : "radial-gradient(rgba(0,0,0,.13) 1.1px, transparent 1.4px)";
         v.style.backgroundSize = `${28 * z}px ${28 * z}px`;
@@ -489,7 +497,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
       { rect: islandFocus(islandById("cases")), text: "Кейсы: продукт целиком — экраны сотрудника и HR, презентация и даже аватары" },
       { rect: islandById("proj"), text: "Лендинги целиком и айдентика «Кофе Культ»" },
-      { rect: frameById("contact"), text: "А здесь можно написать мне. Буду рад твоей задаче!" },
+      { rect: islandById("contact"), text: "А здесь можно написать мне. Буду рад твоей задаче!" },
     ],
     []
   );
@@ -581,7 +589,8 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     const f = frameById(id);
     if (!el) return;
     el.classList.remove("is-hit");
-    shatter(el, f.w, f.h, ix, iy, "out");
+    const k = f.k ?? 1;
+    shatter(el, f.w / k, f.h / k, ix / k, iy / k, "out");
     // трещины разлетелись вместе с осколками
     el.querySelector(".st-crack-clip")?.remove();
     brokenRef.current.add(id);
@@ -596,7 +605,8 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     if (!el) return;
     restoring.current.add(id);
     // осколки слетаются со всех сторон, затем блок появляется целиком и пружинит
-    const ms = shatter(el, f.w, f.h, f.w / 2, f.h / 2, "in");
+    const k = f.k ?? 1;
+    const ms = shatter(el, f.w / k, f.h / k, f.w / k / 2, f.h / k / 2, "in");
     setTimeout(() => {
       brokenRef.current.delete(id);
       restoring.current.delete(id);
@@ -620,7 +630,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     if (s.frame) {
       const el = worldRef.current?.querySelector<HTMLElement>(`[data-frame="${s.id}"]`);
       // один заезд — один удар: пока машинка отскакивает и упирается, счёт не растёт
-      if (el && power > 0.15 && (countedAt.current.get(s.id) ?? 0) < now - 900) {
+      if (el && power > 0.15 && !UNBREAKABLE.includes(s.id) && (countedAt.current.get(s.id) ?? 0) < now - 900) {
         countedAt.current.set(s.id, now);
         const n = (hitsRef.current.get(s.id) ?? 0) + 1;
         hitsRef.current.set(s.id, n);
@@ -635,14 +645,15 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
         el.classList.remove("is-hit");
         void el.offsetWidth;
         el.classList.add("is-hit");
-        if (power > 0.12) makeCrack(el, px - s.x, py - s.y, angle, power, Math.min(s.w, s.h) * 0.5, "var(--r)");
+        const k = frameById(s.id).k ?? 1;
+        if (power > 0.12) makeCrack(el, (px - s.x) / k, (py - s.y) / k, angle, power, (Math.min(s.w, s.h) * 0.5) / k, "var(--r)");
       }
     } else if (power > 0.12 && cityFxRef.current) {
       // у дома своя подложка по его контуру — трещина не вылезет на тротуар
       const fx = cityFxRef.current;
       let host = fx.querySelector<HTMLElement>(`[data-b="${s.id}"]`);
       if (!host) {
-        const b = getCity().bounds;
+        const b = getCity().outer;
         host = document.createElement("div");
         host.dataset.b = s.id;
         host.className = "st-city__host";
@@ -692,6 +703,11 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     let lastPuff = 0;
     let lastDust = 0;
     let braking = false;
+    // последняя точка на асфальте — туда катер вернёт машинку, если она заплывёт слишком далеко
+    let safe = { x: c.x, y: c.y, a: c.a };
+    let safeAt = 0;
+    let sinkAt = 0;
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __car: typeof c }).__car = c;
     const ZOOM_OUT = 0.3;
     const rnd = (a: number) => (Math.random() - 0.5) * a;
 
@@ -704,11 +720,11 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     // частицы поверхности: трава летит клочками, грунт пылит, вода расходится кругами
     const kick = (s: Surface, x: number, y: number, bx: number, by: number, t: number, n = 1) => {
       for (let i = 0; i < n; i++) {
-        if (s === "grass" || s === "field") {
+        if (s === "grass") {
           addParticle(parts, { x, y, vx: bx * 140 + rnd(160), vy: by * 140 + rnd(160), t, life: 0.55, r0: 5, r1: 2, rgb: Math.random() < 0.5 ? "78,130,52" : "120,176,78", a: 0.9 });
-        } else if (s === "dirt") {
+        } else if (s === "dirt" || s === "sand") {
           addParticle(parts, { x, y, vx: bx * 70 + rnd(80), vy: by * 70 + rnd(80), t, life: 1.1, r0: 10, r1: 38, rgb: "176,136,92", a: 0.42 });
-        } else if (s === "water") {
+        } else if (s === "water" || s === "sea") {
           addParticle(parts, { x, y, vx: 0, vy: 0, t, life: 0.9, r0: 8, r1: 46, rgb: "255,255,255", a: 0.8, ring: true });
           addParticle(parts, { x, y, vx: bx * 120 + rnd(200), vy: by * 120 + rnd(200), t, life: 0.45, r0: 5, r1: 2, rgb: "220,246,255", a: 0.95 });
         } else {
@@ -729,6 +745,20 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       const right = k.has("KeyD") || k.has("ArrowRight");
       let steer = (right ? 1 : 0) - (left ? 1 : 0);
       let gas = 1;
+      if (sinkAt) {
+        // машинка тонет: управление отключено, через секунду она снова на дороге, носом в город
+        up = down = false;
+        steer = 0;
+        c.v = 0;
+        if (now - sinkAt > 1100) {
+          sinkAt = 0;
+          c.x = safe.x;
+          c.y = safe.y;
+          c.a = safe.a + Math.PI;
+          lastWheel.fill(null);
+          carElRef.current?.classList.remove("is-sunk");
+        }
+      }
       // Джойстик на телефоне: машинка разворачивается туда, куда отклонён стик, и едет;
       // чем сильнее отклонение — тем быстрее. Пока разворот крутой, газ сбрасывается.
       const st = stickRef.current;
@@ -803,9 +833,23 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
         }
         c.v = -c.v * spec.bounce;
       }
-      // границ больше нет: за городом — бескрайнее поле
       c.x = nx;
       c.y = ny;
+
+      // Город стоит на острове. По пляжу и мелководью ехать можно, но дальше в море машинку
+      // забирает катер и возвращает на последнюю дорогу — невидимой стены нет.
+      if (!sinkAt && surf === "road" && now - safeAt > 400 && Math.abs(c.v) > 30) {
+        safeAt = now;
+        safe = { x: c.x, y: c.y, a: c.a };
+      }
+      if (!sinkAt && seaDepth(city, c.x, c.y) > SEA_LIMIT) {
+        sinkAt = now;
+        c.v = 0;
+        carElRef.current?.classList.add("is-sunk");
+        for (let i = 0; i < 10; i++)
+          addParticle(parts, { x: c.x + rnd(60), y: c.y + rnd(60), vx: 0, vy: 0, t: t + i * 0.05, life: 1.1, r0: 10, r1: 70 + Math.random() * 50, rgb: "255,255,255", a: 0.85, ring: true });
+        showToast({ text: "Дальше только море — катер вернул машинку на дорогу" });
+      }
 
       // покрытие меняется, только если машинка задержалась на новом дольше доли секунды —
       // иначе на кромке тротуара надпись и эффекты мигали бы
@@ -869,8 +913,9 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       }
 
       // пыль и брызги из-под задних колёс, дым шин при пробуксовке на асфальте
-      const dusty = surf === "grass" || surf === "field" || surf === "dirt";
-      if (t - lastDust > 0.035 && ((dusty && Math.abs(c.v) > 80) || (skid && !dusty && surf !== "water"))) {
+      const dusty = surf === "grass" || surf === "sand" || surf === "dirt";
+      const wet = surf === "water" || surf === "sea";
+      if (t - lastDust > 0.035 && ((dusty && Math.abs(c.v) > 80) || (skid && !dusty && !wet))) {
         lastDust = t;
         const [lx, ly] = wheels[2 + Math.floor(Math.random() * 2)];
         const p = toWorld(lx, ly);
@@ -935,7 +980,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       ctx?.clearRect(0, 0, canvas!.width, canvas!.height);
       carElRef.current?.classList.remove("is-braking");
     };
-  }, [driving, carId, camera, vpSize, hitSolid]);
+  }, [driving, carId, camera, vpSize, hitSolid, showToast]);
 
   const discuss = (name: string) => {
     const text = `Привет, Арсений! Пишу по поводу работы «${name}» с твоего сайта.`;

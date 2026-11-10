@@ -1,4 +1,4 @@
-import { AUTOMATION, HERO, LINKS, PRESENTATIONS, PROJECTS, SOCIAL, WALLPAPERS } from "@/lib/content";
+import { AUTOMATION, HERO, LINKS, PROJECTS, SOCIAL, WALLPAPERS } from "@/lib/content";
 import { HR_CASE_H } from "./cases";
 import { TOUR_CASE_H } from "./casesTour";
 
@@ -18,22 +18,31 @@ const GAP = 200;
 const colX = (i: number) => i * (COL + GAP);
 const span = (n: number) => n * COL + (n - 1) * GAP;
 
-const ROW1 = { y: 0, h: 2260 };
-const ROW2 = { y: ROW1.y + ROW1.h + GAP, h: 1840 };
-const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 2500 };
-
-// Сетка нужна городу: улицы продолжают промежутки между островами.
-export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3], colX, span };
-
 // Кейсы — справа от сетки: две вертикальные ленты бордов рядом, как проекты на Behance.
 const CASES = { x: colX(6), w: 4500, h: Math.max(HR_CASE_H, TOUR_CASE_H) + 200 };
+
+// Во сколько раз крупнее показаны работы-картинки: обои и проекты свёрстаны в своём размере и увеличены целиком.
+const WALL_K = 1.6;
+const PROJ_K = 1.2;
+const CONTACT_K = 1.5;
+
+/*
+ * Левая часть — четыре ряда, по высоте ровно с лентами кейсов: мир получается цельным прямоугольником.
+ * Нижний ряд («Контакты») забирает всё, что осталось до нижнего края кейсов.
+ */
+const ROW1 = { y: 0, h: 2260 };
+const ROW2 = { y: ROW1.y + ROW1.h + GAP, h: 2700 };
+const ROW3 = { y: ROW2.y + ROW2.h + GAP, h: 3000 };
+const ROW4 = { y: ROW3.y + ROW3.h + GAP, h: Math.max(1000, CASES.h - (ROW3.y + ROW3.h + GAP)) };
+
+// Сетка нужна городу: улицы продолжают промежутки между островами.
+export const GRID = { COL, GAP, rows: [ROW1, ROW2, ROW3, ROW4], colX, span };
 
 export const ISLANDS: Island[] = [
   { id: "about", name: "Обо мне", color: "#FEFE78", x: colX(0), y: ROW1.y, w: span(3), h: ROW1.h },
   { id: "plugins", name: "Лаборатория", color: "#86DDFF", x: colX(3), y: ROW1.y, w: span(3), h: ROW1.h },
-  { id: "social", name: "Соцсети", color: "#FFB6E1", x: colX(0), y: ROW2.y, w: span(2), h: ROW2.h },
-  { id: "wall", name: "Обои", color: "#ACF9A2", x: colX(2), y: ROW2.y, w: span(2), h: ROW2.h },
-  { id: "pres", name: "Презентации", color: "#C791FF", x: colX(4), y: ROW2.y, w: span(2), h: ROW2.h },
+  { id: "social", name: "Соцсети", color: "#FFB6E1", x: colX(0), y: ROW2.y, w: span(3), h: ROW2.h },
+  { id: "wall", name: "Обои", color: "#ACF9A2", x: colX(3), y: ROW2.y, w: span(3), h: ROW2.h },
   {
     id: "cases",
     name: "Кейсы",
@@ -45,8 +54,8 @@ export const ISLANDS: Island[] = [
     // камера подлетает к обложкам обоих кейсов, а не ко всей ленте
     focus: { x: CASES.x + 60, y: 40, w: CASES.w - 120, h: 1320 },
   },
-  { id: "proj", name: "Проекты", color: "#FFC7B6", x: colX(0), y: ROW3.y, w: span(5), h: ROW3.h },
-  { id: "contact", name: "Контакты", color: "#1E1E1E", dark: true, x: colX(5), y: ROW3.y, w: span(1), h: ROW3.h },
+  { id: "proj", name: "Проекты", color: "#FFC7B6", x: colX(0), y: ROW3.y, w: span(6), h: ROW3.h },
+  { id: "contact", name: "Контакты", color: "#1E1E1E", dark: true, x: colX(0), y: ROW4.y, w: span(6), h: ROW4.h },
 ];
 
 export const WORLD: Rect = { x: 0, y: -120, w: CASES.x + CASES.w, h: CASES.h + 120 };
@@ -72,6 +81,8 @@ export type FrameMeta = Rect & {
   tags?: string[];
   tagColor?: string;
   link?: { href: string; label: string };
+  /** фрейм свёрстан в размере w/k × h/k и увеличен целиком в k раз */
+  k?: number;
 };
 
 // Высоты лендингов посчитаны по пропорциям картинок, чтобы страницы были видны целиком.
@@ -85,15 +96,21 @@ const SITES: [id: string, name: string, src: string, h: number][] = [
 
 // Окна в «Проектах» расставлены с равным шагом по ширине острова.
 const SITE_STEP = 580;
+const PROJ_X0 = 77;
+// координаты и размеры «Проектов» заданы в исходном масштабе вёрстки и увеличиваются в PROJ_K раз
+const proj = (x: number, y: number, w: number, h: number) => ({
+  ...rel("proj", Math.round(x * PROJ_K), Math.round(y * PROJ_K)),
+  w: Math.round(w * PROJ_K),
+  h: Math.round(h * PROJ_K),
+  k: PROJ_K,
+});
 
 export const SITE_FRAMES = SITES.map(([id, name, src, h], i) => ({
   src,
   meta: {
     id,
     name,
-    ...rel("proj", 60 + i * SITE_STEP, 170),
-    w: 470,
-    h: h + 40,
+    ...proj(PROJ_X0 + i * SITE_STEP, 170, 470, h + 40),
     r: 18,
     text: PROJECTS.description,
   } as FrameMeta,
@@ -105,8 +122,9 @@ export const SITE_FRAMES = SITES.map(([id, name, src, h], i) => ({
  * последний — сторис 640×1067, остальные квадраты. Края сетки ровные, ничего не обрезается.
  */
 const SOCIAL_ROW_ASPECT = [1, 770 / 640, 1, 1, 1, 1, 1, 1067 / 640];
-const POST_W = 170;
-const POST_GAP = 12;
+const POST_W = 250;
+const POST_GAP = 18;
+export const POST_SCALE = POST_W / 170;
 
 export const SOCIAL_LAYOUT = (() => {
   let y = 0;
@@ -134,10 +152,6 @@ export const labSlot = (i: number, cols = 1) => ({
   w: SLOT_W * cols + SLOT_GAP * (cols - 1),
   h: SLOT_H,
 });
-
-// Презентации: карточки видео, под ними вкладки и просмотрщик — всё по центру острова.
-const PRES_CONTENT_H = 440 + 60 + 794;
-const PRES_Y0 = Math.round((ROW2.h - PRES_CONTENT_H) / 2);
 
 export const FRAMES: FrameMeta[] = [
   {
@@ -202,7 +216,7 @@ export const FRAMES: FrameMeta[] = [
     name: "Посты для соцсетей",
     ...rel(
       "social",
-      Math.round((span(2) - SOCIAL_LAYOUT.w) / 2),
+      Math.round((span(3) - SOCIAL_LAYOUT.w) / 2),
       Math.round((ROW2.h - SOCIAL_LAYOUT.h) / 2)
     ),
     w: SOCIAL_LAYOUT.w,
@@ -214,25 +228,13 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "wall",
     name: "Обои для телефонов и ПК",
-    ...rel("wall", 90, Math.round((ROW2.h - 1260) / 2)),
-    w: 1220,
-    h: 1260,
+    ...rel("wall", Math.round((span(3) - 1220 * WALL_K) / 2), Math.round((ROW2.h - 1260 * WALL_K) / 2)),
+    w: 1220 * WALL_K,
+    h: 1260 * WALL_K,
+    k: WALL_K,
     r: 0,
     text: WALLPAPERS.description,
   },
-  ...PRESENTATIONS.cards.map(
-    (card, i): FrameMeta => ({
-      id: `pres-${i}`,
-      name: i === 0 ? "Хакатон: ИИ для стройки" : "Кудач — мой стартап",
-      ...rel("pres", 110 + i * 620, PRES_Y0),
-      w: 560,
-      h: 440,
-      r: 28,
-      text: card.text,
-      tags: [card.tag],
-      tagColor: card.tagColor,
-    })
-  ),
   /* ---------- кейс: HR-платформа — одна лента бордов ---------- */
   {
     id: "case-hr",
@@ -260,27 +262,21 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "site-5",
     name: "Вне рамок",
-    ...rel("proj", 60 + 5 * SITE_STEP, 170),
-    w: 470,
-    h: 1996,
+    ...proj(PROJ_X0 + 5 * SITE_STEP, 170, 470, 1996),
     r: 18,
     text: PROJECTS.description,
   },
   {
     id: "site-6",
     name: "Вне рамок — мобильная",
-    ...rel("proj", 60 + 6 * SITE_STEP, 170),
-    w: 200,
-    h: 2252,
+    ...proj(PROJ_X0 + 6 * SITE_STEP, 170, 200, 2252),
     r: 30,
     text: PROJECTS.description,
   },
   {
     id: "coffee",
     name: "Кофе Культ",
-    ...rel("proj", 60, 1100),
-    w: 1490,
-    h: 1000,
+    ...proj(PROJ_X0, 1100, 1490, 1000),
     r: 40,
     text: "Личный некоммерческий концепт айдентики для сети кофеен: стаканчики, упаковка десертов, меню, абонементы. Сделан для себя и в работу не пошёл; логотип принадлежит «Кофе Культ» и использован только для демонстрации идеи.",
     tags: ["Айдентика", "Упаковка", "Полиграфия"],
@@ -289,18 +285,17 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "merch",
     name: "Мерч",
-    ...rel("proj", 60 + 3 * SITE_STEP, 1400),
-    w: 1050,
-    h: 960,
+    ...proj(PROJ_X0 + 3 * SITE_STEP, 1400, 1050, 960),
     r: 0,
     text: PROJECTS.description,
   },
   {
     id: "contact",
     name: "Связаться",
-    ...rel("contact", 60, 170),
-    w: 480,
-    h: 620,
+    ...rel("contact", 150, Math.round((ROW4.h - 620 * CONTACT_K) / 2)),
+    w: 480 * CONTACT_K,
+    h: 620 * CONTACT_K,
+    k: CONTACT_K,
     r: 36,
     text: "Пиши в Telegram — расскажи о задаче, обсудим сроки и формат работы.",
   },
@@ -308,17 +303,8 @@ export const FRAMES: FrameMeta[] = [
 
 export const frameById = (id: string) => FRAMES.find((f) => f.id === id)!;
 
-// На месте просмотрщика в «Презентациях» — заготовка под следующие презентации.
-export const PRES_SOON: Rect = { ...rel("pres", 110, PRES_Y0 + 500), w: 1180, h: 794 };
-
 export const narrowWallpapers = WALLPAPERS.rows.flatMap((r) => r.images.filter((_, i) => r.cols[i] === 1));
 export const wideWallpapers = WALLPAPERS.rows.flatMap((r) => r.images.filter((_, i) => r.cols[i] === 2));
-
-export const DECKS = PRESENTATIONS.slideGroups.map((slides, i) => ({
-  name: `Презентация ${i + 1}`,
-  slides,
-  color: ["#C791FF", "#FEFE78", "#86DDFF"][i % 3],
-}));
 
 export const poster = (video: string) =>
   video.replace("/videos/", "/images/posters/").replace(".mp4", ".jpg");
@@ -345,6 +331,8 @@ export const CARS: CarSpec[] = [
 
 // Блоки, в которые можно врезаться: всё, кроме прозрачных коллажей (приветствие, обои, соцсети) и самого гаража.
 export const COLLIDERS = FRAMES.filter((f) => !["hero", "wall", "social", "garage"].includes(f.id));
+// Ленты кейсов слишком велики, чтобы рассыпаться: внутри живая карта и десятки экранов — на них остаются только трещины.
+export const UNBREAKABLE = ["case-hr", "case-tour"];
 
 /* ---------- достижения ---------- */
 

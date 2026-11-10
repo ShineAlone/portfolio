@@ -1,13 +1,13 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
-import { EDUCATION, HERO, LINKS, PRESENTATIONS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
+import { memo, useEffect, useRef, useState } from "react";
+import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
   ISLANDS,
   LAB_CARDS,
-  PRES_SOON,
   SITE_FRAMES,
+  POST_SCALE,
   SOCIAL_LAYOUT,
   frameById,
   islandById,
@@ -572,8 +572,8 @@ function SocialPile({ spread, selected }: { spread: boolean; selected: boolean }
   return (
     <Frame meta={meta} selected={selected} className={`st-social${spread ? " is-spread" : ""}`}>
       {posts.map(({ src, x, y, w, h }, i) => {
-        const px = meta.w / 2 - w / 2 - x + (rand(i * 3 + 1) - 0.5) * 780;
-        const py = meta.h / 2 - h / 2 - y + (rand(i * 3 + 2) - 0.5) * 520;
+        const px = meta.w / 2 - w / 2 - x + (rand(i * 3 + 1) - 0.5) * 780 * POST_SCALE;
+        const py = meta.h / 2 - h / 2 - y + (rand(i * 3 + 2) - 0.5) * 520 * POST_SCALE;
         const rot = (rand(i * 3 + 3) - 0.5) * 56;
         return (
           <div
@@ -653,14 +653,27 @@ function Monitor() {
 
 function Orbit({ selected, onPhone }: { selected: boolean; onPhone: () => void }) {
   const meta = frameById("wall");
-  const cx = meta.w / 2;
-  const cy = meta.h / 2 + 20;
+  // фрейм увеличен целиком (meta.k) — внутри считаем в исходных пикселях вёрстки
+  const k = meta.k ?? 1;
+  const cx = meta.w / k / 2;
+  const cy = meta.h / k / 2 + 20;
   const rx = 520;
   const ry = 480;
   // Эллипс от верхней точки; флаг sweep=1 — движение по часовой стрелке.
   const path = `path('M ${cx} ${cy - ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy + ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy - ry}')`;
+  // орбита анимируется в основном потоке — останавливаем её, когда остров не в кадре
+  const probe = useRef<HTMLSpanElement>(null);
+  const [seen, setSeen] = useState(true);
+  useEffect(() => {
+    const el = probe.current?.parentElement;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   return (
-    <Frame meta={meta} selected={selected} className="st-free st-orbit">
+    <Frame meta={meta} selected={selected} className={`st-free st-orbit${seen ? "" : " is-paused"}`}>
+      <span ref={probe} hidden />
       {Array.from({ length: ORBIT_N }, (_, k) => (
         <OrbitPhone
           key={k}
@@ -681,36 +694,6 @@ function Orbit({ selected, onPhone }: { selected: boolean; onPhone: () => void }
         <span className="st-orbit__caption">Каждый месяц — новые обои</span>
       </div>
     </Frame>
-  );
-}
-
-/* ---------- Презентации ---------- */
-
-function Presentations(p: { selected: string | null }) {
-  return (
-    <>
-      {PRESENTATIONS.cards.map((card, i) => (
-        <Frame key={i} meta={frameById(`pres-${i}`)} selected={p.selected === `pres-${i}`} className="st-card">
-          <div className="stc">
-            <div className="stc__media">
-              <HoverVideo video={card.video!} />
-            </div>
-            <span className="stp__tag" style={{ background: card.tagColor }}>
-              {card.tag}
-            </span>
-            <p>{card.text}</p>
-          </div>
-        </Frame>
-      ))}
-      {/* первая презентация переехала в кейс; здесь появятся следующие */}
-      <div
-        className="st-soon"
-        style={{ left: PRES_SOON.x, top: PRES_SOON.y, width: PRES_SOON.w, height: PRES_SOON.h }}
-      >
-        <b>Скоро здесь</b>
-        <span>новые презентации — а первая уже живёт в «Кейсах» вместе с продуктом</span>
-      </div>
-    </>
   );
 }
 
@@ -857,13 +840,14 @@ function Contact({ selected }: { selected: boolean }) {
           Написать в Telegram ↗
         </a>
       </Frame>
-      <div className="st-deco stx__spin" style={{ left: isl.x + 100, top: isl.y + 860 }}>
-        <SpinFigure ms={110} />
-        <span>кручусь, пока ты решаешься</span>
-      </div>
-      <div className="st-deco stx__vertical" style={{ left: isl.x + isl.w / 2 - 150, top: isl.y + 1380 }}>
+      {/* широкий финал: крупная надпись по центру и крутящаяся фигура справа */}
+      <div className="st-deco stx__big" style={{ left: isl.x + 1040, top: isl.y, width: isl.w - 1040 - 900, height: isl.h }}>
         <span>напиши</span>
         <span>мне</span>
+      </div>
+      <div className="st-deco stx__spin" style={{ left: isl.x + isl.w - 820, top: isl.y + isl.h / 2 - 370 }}>
+        <SpinFigure ms={110} />
+        <span>кручусь, пока ты решаешься</span>
       </div>
     </>
   );
@@ -962,7 +946,6 @@ export const World = memo(function World(p: WorldProps) {
       />
       <SocialPile spread={p.spread} selected={p.selected === "social"} />
       <Orbit selected={p.selected === "wall"} onPhone={p.onPhone} />
-      <Presentations selected={p.selected} />
       <CaseHR selected={p.selected} active={p.presView} slide={p.slide} onSlide={p.onSlide} />
       <CaseTour selected={p.selected} />
       <Projects selected={p.selected} />
