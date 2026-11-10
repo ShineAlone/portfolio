@@ -190,7 +190,6 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
         </div>
         <span className="st-ball__shadow" aria-hidden />
       </div>
-      <span className="st-ball__hint">Крути сферу мышкой</span>
     </Frame>
   );
 }

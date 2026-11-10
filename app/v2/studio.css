@@ -3990,85 +3990,37 @@
   }
 }
 
-.st-ball__hint {
-  position: absolute;
-  left: 50%;
-  bottom: -10px;
-  padding: 10px 20px;
-  border-radius: 22px;
-  background: #fff;
-  border: 2px solid #111;
-  font-size: 20px;
-  white-space: nowrap;
-  transform: translateX(-50%) rotate(-2deg);
-  pointer-events: none;
-}
 
-/* ---------- обои: полёт сквозь поле карточек ---------- */
+/* ---------- обои: поле карточек, которое собирается под курсором ---------- */
 
 .st-field__stage {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  border-radius: 34px;
-}
-
-.st-field__world {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
+  /* по скруглению самого острова — карточки доходят до его края */
+  border-radius: 72px;
 }
 
 .st-field__card {
   position: absolute;
-  left: -95px;
-  top: -200px;
-  width: 190px;
+  left: 0;
+  top: 0;
+  width: 300px;
   padding: 0;
   border: 0 !important;
   background: none !important;
-  cursor: pointer;
-  will-change: transform, opacity;
+  cursor: default;
+  will-change: transform;
 }
 
 .st-field__card.is-wide {
-  left: -200px;
-  top: -125px;
-  width: 400px;
+  width: 620px;
 }
 
 .st-world .st-field__card img {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 14px;
-  box-shadow: 0 24px 40px -22px rgba(0, 0, 0, 0.55);
-  transition: scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.st-field__card:hover img {
-  scale: 1.06;
-}
-
-.st-field__card img.is-pop {
-  animation: st-field-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes st-field-pop {
-  40% {
-    scale: 1.28;
-    rotate: -3deg;
-  }
-}
-
-.st-field__caption {
-  position: absolute;
-  left: 50%;
-  bottom: 26px;
-  margin: 0;
-  translate: -50% 0;
-  z-index: 2;
+  border-radius: 18px;
+  box-shadow: 0 30px 50px -26px rgba(0, 0, 0, 0.55);
 }

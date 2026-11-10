@@ -25,7 +25,6 @@ const CASES = { x: colX(6), w: 4500, h: Math.max(HR_CASE_H, TOUR_CASE_H) + 200 }
 const ABOUT_CALM = { w: 1240, h: 1120, k: 1.7 };
 
 // Во сколько раз крупнее показаны работы-картинки: обои и проекты свёрстаны в своём размере и увеличены целиком.
-const WALL_K = 1.6;
 const PROJ_K = 1.2;
 const CONTACT_K = 1.7;
 
@@ -242,11 +241,10 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "wall",
     name: "Обои для телефонов и ПК",
-    // поле обоев занимает весь остров, с небольшим отступом от края
-    ...rel("wall", 60, 60),
-    w: span(3) - 120,
-    h: ROW2.h - 120,
-    k: WALL_K,
+    // поле обоев занимает остров целиком и обрезается по его скруглению
+    ...rel("wall", 0, 0),
+    w: span(3),
+    h: ROW2.h,
     r: 0,
     text: WALLPAPERS.description,
   },

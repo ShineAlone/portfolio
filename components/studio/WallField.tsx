@@ -7,17 +7,16 @@ import { Frame } from "./Frame";
 /* eslint-disable @next/next/no-img-element */
 
 /*
- * Обои: поле карточек в глубину. Камера медленно летит вперёд — дальние обои видны мелкой россыпью
- * по всему блоку, ближние вырастают, собираются в плотную группу в центре и пролетают мимо.
- * Карточка, ушедшая за камеру, возвращается в самую глубину на новое место, поэтому полёт бесконечный.
- * Порядок перекрытия даёт сам браузер: карточки стоят в общем 3D-пространстве.
+ * Обои: поле мелких карточек по всему блоку. Курсор работает как линза с притяжением:
+ * обои рядом с ним вырастают и стягиваются к нему в плотную перекрывающуюся группу,
+ * остальные остаются мелкой россыпью. Уводишь мышку — группа распадается и собирается в новом месте.
  */
 
-const PERSPECTIVE = 1200;
-const FAR = 5200; // глубина, на которой карточка появляется
-const NEAR = -330; // здесь она уже «за плечом» камеры и переносится назад
-const SPEED = 130; // единиц глубины в секунду
 const COUNT = 132;
+// радиус, в котором курсор «достаёт» до карточек (в единицах холста)
+const REACH = 820;
+// какую долю пути до курсора проходит карточка под ним
+const PULL = 0.42;
 
 // детерминированный генератор — раскладка одинаковая при каждой загрузке
 function mulberry(seed: number) {
@@ -30,63 +29,88 @@ function mulberry(seed: number) {
   };
 }
 
-type Card = { src: string; wide: boolean; x: number; y: number; z: number; core: boolean };
+// hx/hy — «дом» карточки в долях блока, base — её размер в покое, top — размер под курсором
+type Card = { src: string; wide: boolean; hx: number; hy: number; base: number; top: number; phase: number };
 
 const CARDS: Card[] = (() => {
-  const rnd = mulberry(7);
-  const out: Card[] = [];
-  for (let i = 0; i < COUNT; i++) {
-    // каждая пятая — горизонтальные обои для ПК, остальные — для телефона
+  const rnd = mulberry(11);
+  // расставляем по неровной сетке, чтобы россыпь была равномерной, без дыр и слипшихся куч
+  const cols = 11;
+  const rows = COUNT / cols;
+  return Array.from({ length: COUNT }, (_, i) => {
     const wide = i % 5 === 0;
     const list = wide ? wideWallpapers : narrowWallpapers;
-    // треть карточек летит близко к оси — из них складывается плотная группа в центре
-    const core = i % 3 === 0;
-    out.push({
+    return {
       src: list[i % list.length],
       wide,
-      core,
-      x: (rnd() - 0.5) * (core ? 760 : 6400),
-      y: (rnd() - 0.5) * (core ? 940 : 8000),
-      z: NEAR + ((i + rnd()) / COUNT) * (FAR - NEAR),
-    });
-  }
-  return out;
+      hx: ((i % cols) + 0.15 + rnd() * 0.7) / cols,
+      hy: (Math.floor(i / cols) + 0.15 + rnd() * 0.7) / rows,
+      base: 0.14 + rnd() * 0.16,
+      top: 0.85 + rnd() * 0.5,
+      phase: rnd() * Math.PI * 2,
+    };
+  });
 })();
 
 export function WallField({ selected, onPick }: { selected: boolean; onPick: () => void }) {
+  const meta = frameById("wall");
   const stage = useRef<HTMLDivElement>(null);
-  const world = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const els = [...world.current!.children] as HTMLElement[];
-    const rnd = mulberry(99);
-    const cards = CARDS.map((c) => ({ ...c }));
+    const el = stage.current!;
+    const els = [...el.children] as HTMLElement[];
+    const W = meta.w;
+    const H = meta.h;
+    // текущее состояние каждой карточки — оно плавно догоняет цель
+    const cur = CARDS.map((c) => ({ x: c.hx * W, y: c.hy * H, s: c.base, z: 0 }));
+    const mouse = { x: 0, y: 0, on: false, k: 0 };
     let raf = 0;
     let last = 0;
     let visible = false;
 
-    const place = (dt: number) => {
-      for (let i = 0; i < cards.length; i++) {
-        const c = cards[i];
-        c.z -= SPEED * dt;
-        if (c.z < NEAR) {
-          c.z += FAR - NEAR;
-          c.x = (rnd() - 0.5) * (c.core ? 760 : 6400);
-          c.y = (rnd() - 0.5) * (c.core ? 940 : 8000);
-        }
-        // проявляется из глубины и тает, пролетая мимо камеры
-        const o = Math.min(1, (FAR - c.z) / 700, (c.z - NEAR) / 220);
-        els[i].style.transform = `translate3d(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px, ${(-c.z).toFixed(1)}px)`;
-        els[i].style.opacity = o.toFixed(3);
-      }
-    };
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000 || 0);
       last = now;
-      place(dt);
+      // сила линзы плавно нарастает, когда курсор входит в блок, и спадает, когда уходит
+      mouse.k += ((mouse.on ? 1 : 0) - mouse.k) * Math.min(1, dt * 5);
+      const ease = Math.min(1, dt * 7);
+      const t = now / 1000;
+      for (let i = 0; i < CARDS.length; i++) {
+        const c = CARDS[i];
+        const p = cur[i];
+        // в покое карточки едва заметно покачиваются
+        const hx = c.hx * W + Math.sin(t * 0.35 + c.phase) * 10;
+        const hy = c.hy * H + Math.cos(t * 0.3 + c.phase) * 10;
+        const d = Math.hypot(mouse.x - hx, mouse.y - hy);
+        let f = Math.max(0, 1 - d / REACH);
+        f = f * f * (3 - 2 * f) * mouse.k;
+        const tx = hx + (mouse.x - hx) * f * PULL;
+        const ty = hy + (mouse.y - hy) * f * PULL;
+        const ts = c.base + (c.top - c.base) * f;
+        p.x += (tx - p.x) * ease;
+        p.y += (ty - p.y) * ease;
+        p.s += (ts - p.s) * ease;
+        els[i].style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%) scale(${p.s.toFixed(3)})`;
+        // крупные карточки лежат поверх мелких
+        const z = Math.round(p.s * 100);
+        if (z !== p.z) {
+          p.z = z;
+          els[i].style.zIndex = String(z);
+        }
+      }
       if (visible) raf = requestAnimationFrame(frame);
     };
-    place(0);
+
+    // курсор — в координатах блока: холст масштабируется, поэтому пересчитываем через рамку
+    const move = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      mouse.x = ((e.clientX - r.left) / r.width) * W;
+      mouse.y = ((e.clientY - r.top) / r.height) * H;
+      mouse.on = true;
+    };
+    const leave = () => (mouse.on = false);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerleave", leave);
 
     // пока блок не в кадре — поле стоит
     const io = new IntersectionObserver(([e]) => {
@@ -99,38 +123,24 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
         cancelAnimationFrame(raf);
       }
     });
-    io.observe(stage.current!);
+    io.observe(el);
     return () => {
       io.disconnect();
       cancelAnimationFrame(raf);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerleave", leave);
     };
-  }, []);
+  }, [meta.w, meta.h]);
 
   return (
-    <Frame meta={frameById("wall")} selected={selected} className="st-free st-field">
-      <div ref={stage} className="st-field__stage" style={{ perspective: PERSPECTIVE }}>
-        <div ref={world} className="st-field__world">
-          {CARDS.map((c, i) => (
-            <button
-              key={i}
-              type="button"
-              data-ui
-              className={`st-field__card${c.wide ? " is-wide" : ""}`}
-              onClick={(e) => {
-                // клик «подбрасывает» карточку и засчитывает достижение
-                const img = e.currentTarget.firstElementChild as HTMLElement;
-                img.classList.remove("is-pop");
-                void img.offsetWidth;
-                img.classList.add("is-pop");
-                onPick();
-              }}
-            >
-              <img src={c.src} alt="" loading="lazy" draggable={false} />
-            </button>
-          ))}
-        </div>
+    <Frame meta={meta} selected={selected} className="st-free st-field">
+      <div ref={stage} className="st-field__stage">
+        {CARDS.map((c, i) => (
+          <button key={i} type="button" data-ui className={`st-field__card${c.wide ? " is-wide" : ""}`} onClick={onPick}>
+            <img src={c.src} alt="" loading="lazy" draggable={false} />
+          </button>
+        ))}
       </div>
-      <span className="st-orbit__caption st-field__caption">Каждый месяц — новые обои</span>
     </Frame>
   );
 }
