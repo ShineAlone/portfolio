@@ -1,0 +1,225 @@
+/* Сгенерировано scripts/gen-calm-theme.mjs из studio.css — руками не править. */
+
+.th-calm .st-island__label {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  box-shadow: 0 0 0 1px var(--calm-line);
+}
+
+.th-calm .st-island__title {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.th-calm .st-spread {
+  border-color: var(--calm-line) !important;
+  box-shadow: none;
+}
+
+.th-calm .st-spread:hover {
+  box-shadow: none;
+}
+
+.th-calm .st-spread:active {
+  box-shadow: none;
+}
+
+.th-calm .st-spread__deck i {
+  border-color: var(--calm-line);
+}
+
+.th-calm .sthg__hello {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .sthg__name {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .sthg__note span {
+  border-color: var(--calm-line);
+}
+
+.th-calm .st-sticker {
+  border-color: var(--calm-line) !important;
+  box-shadow: none;
+}
+
+.th-calm .st-sticker b {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stchat__msg.is-a {
+  border-color: var(--calm-line);
+  box-shadow: none;
+}
+
+.th-calm .stchat__react {
+  border-color: var(--calm-line) !important;
+}
+
+.th-calm .stchat__chips span {
+  border-color: var(--calm-line);
+}
+
+.th-calm .stchat__chips span:hover {
+  box-shadow: none;
+}
+
+.th-calm .stchat__msg.is-how {
+  border-color: var(--calm-line);
+}
+
+.th-calm .stchat__step {
+  border-color: var(--calm-line);
+}
+
+.th-calm .stchat__step em {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stchat__cap {
+  border-color: var(--calm-line);
+}
+
+.th-calm .stv__head span {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stv li::before {
+  box-shadow: 0 0 0 1px var(--calm-line);
+}
+
+.th-calm .stv__cta {
+  border-color: var(--calm-line);
+  box-shadow: none;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stv__cta:hover {
+  box-shadow: none;
+}
+
+.th-calm .stv__cta:active {
+  box-shadow: none;
+}
+
+.th-calm .stv__plane::after {
+  border-color: var(--calm-line);
+}
+
+.th-calm .stv__company {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stp__art {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stp__name {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .st-phone {
+  border-color: var(--calm-line) !important;
+}
+
+.th-calm .st-monitor__screen {
+  border-color: var(--calm-line);
+}
+
+.th-calm .st-orbit__caption {
+  border-color: var(--calm-line);
+}
+
+.th-calm .stpr__tabs button {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  border-color: var(--calm-line) !important;
+  box-shadow: none;
+}
+
+.th-calm .stpr__tabs button.is-active {
+  box-shadow: none;
+}
+
+.th-calm .stk__bg {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stk__title b {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stk__note {
+  border-color: var(--calm-line);
+  box-shadow: none;
+}
+
+.th-calm .stk__note i {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stk__note b {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stx__title {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stx__big {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.th-calm .st-brand__logo {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .st-feed {
+  border-color: var(--calm-line) !important;
+  box-shadow: none;
+}
+
+.th-calm .st-win__word {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .st-cursor.is-on-frame .st-cursor__label {
+  box-shadow: 0 0 0 1px var(--calm-line);
+}
+
+.th-calm .stl__title {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.th-calm .stg__go {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  border-color: var(--calm-line);
+  box-shadow: none;
+}
+
+.th-calm .st-ball__hint {
+  border-color: var(--calm-line);
+}

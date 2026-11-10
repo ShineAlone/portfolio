@@ -79,16 +79,23 @@ function CityMap() {
 
 export function AboutCalm() {
   const [on, setOn] = useState(false);
-  const [open, setOpen] = useState(0);
   // входная анимация запускается через кадр после загрузки
   useEffect(() => {
     const t = setTimeout(() => setOn(true), 120);
     return () => clearTimeout(t);
   }, []);
-
   return (
-    <main className={`ab${on ? " is-on" : ""}`}>
-      <div className="ab__wrap">
+    <main className="ab">
+      <AboutCalmBody on={on} />
+    </main>
+  );
+}
+
+// Само содержимое блока — используется и на отдельной странице, и внутри холста спокойной версии.
+export function AboutCalmBody({ on }: { on: boolean }) {
+  const [open, setOpen] = useState(0);
+  return (
+      <div className={`ab__wrap${on ? " is-on" : ""}`}>
         <header className="ab-head">
           <div className="ab-photo">
             <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
@@ -104,7 +111,7 @@ export function AboutCalm() {
                 <i />
                 {HERO.statusLabel}
               </span>
-              <a className="ab-btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
+              <a data-ui className="ab-btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
                 Написать в Telegram
                 <svg viewBox="0 0 16 16" aria-hidden>
                   <path d="M4 12L12 4M6 4h6v6" />
@@ -120,7 +127,7 @@ export function AboutCalm() {
             <ol className="ab-exp">
               {WORK.map((w, i) => (
                 <li key={w.company} className={open === i ? "is-open" : ""}>
-                  <button type="button" onClick={() => setOpen(i)} aria-expanded={open === i}>
+                  <button type="button" data-ui onClick={() => setOpen(i)} aria-expanded={open === i}>
                     <small>{w.period.replace("\n", " ")}</small>
                     <b>{w.company}</b>
                     <span>{w.role}</span>
@@ -193,7 +200,7 @@ export function AboutCalm() {
               Сделал туристическое приложение «Шагай и точка» — проект выиграл грант. Для себя собираю Figma-плагины и
               небольшие сервисы.
             </p>
-            <a className="ab-link" href="/v2?canvas">
+            <a data-ui className="ab-link" href="/v2?canvas">
               Смотреть в «Лаборатории»
               <svg viewBox="0 0 16 16" aria-hidden>
                 <path d="M4 12L12 4M6 4h6v6" />
@@ -202,6 +209,5 @@ export function AboutCalm() {
           </section>
         </div>
       </div>
-    </main>
   );
 }

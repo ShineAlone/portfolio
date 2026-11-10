@@ -64,7 +64,7 @@
   transform: scale(1.7) translateY(16%);
 }
 
-.ab.is-on .ab-photo {
+.ab .is-on .ab-photo {
   opacity: 1;
   transform: none;
 }
@@ -98,7 +98,7 @@
   color: var(--soft);
 }
 
-.ab.is-on .ab-head h1 span {
+.ab .is-on .ab-head h1 span {
   opacity: 1;
   transform: none;
 }
@@ -114,8 +114,8 @@
   transition-delay: 0.42s;
 }
 
-.ab.is-on .ab-head__text > p,
-.ab.is-on .ab-head__row {
+.ab .is-on .ab-head__text > p,
+.ab .is-on .ab-head__row {
   opacity: 1;
   transform: none;
 }
@@ -217,7 +217,7 @@
     border-color 0.2s, box-shadow 0.3s;
 }
 
-.ab.is-on .ab-tile {
+.ab .is-on .ab-tile {
   opacity: 1;
   transform: none;
 }
@@ -586,4 +586,30 @@
     transition-delay: 0s !important;
     animation: none !important;
   }
+}
+
+/* ---------- внутри холста (спокойная версия сайта) ---------- */
+
+.ab.ab--embed {
+  min-height: 0;
+  padding: 0;
+  background: none;
+}
+
+.ab--embed .ab__wrap {
+  max-width: none;
+}
+
+.st-world .ab img {
+  pointer-events: none;
+}
+
+.st-world .ab-tools img {
+  width: 34px;
+  height: 34px;
+}
+
+.st-world .ab-tools .is-boxed img {
+  width: 14px;
+  height: 21px;
 }

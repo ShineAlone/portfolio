@@ -17,6 +17,7 @@ import {
 } from "./data";
 import { Frame } from "./Frame";
 import { SocialSphere } from "./SocialSphere";
+import { AboutCalmBody } from "./AboutCalm";
 import { CaseHR } from "./CaseHR";
 import { CaseTour } from "./CaseTour";
 
@@ -865,15 +866,25 @@ type WorldProps = {
   onDrive: () => void;
   /** камера сейчас на острове кейсов, где стоит презентация (и мы не за рулём) */
   presView: boolean;
+  /** спокойная версия: вместо приветствия, чата и истории — блок-визитка */
+  calm?: boolean;
 };
 
 export const World = memo(function World(p: WorldProps) {
   return (
     <>
       <Islands />
-      <Greeting step={p.introStep} typed={p.typed} selected={p.selected === "hero"} onSticker={p.onSticker} />
-      <Chat step={p.chatStep} selected={p.selected === "chat"} />
-      <History selected={p.selected === "history"} />
+      {p.calm ? (
+        <Frame meta={frameById("about-calm")} selected={p.selected === "about-calm"} className="st-free ab ab--embed" noSelect>
+          <AboutCalmBody on={p.introStep >= 6} />
+        </Frame>
+      ) : (
+        <>
+          <Greeting step={p.introStep} typed={p.typed} selected={p.selected === "hero"} onSticker={p.onSticker} />
+          <Chat step={p.chatStep} selected={p.selected === "chat"} />
+          <History selected={p.selected === "history"} />
+            </>
+      )}
       <LabIntro selected={p.selected === "lab-intro"} />
       {LAB_CARDS.map((_, i) => (
         <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} />

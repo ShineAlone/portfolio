@@ -12,7 +12,7 @@ import {
   WORLD,
   CARS,
   CHAT_STEP_MS,
-  COLLIDERS,
+  collidersFor,
   UNBREAKABLE,
   frameById,
   islandById,
@@ -138,7 +138,9 @@ function Confetti() {
   );
 }
 
-export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
+export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "calm" } = {}) {
+  // спокойная версия: тот же холст в светлом монохроме, без игрового интро
+  const calm = theme === "calm";
   const camera = useMemo(createCameraStore, []);
   const viewportRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -431,6 +433,14 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
   }, [flyTo]);
 
   useEffect(() => {
+    if (calm) {
+      // без сборки приветствия: сразу показываем остров, блок-визитка проявляется сам
+      camera.set(fit(pad(frameById("about-calm"), 150), 40));
+      setReady(true);
+      setIntro(6);
+      setTyped(NAME_CHARS);
+      return;
+    }
     const h = frameById("hero");
     camera.set(fit(pad(h, 120), 40));
     setReady(true);
@@ -491,7 +501,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
 
   const tourStops = useMemo(
     () => [
-      { rect: frameById("hero"), text: "Это я — дизайнер широкого профиля, в дизайне с 2021 года" },
+      { rect: frameById(calm ? "about-calm" : "hero"), text: "Это я — дизайнер широкого профиля, в дизайне с 2021 года" },
       { rect: islandById("plugins"), text: "Лаборатория: плагины, сервисы и гараж — возьми машинку и прокатись по сайту" },
       { rect: frameById("social"), text: "Больше 2000 постов. Часть собрал в сферу — покрути её мышкой" },
       { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
@@ -499,7 +509,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       { rect: islandById("proj"), text: "Лендинги целиком и айдентика «Кофе Культ»" },
       { rect: islandById("contact"), text: "А здесь можно написать мне. Буду рад твоей задаче!" },
     ],
-    []
+    [calm]
   );
 
   const stopTour = useCallback(() => {
@@ -671,7 +681,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
     const city = getCity();
     const R = Math.max(spec.w, spec.h) * 0.42;
     const solids: Solid[] = [
-      ...COLLIDERS.map((f) => ({ id: f.id, x: f.x, y: f.y, w: f.w, h: f.h, frame: true })),
+      ...collidersFor(calm).map((f) => ({ id: f.id, x: f.x, y: f.y, w: f.w, h: f.h, frame: true })),
       ...city.buildings.map((b) => ({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h, frame: false })),
     ];
     const canvas = fxRef.current;
@@ -979,7 +989,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
       ctx?.clearRect(0, 0, canvas!.width, canvas!.height);
       carElRef.current?.classList.remove("is-braking");
     };
-  }, [driving, carId, camera, vpSize, hitSolid, showToast]);
+  }, [driving, carId, camera, vpSize, hitSolid, showToast, calm]);
 
   const discuss = (name: string) => {
     const text = `Привет, Арсений! Пишу по поводу работы «${name}» с твоего сайта.`;
@@ -1190,7 +1200,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
   const mapS = MAP_W / WORLD.w;
 
   return (
-    <div className={`st-app${introDone ? " is-ready" : " is-intro"}${driving ? " is-driving" : ""}`}>
+    <div className={`st-app${introDone ? " is-ready" : " is-intro"}${driving ? " is-driving" : ""}${calm ? " th-calm" : ""}`}>
       <main
         ref={viewportRef}
         className={`st-viewport${spaceHeld ? " is-hand" : ""}`}
@@ -1219,6 +1229,7 @@ export function StudioApp({ onFeed }: { onFeed?: () => void } = {}) {
             onPickCar={setCarId}
             onDrive={startDrive}
             presView={activeIsland === "cases" && !driving}
+            calm={calm}
           />
 
           {broken.length > 0 && (

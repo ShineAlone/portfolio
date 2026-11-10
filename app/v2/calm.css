@@ -1,0 +1,215 @@
+/*
+ * Спокойная версия холста (класс .th-calm на корне): тот же мир, но светлый монохром,
+ * PT Root UI вместо дисплейного шрифта, тонкие границы и один акцент — фиолетовый.
+ * Автоматическая часть (обводки, тени, начертания) лежит в calm.gen.css; здесь — то, что задаётся руками.
+ * Ленты кейсов и город не перекрашиваются: у кейсов свой фирменный стиль продукта.
+ */
+
+.th-calm {
+  --calm-bg: #f3f2ef;
+  --calm-card: #fff;
+  --calm-line: #e3e1db;
+  --calm-ink: #17171a;
+  --calm-grey: #77767c;
+  --calm-accent: #7c4dff;
+  --display: var(--font-root);
+  --violet: var(--calm-accent);
+  color: var(--calm-ink);
+}
+
+/* у кейсов остаётся их собственная типографика */
+.th-calm .hb-case,
+.th-calm .tb-case {
+  --display: var(--font-display), var(--font-root);
+}
+
+/* фон холста: ровный, с едва заметной сеткой точек */
+.th-calm:not(.is-driving) .st-viewport {
+  background-color: var(--calm-bg) !important;
+}
+
+/* ---------- острова ---------- */
+
+.th-calm .st-island {
+  background: #eceae5;
+  box-shadow: inset 0 0 0 1px var(--calm-line);
+  border-radius: 56px;
+}
+
+.th-calm .st-island.is-dark {
+  background: #17171a;
+  box-shadow: none;
+}
+
+.th-calm .st-island__label {
+  background: var(--calm-card);
+  color: var(--calm-ink);
+  font-weight: 500;
+  box-shadow: 0 0 0 1px var(--calm-line);
+}
+
+.th-calm .st-island.is-dark .st-island__label {
+  background: var(--calm-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+.th-calm .st-island__title {
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  text-transform: none;
+}
+
+/* рамка выделения — акцентом, а не цветом острова */
+.th-calm .st-frame.is-selected::after {
+  box-shadow: 0 0 0 calc(2px / var(--z) / var(--zk, 1)) var(--calm-accent), 0 0 0 calc(7px / var(--z) / var(--zk, 1)) rgba(124, 77, 255, 0.18);
+}
+
+.th-calm .st-frame:hover::after {
+  box-shadow: 0 0 0 calc(1.5px / var(--z) / var(--zk, 1)) #bdbbb5;
+}
+
+.th-calm .st-frame.is-quiet:hover:not(.is-selected)::after {
+  box-shadow: none;
+}
+
+/* ---------- карточки на холсте ---------- */
+
+.th-calm .st-card,
+.th-calm .st-win,
+.th-calm .stg,
+.th-calm .stl {
+  box-shadow: 0 0 0 1px var(--calm-line), 0 30px 60px -44px rgba(23, 23, 26, 0.4);
+}
+
+/* цветные плашки-теги становятся нейтральными */
+.th-calm .stp__tag,
+.th-calm .st-tags span {
+  background: var(--calm-bg) !important;
+  color: var(--calm-ink);
+}
+
+.th-calm .st-btn {
+  background: var(--calm-ink) !important;
+  color: #fff !important;
+  border-color: var(--calm-ink) !important;
+  font-family: var(--font-root);
+  font-weight: 500;
+  rotate: none;
+}
+
+.th-calm .st-btn:hover {
+  background: var(--calm-accent) !important;
+  border-color: var(--calm-accent) !important;
+  transform: translateY(-1px);
+}
+
+.th-calm .st-btn--ghost {
+  background: var(--calm-card) !important;
+  color: var(--calm-ink) !important;
+  border-color: var(--calm-line) !important;
+}
+
+/* подпись под сферой и под монитором — без наклона */
+.th-calm .st-ball__hint,
+.th-calm .st-orbit__caption {
+  border-color: var(--calm-line);
+  transform: translateX(-50%);
+  rotate: none;
+  color: var(--calm-grey);
+}
+
+.th-calm .st-orbit__caption {
+  transform: none;
+}
+
+.th-calm .st-phone {
+  border-color: #17171a !important;
+}
+
+/* ---------- контакты ---------- */
+
+.th-calm .stx {
+  background: var(--calm-card);
+  box-shadow: none;
+}
+
+.th-calm .stx__big {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: -0.05em;
+  color: #2a2a2e;
+  text-shadow: none;
+}
+
+.th-calm .stx__big span:last-child {
+  color: #fff;
+}
+
+.th-calm .stx__spin span {
+  rotate: none;
+  transform: none;
+}
+
+/* ---------- интерфейс поверх холста ---------- */
+
+.th-calm .st-brand__logo {
+  background: var(--calm-accent);
+  color: #fff;
+}
+
+.th-calm .st-chips {
+  background: var(--calm-card);
+  box-shadow: 0 0 0 1px var(--calm-line), 0 16px 30px -22px rgba(23, 23, 26, 0.35);
+}
+
+.th-calm .st-chips button.is-active {
+  background: var(--calm-ink) !important;
+  color: #fff !important;
+}
+
+.th-calm .st-map__isl {
+  background: #dddad3 !important;
+  color: var(--calm-ink) !important;
+}
+
+.th-calm .st-map__isl.is-active {
+  background: var(--calm-accent) !important;
+  color: #fff !important;
+}
+
+.th-calm .st-map__isl.is-dark {
+  background: #3a3a3f !important;
+  color: #fff !important;
+}
+
+/* выноска выбранной работы */
+.th-calm .st-callout__card {
+  box-shadow: 0 0 0 1px var(--calm-line), 0 30px 60px -30px rgba(23, 23, 26, 0.45);
+}
+
+.th-calm .st-callout__island {
+  background: var(--calm-bg);
+}
+
+/* ---------- доводка по блокам ---------- */
+
+/* название острова на общем плане: PT Root уже Unbounded — увеличиваем */
+.th-calm .st-island__title {
+  scale: 1.45;
+}
+
+/* работы стоят ровно, без «разбросанных фотографий» */
+.th-calm .st-print,
+.th-calm .stk__card {
+  --rot: 0deg !important;
+}
+
+.th-calm .stl__kicker {
+  background: #fff;
+  color: var(--calm-ink);
+}
+
+.th-calm .stx__big {
+  color: #3a3a40;
+}

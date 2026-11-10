@@ -21,6 +21,9 @@ const span = (n: number) => n * COL + (n - 1) * GAP;
 // Кейсы — справа от сетки: две вертикальные ленты бордов рядом, как проекты на Behance.
 const CASES = { x: colX(6), w: 4500, h: Math.max(HR_CASE_H, TOUR_CASE_H) + 200 };
 
+// Блок «Обо мне» спокойной версии: свёрстан в w×h и увеличен в k раз.
+const ABOUT_CALM = { w: 1240, h: 1120, k: 1.7 };
+
 // Во сколько раз крупнее показаны работы-картинки: обои и проекты свёрстаны в своём размере и увеличены целиком.
 const WALL_K = 1.6;
 const PROJ_K = 1.2;
@@ -181,6 +184,17 @@ export const FRAMES: FrameMeta[] = [
     r: 40,
     text: "Опыт работы: от фриланса и собственного стартапа до федерального ведомства.",
   },
+  // спокойная версия сайта: вместо приветствия, чата и истории — один блок-визитка
+  {
+    id: "about-calm",
+    name: "Обо мне",
+    ...rel("about", Math.round((span(3) - ABOUT_CALM.w * ABOUT_CALM.k) / 2), Math.round((ROW1.h - ABOUT_CALM.h * ABOUT_CALM.k) / 2)),
+    w: ABOUT_CALM.w * ABOUT_CALM.k,
+    h: ABOUT_CALM.h * ABOUT_CALM.k,
+    k: ABOUT_CALM.k,
+    r: 0,
+    text: HERO.paragraphs[0],
+  },
   {
     id: "lab-intro",
     name: "Не только дизайн",
@@ -330,7 +344,9 @@ export const CARS: CarSpec[] = [
 ];
 
 // Блоки, в которые можно врезаться: всё, кроме прозрачных коллажей (приветствие, обои, соцсети) и самого гаража.
-export const COLLIDERS = FRAMES.filter((f) => !["hero", "wall", "social", "garage"].includes(f.id));
+// В спокойной версии вместо чата и истории стоит блок-визитка — и сталкиваться нужно с ним.
+export const collidersFor = (calm: boolean) =>
+  FRAMES.filter((f) => !["hero", "wall", "social", "garage", ...(calm ? ["chat", "history"] : ["about-calm"])].includes(f.id));
 // Ленты кейсов слишком велики, чтобы рассыпаться: внутри живая карта и десятки экранов — на них остаются только трещины.
 export const UNBREAKABLE = ["case-hr", "case-tour"];
 
