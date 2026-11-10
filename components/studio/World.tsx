@@ -797,7 +797,8 @@ function TextRing({ text, radius, back, className = "" }: { text: string; radius
   const chars = [...text];
   const step = 360 / chars.length;
   // размер буквы подбирается так, чтобы текст ровно замкнул окружность
-  const size = Math.round(((2 * Math.PI * radius) / chars.length) * 1.12);
+  // Unbounded широкий: буква занимает около 70% своего шага, остальное — воздух между буквами
+  const size = Math.round(((2 * Math.PI * radius) / chars.length) * 0.94);
   return (
     <div className={`stx-ring${back ? " is-back" : ""} ${className}`} style={{ fontSize: size }} aria-hidden>
       {chars.map((ch, i) => (
@@ -820,8 +821,8 @@ function Contact({ selected }: { selected: boolean }) {
   const stage = { x: left, y: isl.y, w: isl.x + isl.w - left - 200, h: isl.h };
   const rings = (back: boolean) => (
     <div className={`stx-rings${back ? " is-back" : ""}`}>
-      <TextRing text={RING_MAIN} radius={920} back={back} className="is-main" />
-      <TextRing text={RING_SUB} radius={760} back={back} className="is-sub" />
+      <TextRing text={RING_MAIN} radius={1080} back={back} className="is-main" />
+      <TextRing text={RING_SUB} radius={900} back={back} className="is-sub" />
     </div>
   );
   return (
@@ -833,6 +834,9 @@ function Contact({ selected }: { selected: boolean }) {
         </span>
         <b className="stx__title">Есть задача?</b>
         <p>Напиши мне в Telegram — расскажи о проекте, обсудим сроки и формат работы.</p>
+        <span className="stx__handle">
+          <small>Telegram</small>@{LINKS.telegram.split("/").pop()}
+        </span>
         <a data-ui className="st-btn stx__btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
           Написать в Telegram ↗
         </a>

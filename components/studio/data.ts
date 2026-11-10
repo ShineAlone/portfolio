@@ -306,9 +306,10 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "contact",
     name: "Связаться",
-    ...rel("contact", 110, Math.round((ROW4.h - 620 * CONTACT_K) / 2)),
-    w: 480 * CONTACT_K,
-    h: 620 * CONTACT_K,
+    // карточка во всю высоту острова — уравновешивает сцену с фигурой справа
+    ...rel("contact", 100, 100),
+    w: 640 * CONTACT_K,
+    h: ROW4.h - 200,
     k: CONTACT_K,
     r: 36,
     text: "Пиши в Telegram — расскажи о задаче, обсудим сроки и формат работы.",

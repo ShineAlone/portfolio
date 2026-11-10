@@ -2111,8 +2111,39 @@
 }
 
 .stx__btn {
+  margin-top: 26px;
+  align-self: stretch;
+  justify-content: center;
+  padding-top: 18px;
+  padding-bottom: 18px;
+  font-size: 20px;
+}
+
+.stx__title {
+  font-size: 76px;
+}
+
+.stx p {
+  font-size: 24px;
+}
+
+/* ник — главный контакт, поэтому крупно */
+.stx__handle {
   margin-top: auto;
-  align-self: flex-start;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 40px;
+  letter-spacing: -0.02em;
+}
+
+.stx__handle small {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--font-root);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0;
+  opacity: 0.6;
 }
 
 .st-deco {
@@ -2130,16 +2161,18 @@
 .stx-stage {
   perspective: 4200px;
   perspective-origin: 50% 46%;
+  /* снизу сцена обрезана по краю острова — ноги уходят за него; сверху голова выходит наружу */
+  clip-path: inset(-700px -400px 0 -400px);
 }
 
 .st-world .stx-stage__me {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 1040px;
-  height: 1040px;
-  margin: -520px 0 0 -520px;
-  filter: drop-shadow(0 50px 50px rgba(0, 0, 0, 0.5));
+  top: -360px;
+  width: 1700px;
+  height: 1700px;
+  margin: 0 0 0 -850px;
 }
 
 .stx-rings {
@@ -2164,12 +2197,12 @@
 }
 
 .stx-ring.is-main {
-  top: 44%;
+  top: 47%;
   color: #fefe78;
 }
 
 .stx-ring.is-sub {
-  top: 66%;
+  top: 68%;
   color: #fff;
   animation-duration: 30s;
 }
