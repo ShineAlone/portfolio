@@ -3589,7 +3589,7 @@
 .stl {
   display: flex;
   flex-direction: column;
-  padding: 36px;
+  padding: 40px;
   background: #111;
   color: #fff;
   box-shadow: 0 40px 70px -40px rgba(0, 0, 0, 0.5);
@@ -3605,11 +3605,11 @@
 }
 
 .stl__title {
-  margin-top: 18px;
+  margin-top: 20px;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 44px;
-  line-height: 1.05;
+  font-size: 54px;
+  line-height: 1.02;
   letter-spacing: -0.02em;
 }
 
@@ -3620,38 +3620,71 @@
   opacity: 0.85;
 }
 
-.stl__flow {
+/* три шага: активный подсвечивается голубым, подсветка идёт по кругу */
+.stl__steps {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
   margin-top: auto;
-  font-size: 22px;
+  list-style: none;
 }
 
-.stl__flow span {
-  padding: 8px 14px;
-  border-radius: 18px;
-  border: 2px solid #fff;
-  font-size: 16px;
+.stl__steps li {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 84px;
+  padding: 0 22px;
+  border-radius: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  animation: stl-step 7.5s calc(var(--i) * 2.5s) infinite;
 }
 
-.stl__flow span:last-child {
-  background: #86ddff;
-  border-color: #86ddff;
-  color: #111;
+@keyframes stl-step {
+  0%,
+  30% {
+    background: #86ddff;
+    border-color: #86ddff;
+    color: #111;
+  }
+  36%,
+  100% {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #fff;
+  }
 }
 
-.stl__note {
-  font-size: 18px !important;
-  opacity: 0.6 !important;
+.stl__steps em {
+  font: 800 30px var(--display);
+  font-style: normal;
+  opacity: 0.45;
+}
+
+.stl__steps span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.stl__steps b {
+  font: 700 23px var(--display);
+}
+
+.stl .stl__note {
+  margin-top: 20px;
+  font-size: 18px;
+  opacity: 0.55;
 }
 
 /* гараж */
 .stg {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 28px;
+  gap: 24px;
+  padding: 32px;
   background: #2b2b2b;
   color: #fff;
   overflow: hidden;
@@ -3673,8 +3706,8 @@
 
 .stg__info .stl__title {
   display: block;
-  margin-top: 12px;
-  font-size: 38px;
+  margin-top: 14px;
+  font-size: 44px;
 }
 
 /* низ карточки: подсказка по клавишам и кнопка старта */
@@ -3686,8 +3719,8 @@
 }
 
 .stg__info p {
-  margin-top: 10px;
-  font-size: 19px;
+  margin-top: 8px;
+  font-size: 21px;
   line-height: 1.45;
   opacity: 0.85;
 }
@@ -3701,32 +3734,15 @@
   opacity: 0.85;
 }
 
+/* клавиши в одну строку — подпись стоит ровно по их центру */
 .stg__wasd {
-  display: grid;
-  grid-template-columns: repeat(3, 34px);
-  grid-template-areas: ". w ." "a s d";
-  gap: 4px;
-}
-
-.stg__wasd kbd:nth-child(1) {
-  grid-area: w;
-}
-
-.stg__wasd kbd:nth-child(2) {
-  grid-area: a;
-}
-
-.stg__wasd kbd:nth-child(3) {
-  grid-area: s;
-}
-
-.stg__wasd kbd:nth-child(4) {
-  grid-area: d;
+  display: flex;
+  gap: 5px;
 }
 
 .stg kbd {
-  height: 34px;
-  min-width: 34px;
+  height: 40px;
+  min-width: 40px;
   display: grid;
   place-items: center;
   border-radius: 8px;
@@ -3747,8 +3763,9 @@
   color: #111 !important;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 19px;
-  padding: 14px 24px;
+  font-size: 20px;
+  height: 60px;
+  padding: 0 30px;
   border: 3px solid #111;
   box-shadow: 5px 5px 0 #000;
 }
@@ -3767,8 +3784,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  border-radius: 20px;
+  gap: 16px;
+  border-radius: 22px;
   border: 3px dashed rgba(255, 255, 255, 0.35) !important;
   transition: border-color 0.2s, background 0.2s;
 }
@@ -3783,7 +3800,7 @@
 }
 
 .stg__car {
-  height: 128px;
+  height: 150px;
   display: grid;
   place-items: center;
 }
@@ -3791,7 +3808,7 @@
 .stg__car svg {
   width: auto;
   height: 100%;
-  max-width: 84px;
+  max-width: 96px;
   filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

@@ -477,19 +477,31 @@ function PluginCard({ index, selected }: { index: number; selected: boolean }) {
 
 /* ---------- Лаборатория: идеи, вайб-код и гараж ---------- */
 
+// путь от идеи до продукта: шаги подсвечиваются по очереди
+const LAB_STEPS = [
+  ["Идея", "Замечаю рутину, которую можно убрать"],
+  ["Прототип", "Собираю рабочую версию вайб-кодингом"],
+  ["Продукт", "Довожу до инструмента, которым пользуются"],
+];
+
 function LabIntro({ selected }: { selected: boolean }) {
   return (
     <Frame meta={frameById("lab-intro")} selected={selected} className="stl">
       <span className="stl__kicker">не только дизайн</span>
       <b className="stl__title">Придумываю и собираю сам</b>
-      <p>
-        Генерирую идеи и довожу их до работающего продукта с помощью вайб-кодинга: Figma-плагины, небольшие
-        сервисы и сайты.
-      </p>
-      <div className="stl__flow">
-        <span>Идея</span>→<span>Прототип</span>→<span>Продукт</span>
-      </div>
-      <p className="stl__note">Этот сайт и гараж с машинками — тоже мой вайб-код ↓</p>
+      <p>Довожу идеи до работающего продукта: Figma-плагины, сервисы и сайты.</p>
+      <ol className="stl__steps">
+        {LAB_STEPS.map(([name, text], i) => (
+          <li key={name} style={{ "--i": i } as React.CSSProperties}>
+            <em>0{i + 1}</em>
+            <span>
+              <b>{name}</b>
+              {text}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="stl__note">Этот сайт и гараж с машинками — тоже мой вайб-код</p>
     </Frame>
   );
 }
@@ -603,7 +615,7 @@ function Garage({
       <div className="stg__info">
         <span className="stl__kicker">мини-игра</span>
         <b className="stl__title">Гараж</b>
-        <p>Выбери машинку и прокатись по сайту: вокруг блоков вырастет город.</p>
+        <p>Выбери машинку и прокатись по сайту</p>
       </div>
       <div className="stg__lot">
         {CARS.map((c, i) => (
@@ -628,7 +640,7 @@ function Garage({
             <kbd>S</kbd>
             <kbd>D</kbd>
           </span>
-          руль и газ
+          <span>руль и газ</span>
         </div>
         <button type="button" data-ui className="st-btn stg__go" onClick={onDrive}>
           {driving ? "Выйти из машины" : "Поехали!"}
