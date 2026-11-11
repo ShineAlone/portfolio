@@ -416,7 +416,7 @@ export function HistoryContent() {
           {WORK.map((w, i) => (
             <li key={w.company} className={i === 0 ? "is-current" : ""} style={{ "--c": w.tagColor } as React.CSSProperties}>
               <span className="stv__ver">
-                v{WORK.length - i}.0 · {w.period.replace("\n", " ")}
+                v{WORK.length - i}.0 · {w.period.replace("\n", " ").replace(/\s*–\s*/, "–")}
                 {i === 0 && <em>текущая</em>}
               </span>
               <div className="stv__company">{w.company}</div>

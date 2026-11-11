@@ -2,22 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { MobileApp } from "./MobileApp";
+import { MobileGate } from "./MobileGate";
 import { StudioApp } from "./StudioApp";
 
 /*
- * Точка входа: на узком экране — мобильная лента, на остальных — холст.
- * ?feed принудительно открывает ленту (удобно проверять на компьютере), ?canvas — холст.
+ * Точка входа: на узком экране — заглушка с просьбой открыть сайт с компьютера (из неё можно уйти в ленту),
+ * на остальных — холст. ?feed принудительно открывает ленту, ?canvas — холст, ?gate — заглушку.
  * Режим выбирается после монтирования: на сервере ширина экрана неизвестна.
  */
 export function StudioEntry() {
-  const [mode, setMode] = useState<"feed" | "canvas" | null>(null);
+  const [mode, setMode] = useState<"gate" | "feed" | "canvas" | null>(null);
   const [phone, setPhone] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const narrow = window.matchMedia("(max-width: 760px)").matches;
     setPhone(narrow || params.has("feed"));
-    setMode(params.has("canvas") ? "canvas" : params.has("feed") || narrow ? "feed" : "canvas");
+    setMode(params.has("canvas") ? "canvas" : params.has("feed") ? "feed" : narrow || params.has("gate") ? "gate" : "canvas");
   }, []);
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export function StudioEntry() {
   }, [mode]);
 
   if (!mode) return null;
+  if (mode === "gate") return <MobileGate onFeed={() => setMode("feed")} />;
   if (mode === "feed") return <MobileApp onCanvas={() => setMode("canvas")} />;
   return <StudioApp onFeed={phone ? () => setMode("feed") : undefined} />;
 }

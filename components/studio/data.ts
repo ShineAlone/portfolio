@@ -152,7 +152,9 @@ const LAB_TITLES: Record<string, string> = {
 const LAB_ORDER = [0, 4, 2, 3, 1];
 export const LAB_CARDS = (() => {
   const cards = AUTOMATION.cards.filter((c) => !c.title.startsWith("Чек-лист"));
-  return LAB_ORDER.map((i) => ({ ...cards[i], title: LAB_TITLES[cards[i].title] ?? cards[i].title }));
+  // описания заканчиваются точкой — как остальные тексты на холсте
+  const dot = (s: string) => (/[.!?…]$/.test(s) ? s : `${s}.`);
+  return LAB_ORDER.map((i) => ({ ...cards[i], title: LAB_TITLES[cards[i].title] ?? cards[i].title, text: dot(cards[i].text) }));
 })();
 
 // 3D-ролик для YouTube-канала: пока видео не готово (video: null), на его месте стоит заглушка.

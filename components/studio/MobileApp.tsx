@@ -1,5 +1,6 @@
 "use client";
 
+import { useTypograph } from "./typograph";
 import { useEffect, useRef, useState } from "react";
 import { HERO, LINKS, STATS } from "@/lib/content";
 import { CHAT_STEP_MS, ISLANDS } from "./data";
@@ -180,6 +181,7 @@ function MChat() {
 const ORDER = ["about", "plugins", "social", "wall", "cases", "proj", "contact"];
 
 export function MobileApp({ onCanvas }: { onCanvas: () => void }) {
+  useTypograph();
   const [active, setActive] = useState("about");
   const chipsRef = useRef<HTMLElement>(null);
 
