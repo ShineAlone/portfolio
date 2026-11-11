@@ -87,6 +87,9 @@ export const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
   return `${(50 + Math.cos(a) * r).toFixed(2)},${(50 + Math.sin(a) * r).toFixed(2)}`;
 }).join(" ");
 
+// две главные цифры выделены цветом — остальные не спорят с ними
+const STAT_ACCENT: Record<string, string> = { "лет в дизайне": "#fefe78", проектов: "#c9a8ff" };
+
 function Greeting({
   step,
   typed,
@@ -136,11 +139,6 @@ function Greeting({
           </svg>
           <i>↗</i>
         </div>
-        {TOOLS.icons.slice(0, 3).map((tool, i) => (
-          <span key={tool.alt} className={`sthg__tool is-${i}${tool.boxed ? " is-boxed" : ""}`} title={tool.alt}>
-            <img src={tool.src} alt="" draggable={false} />
-          </span>
-        ))}
         <span className="sthg__place">
           <i />
           Тула · работаю удалённо
@@ -173,15 +171,15 @@ function Greeting({
         </span>
       </div>
 
-      {/* цифры — ровный ряд карточек вместо разбросанных наклеек */}
+      {/* цифры — ровный ряд карточек; цветом выделены только две главные, остальные белые */}
       <div className="sthg__stats">
         {STATS.map((s, i) => (
           <button
             key={s.label}
             type="button"
             data-ui
-            className="st-stat"
-            style={{ "--c": STICKERS[i].color, "--i": i } as React.CSSProperties}
+            className={`st-stat${STAT_ACCENT[s.label] ? " is-accent" : ""}`}
+            style={{ "--c": STAT_ACCENT[s.label] ?? "#fff", "--i": i } as React.CSSProperties}
             onClick={(e) => {
               const el = e.currentTarget;
               el.classList.remove("is-wiggle");
@@ -381,6 +379,13 @@ function History({ selected }: { selected: boolean }) {
   );
 }
 
+// короткие описания для холста: полный текст остаётся на основном сайте
+const WORK_SHORT = [
+  "Оформляю материалы для федеральных и региональных мероприятий: брендинг, презентации для отчётных сессий и выступлений, реклама, полиграфия и посты для соцсетей.",
+  "Проектировал веб-интерфейсы промышленных и корпоративных систем: сценарии, прототипы и визуальную часть — в связке с аналитиками и разработчиками.",
+  "Айдентика, презентации, сайты и приложения для частных клиентов, малого бизнеса и стартапов. Сооснователь и дизайнер туристического стартапа, участник грантовых конкурсов.",
+];
+
 // История версий — общая для холста и мобильной ленты.
 export function HistoryContent() {
   return (
@@ -391,14 +396,14 @@ export function HistoryContent() {
         </div>
         <ol>
           {WORK.map((w, i) => (
-            <li key={w.company} style={{ "--c": w.tagColor } as React.CSSProperties}>
+            <li key={w.company} className={i === 0 ? "is-current" : ""} style={{ "--c": w.tagColor } as React.CSSProperties}>
               <span className="stv__ver">
                 v{WORK.length - i}.0 · {w.period.replace("\n", " ")}
                 {i === 0 && <em>текущая</em>}
               </span>
               <div className="stv__company">{w.company}</div>
               <div className="stv__role">{w.role}</div>
-              <p>{w.description}</p>
+              <p>{WORK_SHORT[i] ?? w.description}</p>
               <div className="st-tags">
                 {w.tags.map((t) => (
                   <span key={t}>{t}</span>
