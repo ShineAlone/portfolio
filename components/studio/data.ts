@@ -166,14 +166,16 @@ export const LAB_MOTION: { video: string | null } = { video: "/videos/motion-you
  */
 const LAB_COL = 642;
 const LAB_GAP = 40;
-const LAB_ROWS = [660, 560, 608];
-// между плагинами и нижним рядом — подпись раздела
-const LAB_LABEL_H = 84;
+// нижний ряд ниже остальных: у ролика и модели только заголовки, без описаний
+const LAB_ROWS = [660, 560, 520];
+// между рядами воздуха больше, чем между колонками; перед нижним рядом — подпись раздела
+const LAB_VGAP = 56;
+const LAB_LABEL_H = 96;
 const LAB_X0 = (span(3) - (LAB_COL * 3 + LAB_GAP * 2)) / 2;
-const LAB_Y0 = (ROW1.h - (LAB_ROWS.reduce((a, b) => a + b, 0) + LAB_GAP * 2 + LAB_LABEL_H)) / 2;
+const LAB_Y0 = (ROW1.h - (LAB_ROWS.reduce((a, b) => a + b, 0) + LAB_VGAP * 2 + LAB_LABEL_H)) / 2;
 const labCell = (row: number, col: number, cols = 1) => ({
   x: islandById("plugins").x + LAB_X0 + col * (LAB_COL + LAB_GAP),
-  y: islandById("plugins").y + LAB_Y0 + LAB_ROWS.slice(0, row).reduce((a, b) => a + b + LAB_GAP, 0) + (row === 2 ? LAB_LABEL_H : 0),
+  y: islandById("plugins").y + LAB_Y0 + LAB_ROWS.slice(0, row).reduce((a, b) => a + b + LAB_VGAP, 0) + (row === 2 ? LAB_LABEL_H : 0),
   w: LAB_COL * cols + LAB_GAP * (cols - 1),
   h: LAB_ROWS[row],
 });

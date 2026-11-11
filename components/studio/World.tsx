@@ -532,7 +532,6 @@ function LabMotion({ selected }: { selected: boolean }) {
         </div>
         <span className="stp__tag">3D · моушен</span>
         <div className="stp__name">Анимация для YouTube-канала</div>
-        <p>3D-анимация для превью видео: объёмная сцена, свет и движение камеры.</p>
       </div>
     </Frame>
   );
@@ -548,7 +547,6 @@ function LabUni({ selected }: { selected: boolean }) {
         </div>
         <span className="stp__tag">3D-модель</span>
         <div className="stp__name">Второй корпус ТГПУ им. Л. Н. Толстого</div>
-        <p>Модель корпуса моего университета. Сделал её в рамках факультатива.</p>
       </div>
     </Frame>
   );
