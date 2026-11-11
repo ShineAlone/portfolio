@@ -291,26 +291,10 @@
   font-size: 18px;
 }
 
-/* 3D-ролик: экран 16:9 слева, описание справа */
-.stm {
-  display: flex;
-  gap: 32px;
-  padding: 36px;
-}
-
-.stm__screen {
-  position: relative;
-  flex-shrink: 0;
-  height: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 22px;
-  overflow: hidden;
-  background: #111;
-}
-
+/* заглушка 3D-ролика: вращающийся каркас куба */
 .stm__stub {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  height: 100%;
   display: grid;
   place-items: center;
   color: #fff;
@@ -321,8 +305,8 @@
 
 .stm__cube {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: 130px;
+  height: 130px;
   transform-style: preserve-3d;
   animation: stm-spin 9s linear infinite;
 }
@@ -334,12 +318,12 @@
   background: rgba(199, 145, 255, 0.08);
 }
 
-.stm__cube i:nth-child(1) { transform: translateZ(90px); }
-.stm__cube i:nth-child(2) { transform: rotateY(180deg) translateZ(90px); }
-.stm__cube i:nth-child(3) { transform: rotateY(90deg) translateZ(90px); }
-.stm__cube i:nth-child(4) { transform: rotateY(-90deg) translateZ(90px); }
-.stm__cube i:nth-child(5) { transform: rotateX(90deg) translateZ(90px); }
-.stm__cube i:nth-child(6) { transform: rotateX(-90deg) translateZ(90px); }
+.stm__cube i:nth-child(1) { transform: translateZ(65px); }
+.stm__cube i:nth-child(2) { transform: rotateY(180deg) translateZ(65px); }
+.stm__cube i:nth-child(3) { transform: rotateY(90deg) translateZ(65px); }
+.stm__cube i:nth-child(4) { transform: rotateY(-90deg) translateZ(65px); }
+.stm__cube i:nth-child(5) { transform: rotateX(90deg) translateZ(65px); }
+.stm__cube i:nth-child(6) { transform: rotateX(-90deg) translateZ(65px); }
 
 @keyframes stm-spin {
   from {
@@ -352,16 +336,16 @@
 
 .stm__soon {
   position: absolute;
-  left: 22px;
-  top: 22px;
+  left: 16px;
+  top: 16px;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 8px 16px 9px;
+  padding: 7px 15px 8px;
   border-radius: 20px;
   background: #fefe78;
   color: #111;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -373,66 +357,188 @@
   animation: st-blink 1.6s ease-in-out infinite;
 }
 
-/* строка плеера: намекает, что здесь будет видео */
-.stm__bar {
+/* ---------- 3D-модель корпуса ---------- */
+
+.st-uni {
+  position: relative;
+}
+
+.st-uni__view {
   position: absolute;
-  left: 22px;
-  right: 22px;
-  bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 17px;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(#55626f, #6d7a87);
+  color: #fff;
 }
 
-.stm__bar b {
-  font-size: 20px;
+.st-uni__view.is-away {
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  opacity: 0.8;
 }
 
-.stm__bar span {
-  flex: 1;
-  height: 5px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #c791ff 18%, rgba(255, 255, 255, 0.25) 18%);
+.st-world .st-uni__poster,
+.st-uni__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.stm__bar em {
-  font-style: normal;
-  opacity: 0.7;
+.st-uni__stage,
+.st-uni__canvas {
+  position: absolute;
+  inset: 0;
 }
 
-.stm__info {
+.st-uni__canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.st-uni__canvas canvas:active {
+  cursor: grabbing;
+}
+
+.st-uni__start {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  padding: 10px 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-bottom: 22px;
+  background: linear-gradient(transparent 45%, rgba(20, 28, 40, 0.55));
 }
 
-.stm__tag {
-  align-self: flex-start;
+.st-uni__open {
+  height: 54px;
+  padding: 0 28px !important;
+  border-radius: 27px;
+  border: 3px solid #111 !important;
+  background: #acf9a2 !important;
+  color: #111;
+  font: 800 19px var(--display) !important;
+  box-shadow: 4px 4px 0 #111;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.st-uni__open:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #111;
+}
+
+.st-uni__open:disabled {
+  background: #fff !important;
+  cursor: progress;
+}
+
+.st-uni__msg {
   padding: 6px 14px;
-  border-radius: 20px;
-  background: #c791ff;
+  border-radius: 14px;
+  background: rgba(17, 17, 17, 0.75);
   font-size: 17px;
 }
 
-.stm__name {
-  margin-top: 18px;
-  font: 800 31px/1.1 var(--display);
-  letter-spacing: -0.02em;
+.st-uni__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
-.stm p {
-  margin-top: 16px;
-  font-size: 21px;
-  line-height: 1.45;
-  color: #333;
+.st-uni__views,
+.st-uni__tools {
+  position: absolute;
+  display: flex;
+  gap: 6px;
 }
 
-.stm .stm__note {
-  margin-top: auto;
-  font-size: 18px;
-  color: #777;
+.st-uni__views {
+  left: 14px;
+  bottom: 14px;
+}
+
+.st-uni__tools {
+  right: 14px;
+  top: 14px;
+  flex-direction: column;
+}
+
+.st-uni__views button,
+.st-uni__tools button {
+  height: 40px;
+  min-width: 40px;
+  padding: 0 14px !important;
+  border-radius: 20px;
+  background: rgba(17, 17, 17, 0.72) !important;
+  color: #fff !important;
+  font-size: 17px !important;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.st-uni__tools button {
+  padding: 0 !important;
+  font-size: 20px !important;
+}
+
+.st-uni__views button:hover,
+.st-uni__tools button:hover {
+  background: #111 !important;
+}
+
+.st-uni__views button:focus-visible,
+.st-uni__tools button:focus-visible,
+.st-uni__open:focus-visible {
+  outline: 3px solid #fefe78;
+  outline-offset: 2px;
+}
+
+.st-uni__hint {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  padding: 6px 13px;
+  border-radius: 14px;
+  background: rgba(17, 17, 17, 0.55);
+  font-size: 17px;
+  pointer-events: none;
+}
+
+/* полноэкранный просмотр поверх сайта */
+.st-uni__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 14, 20, 0.6);
+  padding: 24px;
+  font-family: var(--font-golos, system-ui, sans-serif);
+}
+
+.st-uni__modal .st-uni__view {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+}
+
+.st-uni__modal button {
+  border: 0;
+  font-family: inherit;
 }
 
 .st-slot {

@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import { ForumBoard } from "./ForumBoard";
+import { UniModel } from "./UniModel";
 import { earnAch } from "./earn";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
@@ -509,34 +510,44 @@ function LabIntro({ selected }: { selected: boolean }) {
 // 3D-ролик для YouTube: пока он в работе, на месте видео — заглушка с вращающимся каркасом куба.
 function LabMotion({ selected }: { selected: boolean }) {
   return (
-    <Frame meta={frameById("lab-motion")} selected={selected} className="st-card stm">
-      <div className="stm__screen">
-        {LAB_MOTION.video ? (
-          <AutoVideo video={LAB_MOTION.video} />
-        ) : (
-          <div className="stm__stub">
-            <div className="stm__cube" aria-hidden>
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <i key={i} />
-              ))}
+    <Frame meta={frameById("lab-motion")} selected={selected} className="st-card">
+      <div className="stp stp--big" style={{ "--tc": "#c791ff" } as React.CSSProperties}>
+        <div className="stp__media">
+          {LAB_MOTION.video ? (
+            <AutoVideo video={LAB_MOTION.video} />
+          ) : (
+            <div className="stm__stub">
+              <div className="stm__cube" aria-hidden>
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <i key={i} />
+                ))}
+              </div>
+              <span className="stm__soon">
+                <i />
+                Ролик в работе
+              </span>
             </div>
-            <span className="stm__soon">
-              <i />
-              Ролик в работе
-            </span>
-            <div className="stm__bar" aria-hidden>
-              <b>▶</b>
-              <span />
-              <em>1920 × 1080</em>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="stm__info">
-        <span className="stm__tag">3D · моушен</span>
-        <b className="stm__name">Анимация для YouTube-канала</b>
+          )}
+        </div>
+        <span className="stp__tag">3D · моушен</span>
+        <div className="stp__name">Анимация для YouTube-канала</div>
         <p>3D-анимация для превью видео: объёмная сцена, свет и движение камеры.</p>
-        <p className="stm__note">{LAB_MOTION.video ? "Играет сама, пока блок в кадре." : "Сейчас доделываю — скоро появится здесь."}</p>
+      </div>
+    </Frame>
+  );
+}
+
+// 3D-модель корпуса университета: открывается по кнопке, её можно крутить и разворачивать на весь экран
+function LabUni({ selected }: { selected: boolean }) {
+  return (
+    <Frame meta={frameById("lab-uni")} selected={selected} className="st-card">
+      <div className="stp stp--big" style={{ "--tc": "#acf9a2" } as React.CSSProperties}>
+        <div className="stp__media st-uni">
+          <UniModel />
+        </div>
+        <span className="stp__tag">3D-модель</span>
+        <div className="stp__name">Второй корпус ТГПУ им. Л. Н. Толстого</div>
+        <p>Модель корпуса моего университета. Сделал её в рамках факультатива.</p>
       </div>
     </Frame>
   );
@@ -913,6 +924,7 @@ export const World = memo(function World(p: WorldProps) {
       )}
       <LabIntro selected={p.selected === "lab-intro"} />
       <LabMotion selected={p.selected === "lab-motion"} />
+      <LabUni selected={p.selected === "lab-uni"} />
       {LAB_CARDS.map((_, i) => (
         <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} />
       ))}

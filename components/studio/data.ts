@@ -148,11 +148,11 @@ export const LAB_MOTION: { video: string | null } = { video: null };
 
 /*
  * Сетка 3×3 с равными колонками. Главное — пять плагинов: они идут сразу за вступлением крупными
- * одинаковыми карточками. Нижний ряд — второстепенное: 3D-ролик на две колонки и гараж одной карточкой.
+ * одинаковыми карточками. Нижний ряд — 3D и игра: ролик, модель корпуса университета и гараж.
  */
 const LAB_COL = 642;
 const LAB_GAP = 40;
-const LAB_ROWS = [670, 670, 588];
+const LAB_ROWS = [660, 660, 608];
 const LAB_X0 = (span(3) - (LAB_COL * 3 + LAB_GAP * 2)) / 2;
 const LAB_Y0 = (ROW1.h - (LAB_ROWS.reduce((a, b) => a + b, 0) + LAB_GAP * 2)) / 2;
 const labCell = (row: number, col: number, cols = 1) => ({
@@ -213,11 +213,21 @@ export const FRAMES: FrameMeta[] = [
     id: "lab-motion",
     name: "3D-анимация",
     island: "plugins",
-    ...labCell(2, 0, 2),
+    ...labCell(2, 0),
     r: 32,
     text: "3D-анимация для превью видео на YouTube-канале. Ролик ещё в работе.",
     tags: ["3D", "Моушен"],
     tagColor: "#c791ff",
+  },
+  {
+    id: "lab-uni",
+    name: "3D-модель корпуса",
+    island: "plugins",
+    ...labCell(2, 1),
+    r: 32,
+    text: "Модель второго корпуса Тульского государственного педагогического университета им. Л. Н. Толстого. Сделана в рамках факультатива.",
+    tags: ["3D-модель"],
+    tagColor: "#acf9a2",
   },
   ...LAB_CARDS.map((card, i): FrameMeta => {
     const href = card.figmaButton ? LINKS.figmaPlugin : card.link;
