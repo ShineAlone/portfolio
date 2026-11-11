@@ -10,7 +10,7 @@ import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js
 /*
  * 3D-модель второго корпуса ТГПУ. До нажатия показана только заставка — библиотека, модель и декодер
  * грузятся по кнопке «Открыть 3D». Модель можно свободно крутить и приближать; камера не опускается
- * ниже горизонта, поэтому дна не видно. Кнопки-ракурсы плавно переносят камеру на готовые виды.
+ * ниже горизонта, поэтому дна не видно.
  * «На весь экран» открывает то же окно поверх сайта: канвас переезжает туда вместе с камерой.
  */
 
@@ -19,11 +19,7 @@ const POSTER = "/models/university-poster.jpg";
 const DRACO = "/draco/";
 
 // [азимут, наклон от вертикали] в градусах и дальность в долях стартовой
-const VIEWS: { name: string; az: number; pol: number; dist: number }[] = [
-  { name: "Вход", az: 12, pol: 70, dist: 1 },
-  { name: "Двор", az: 192, pol: 64, dist: 1.05 },
-  { name: "Сверху", az: 20, pol: 18, dist: 1.15 },
-];
+const HOME = { az: 12, pol: 70 };
 const RAD = Math.PI / 180;
 
 type Status = "idle" | "loading" | "ready" | "error" | "nogl";
@@ -159,7 +155,7 @@ export function UniModel() {
         camera.position.setFromSpherical(s).add(target);
         camera.lookAt(target);
       };
-      place(VIEWS[0].az * RAD, VIEWS[0].pol * RAD, base);
+      place(HOME.az * RAD, HOME.pol * RAD, base);
       controls.update();
 
       // плавный перелёт к ракурсу: азимут идёт кратчайшей дугой
@@ -289,13 +285,6 @@ export function UniModel() {
 
       {ready && (
         <>
-          <div className="st-uni__views" data-ui>
-            {VIEWS.map((v) => (
-              <button key={v.name} type="button" onClick={() => rig.current?.fly(v.az * RAD, v.pol * RAD, rig.current.base * v.dist)}>
-                {v.name}
-              </button>
-            ))}
-          </div>
           <div className="st-uni__tools" data-ui>
             <button type="button" aria-label="Приблизить" onClick={() => rig.current?.zoom(0.75)}>
               +
@@ -307,7 +296,7 @@ export function UniModel() {
               type="button"
               aria-label="Сбросить вид"
               title="Сбросить вид"
-              onClick={() => rig.current?.fly(VIEWS[0].az * RAD, VIEWS[0].pol * RAD, rig.current.base)}
+              onClick={() => rig.current?.fly(HOME.az * RAD, HOME.pol * RAD, rig.current.base)}
             >
               ↺
             </button>

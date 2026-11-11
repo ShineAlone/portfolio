@@ -64,6 +64,19 @@
   -webkit-user-drag: none;
 }
 
+/* абзацы не оставляют одно слово на последней строке, заголовки делятся на строки поровну */
+.st-world p,
+.st-world li {
+  text-wrap: pretty;
+}
+
+.st-world h3,
+.st-world .stp__name,
+.st-world .stl__title,
+.st-world .stv__company {
+  text-wrap: balance;
+}
+
 /* ---------- острова ---------- */
 
 .st-island {
@@ -357,6 +370,32 @@
   animation: st-blink 1.6s ease-in-out infinite;
 }
 
+/* подпись раздела перед нижним рядом лаборатории */
+.st-lablabel {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-top: 8px;
+}
+
+.st-lablabel b {
+  font: 800 34px var(--display);
+  letter-spacing: -0.02em;
+}
+
+.st-lablabel span {
+  font-size: 20px;
+  opacity: 0.6;
+}
+
+.st-lablabel i {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(17, 17, 17, 0.14);
+}
+
 /* ---------- 3D-модель корпуса ---------- */
 
 .st-uni {
@@ -457,25 +496,15 @@
   clip-path: inset(50%);
 }
 
-.st-uni__views,
 .st-uni__tools {
   position: absolute;
+  right: 14px;
+  top: 14px;
   display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
-.st-uni__views {
-  left: 14px;
-  bottom: 14px;
-}
-
-.st-uni__tools {
-  right: 14px;
-  top: 14px;
-  flex-direction: column;
-}
-
-.st-uni__views button,
 .st-uni__tools button {
   height: 40px;
   min-width: 40px;
@@ -495,12 +524,10 @@
   font-size: 20px !important;
 }
 
-.st-uni__views button:hover,
 .st-uni__tools button:hover {
   background: #111 !important;
 }
 
-.st-uni__views button:focus-visible,
 .st-uni__tools button:focus-visible,
 .st-uni__open:focus-visible {
   outline: 3px solid #fefe78;

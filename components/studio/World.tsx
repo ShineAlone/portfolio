@@ -9,6 +9,7 @@ import {
   CARS,
   ISLANDS,
   LAB_CARDS,
+  LAB_LABEL,
   LAB_MOTION,
   SITE_FRAMES,
   frameById,
@@ -923,6 +924,11 @@ export const World = memo(function World(p: WorldProps) {
             </>
       )}
       <LabIntro selected={p.selected === "lab-intro"} />
+      <div className="st-lablabel" style={{ left: LAB_LABEL.x, top: LAB_LABEL.y, width: LAB_LABEL.w, height: LAB_LABEL.h }}>
+        <b>3D и игра</b>
+        <span>анимация, модель и мини-игра</span>
+        <i />
+      </div>
       <LabMotion selected={p.selected === "lab-motion"} />
       <LabUni selected={p.selected === "lab-uni"} />
       {LAB_CARDS.map((_, i) => (

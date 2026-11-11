@@ -141,7 +141,19 @@ export const SOCIAL_LAYOUT = (() => {
 
 // Лаборатория: сетка 3×3, карточки по центру острова, гараж — во весь нижний ряд.
 // «Чек-лист презентаций» в новой версии не показываем.
-export const LAB_CARDS = AUTOMATION.cards.filter((c) => !c.title.startsWith("Чек-лист"));
+// Названия короче, чем на основном сайте: без повторяющегося «Генератор» в каждой карточке.
+const LAB_TITLES: Record<string, string> = {
+  "Генератор абстрактной геометрии": "Абстрактная геометрия",
+  "Генератор новостных дайджестов": "Новостные дайджесты",
+  "Генератор карточек для новостей": "Карточки для новостей",
+  "Генератор фирменных паттернов": "Фирменные паттерны",
+};
+// Порядок: в первом ряду рядом со вступлением — геометрия и DropToChat, второй ряд — три рабочих плагина-генератора.
+const LAB_ORDER = [0, 4, 2, 3, 1];
+export const LAB_CARDS = (() => {
+  const cards = AUTOMATION.cards.filter((c) => !c.title.startsWith("Чек-лист"));
+  return LAB_ORDER.map((i) => ({ ...cards[i], title: LAB_TITLES[cards[i].title] ?? cards[i].title }));
+})();
 
 // 3D-ролик для YouTube-канала: пока видео не готово (video: null), на его месте стоит заглушка.
 export const LAB_MOTION: { video: string | null } = { video: null };
@@ -152,15 +164,20 @@ export const LAB_MOTION: { video: string | null } = { video: null };
  */
 const LAB_COL = 642;
 const LAB_GAP = 40;
-const LAB_ROWS = [660, 660, 608];
+const LAB_ROWS = [660, 560, 608];
+// между плагинами и нижним рядом — подпись раздела
+const LAB_LABEL_H = 84;
 const LAB_X0 = (span(3) - (LAB_COL * 3 + LAB_GAP * 2)) / 2;
-const LAB_Y0 = (ROW1.h - (LAB_ROWS.reduce((a, b) => a + b, 0) + LAB_GAP * 2)) / 2;
+const LAB_Y0 = (ROW1.h - (LAB_ROWS.reduce((a, b) => a + b, 0) + LAB_GAP * 2 + LAB_LABEL_H)) / 2;
 const labCell = (row: number, col: number, cols = 1) => ({
   x: islandById("plugins").x + LAB_X0 + col * (LAB_COL + LAB_GAP),
-  y: islandById("plugins").y + LAB_Y0 + LAB_ROWS.slice(0, row).reduce((a, b) => a + b + LAB_GAP, 0),
+  y: islandById("plugins").y + LAB_Y0 + LAB_ROWS.slice(0, row).reduce((a, b) => a + b + LAB_GAP, 0) + (row === 2 ? LAB_LABEL_H : 0),
   w: LAB_COL * cols + LAB_GAP * (cols - 1),
   h: LAB_ROWS[row],
 });
+
+// подпись раздела перед нижним рядом лаборатории
+export const LAB_LABEL = { x: labCell(2, 0).x, y: labCell(2, 0).y - LAB_LABEL_H, w: LAB_COL * 3 + LAB_GAP * 2, h: LAB_LABEL_H };
 
 export const FRAMES: FrameMeta[] = [
   {
