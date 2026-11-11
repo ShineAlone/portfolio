@@ -118,8 +118,33 @@ function Greeting({
         ))}
       </div>
 
-      <div className="sthg__photo">
-        <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
+      {/* фото стоит на цветной карточке: голова выходит за её верх, низ обрезан по краю */}
+      <div className="sthg__stage">
+        <div className="sthg__card" />
+        <div className="sthg__photo">
+          <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
+        </div>
+        {/* круглый значок с бегущим по кругу текстом */}
+        <div className="sthg__badge" aria-hidden>
+          <svg viewBox="0 0 200 200">
+            <defs>
+              <path id="sthg-ring" d="M100 100m-74 0a74 74 0 1 1 148 0a74 74 0 1 1 -148 0" />
+            </defs>
+            <text>
+              <textPath href="#sthg-ring">открыт для сотрудничества • пиши в telegram •</textPath>
+            </text>
+          </svg>
+          <i>↗</i>
+        </div>
+        {TOOLS.icons.slice(0, 3).map((tool, i) => (
+          <span key={tool.alt} className={`sthg__tool is-${i}${tool.boxed ? " is-boxed" : ""}`} title={tool.alt}>
+            <img src={tool.src} alt="" draggable={false} />
+          </span>
+        ))}
+        <span className="sthg__place">
+          <i />
+          Тула · работаю удалённо
+        </span>
       </div>
 
       <div className="sthg__name">
@@ -132,16 +157,15 @@ function Greeting({
       </div>
 
       <div className="sthg__note">
-        <span>продуктовый и коммуникационный дизайнер</span>
-        <svg width="190" height="70" viewBox="0 0 190 70" fill="none" aria-hidden>
-          <path d="M6 52c40 10 90 6 132-26" stroke="#111" strokeWidth="4" strokeLinecap="round" />
-          <path d="M120 20l20 4-6 19" stroke="#111" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <span className="is-a">продуктовый</span>
+        <em>и</em>
+        <span className="is-b">коммуникационный</span>
+        <b>дизайнер</b>
       </div>
 
       <div className="sthg__cta">
         <a data-ui className="st-btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
-          {HERO.contactLabel}
+          {HERO.contactLabel} ↗
         </a>
         <span className="sth__status">
           <i />
@@ -149,42 +173,30 @@ function Greeting({
         </span>
       </div>
 
-      {STICKERS.map((s, i) => (
-        <button
-          key={i}
-          type="button"
-          data-ui
-          className={`st-sticker st-sticker--${s.shape}`}
-          style={
-            {
-              left: s.x,
-              top: s.y,
-              width: s.w,
-              height: s.h,
-              "--rot": `${s.rot}deg`,
-              "--c": s.color,
-              "--i": i,
-            } as React.CSSProperties
-          }
-          onClick={(e) => {
-            const el = e.currentTarget;
-            el.classList.remove("is-wiggle");
-            void el.offsetWidth;
-            el.classList.add("is-wiggle");
-            onSticker();
-          }}
-        >
-          {s.shape === "burst" && (
-            <svg className="st-sticker__burst" viewBox="0 0 100 100" aria-hidden>
-              <polygon points={BURST_POINTS} />
-            </svg>
-          )}
-          <b>
-            <CountUp value={STATS[i].value} run={step >= 4} />
-          </b>
-          <span>{STATS[i].label}</span>
-        </button>
-      ))}
+      {/* цифры — ровный ряд карточек вместо разбросанных наклеек */}
+      <div className="sthg__stats">
+        {STATS.map((s, i) => (
+          <button
+            key={s.label}
+            type="button"
+            data-ui
+            className="st-stat"
+            style={{ "--c": STICKERS[i].color, "--i": i } as React.CSSProperties}
+            onClick={(e) => {
+              const el = e.currentTarget;
+              el.classList.remove("is-wiggle");
+              void el.offsetWidth;
+              el.classList.add("is-wiggle");
+              onSticker();
+            }}
+          >
+            <b>
+              <CountUp value={s.value} run={step >= 4} />
+            </b>
+            <span>{s.label}</span>
+          </button>
+        ))}
+      </div>
     </Frame>
   );
 }
