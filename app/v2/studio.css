@@ -2297,6 +2297,202 @@
   object-fit: cover;
 }
 
+/* ---------- форум: экраны сцены ---------- */
+
+.st-forum {
+  overflow: hidden;
+  padding: 56px;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  background: linear-gradient(100deg, #1354a1, #1e4edb);
+  box-shadow: 0 40px 70px -40px rgba(0, 0, 0, 0.45);
+}
+
+/* фирменный паттерн: фигуры берут только яркость, цвет остаётся от градиента */
+.st-world .st-forum__pattern {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: luminosity;
+  opacity: 0.16;
+}
+
+.st-forum > :not(.st-forum__pattern) {
+  position: relative;
+}
+
+.st-forum__head {
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 40px;
+  align-items: end;
+}
+
+.st-forum__kicker {
+  display: inline-block;
+  padding: 7px 16px 8px;
+  border-radius: 20px;
+  background: #fff;
+  color: #1354a1;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.st-forum__head h3 {
+  margin-top: 20px;
+  font: 800 62px/1.04 var(--display);
+  white-space: nowrap;
+  letter-spacing: -0.03em;
+}
+
+.st-forum__head p {
+  font-size: 21px;
+  line-height: 1.45;
+  opacity: 0.88;
+}
+
+.st-forum__tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 40px;
+}
+
+.st-forum__tabs button {
+  position: relative;
+  overflow: hidden;
+  padding: 11px 22px 12px;
+  border-radius: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+  font-size: 19px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.st-forum__tabs button:hover {
+  border-color: #fff;
+}
+
+.st-forum__tabs button.is-on {
+  background: #fff;
+  border-color: #fff;
+  color: #1354a1;
+}
+
+/* полоска-таймер под активной вкладкой, пока шаблоны листаются сами */
+.st-forum__tabs button i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 100%;
+  background: #1e4edb;
+  transform-origin: 0 50%;
+  animation: st-forum-bar linear both;
+}
+
+@keyframes st-forum-bar {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.st-forum__tabs span {
+  margin-left: 12px;
+  font-size: 19px;
+  opacity: 0.8;
+}
+
+.st-forum figure {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #0d3a78;
+  box-shadow: 0 0 0 6px rgba(8, 24, 60, 0.55), 0 30px 50px -24px rgba(0, 10, 40, 0.7);
+}
+
+.st-world .st-forum figure img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.st-forum__main img,
+.st-forum__side img {
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+.st-forum__main img.is-on,
+.st-forum__side img.is-on {
+  opacity: 1;
+}
+
+.st-forum figcaption {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 6px 13px 7px;
+  border-radius: 14px;
+  background: rgba(8, 24, 60, 0.72);
+  backdrop-filter: blur(6px);
+  font-size: 17px;
+}
+
+.st-forum__main {
+  margin-top: 20px;
+  aspect-ratio: 32 / 9;
+}
+
+.st-forum__row {
+  display: grid;
+  grid-template-columns: 16fr 11.6fr 11.6fr;
+  gap: 26px;
+  margin-top: 26px;
+}
+
+.st-forum__side {
+  aspect-ratio: 16 / 9;
+}
+
+.st-forum__specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  list-style: none;
+}
+
+.st-forum__specs li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px 10px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  font-size: 19px;
+}
+
+.st-forum__specs b {
+  font: 800 22px var(--display);
+}
+
+.st-forum__grad {
+  width: 46px;
+  height: 22px;
+  border-radius: 11px;
+  border: 2px solid #fff;
+  background: linear-gradient(90deg, #1354a1, #1e4edb);
+}
+
 /* ---------- тёмный остров «Контакты» ---------- */
 
 .st-island.is-dark {

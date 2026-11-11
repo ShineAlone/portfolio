@@ -112,7 +112,7 @@ export const SITE_FRAMES = SITES.map(([id, name, src, h], i) => ({
   meta: {
     id,
     name,
-    ...proj(PROJ_X0 + i * SITE_STEP, 170, 470, h + 40),
+    ...proj(PROJ_X0 + i * SITE_STEP, 80, 470, h + 40),
     r: 18,
     text: PROJECTS.description,
   } as FrameMeta,
@@ -275,21 +275,21 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "site-5",
     name: "Вне рамок",
-    ...proj(PROJ_X0 + 5 * SITE_STEP, 170, 470, 1996),
+    ...proj(PROJ_X0 + 5 * SITE_STEP, 80, 470, 1996),
     r: 18,
     text: PROJECTS.description,
   },
   {
     id: "site-6",
     name: "Вне рамок — мобильная",
-    ...proj(PROJ_X0 + 6 * SITE_STEP, 170, 200, 2252),
+    ...proj(PROJ_X0 + 6 * SITE_STEP, 80, 200, 2252),
     r: 30,
     text: PROJECTS.description,
   },
   {
     id: "coffee",
     name: "Кофе Культ",
-    ...proj(PROJ_X0, 1100, 1490, 1000),
+    ...proj(PROJ_X0, 1000, 1490, 1000),
     r: 40,
     text: "Личный некоммерческий концепт айдентики для сети кофеен: стаканчики, упаковка десертов, меню, абонементы. Сделан для себя и в работу не пошёл; логотип принадлежит «Кофе Культ» и использован только для демонстрации идеи.",
     tags: ["Айдентика", "Упаковка", "Полиграфия"],
@@ -298,9 +298,21 @@ export const FRAMES: FrameMeta[] = [
   {
     id: "merch",
     name: "Мерч",
-    ...proj(PROJ_X0 + 3 * SITE_STEP, 1400, 1050, 960),
+    // полароиды мерча — одной строкой под «Кофе Культ»
+    ...proj(PROJ_X0, 2040, 1490, 330),
     r: 0,
     text: PROJECTS.description,
+  },
+  {
+    id: "forum",
+    name: "Форум «Российское село»",
+    ...rel("proj", 1940, 1580),
+    w: 1500,
+    h: 1264,
+    r: 44,
+    text: "Оформление экранов сцены для форума «Российское село — место силы»: заставки сессий, плашки спикеров и темы выступлений в двух форматах — под главный экран 3840×1080 и боковой 1920×1080.",
+    tags: ["Брендинг мероприятия", "Экраны сцены", "Шаблоны"],
+    tagColor: "#B8C7FF",
   },
   {
     id: "contact",

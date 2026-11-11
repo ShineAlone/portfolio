@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useRef, useState } from "react";
+import { ForumBoard } from "./ForumBoard";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
@@ -674,6 +675,7 @@ function Projects({ selected }: { selected: string | null }) {
         </div>
       </Frame>
       <Coffee selected={selected === "coffee"} />
+      <ForumBoard selected={selected === "forum"} />
       <Frame meta={frameById("merch")} selected={selected === "merch"} className="st-free st-prints">
         {PROJECTS.merch.map((src, i) => (
           <div
@@ -681,8 +683,9 @@ function Projects({ selected }: { selected: string | null }) {
             className="st-print"
             style={
               {
-                left: (i % 2) * 530 + 20,
-                top: Math.floor(i / 2) * 450 + (i % 2) * 30 + 20,
+                left: i * 372 + 10,
+                top: (i % 2) * 16 + 8,
+                width: 350,
                 "--rot": `${[-4, 3, 2, -3][i]}deg`,
               } as React.CSSProperties
             }
