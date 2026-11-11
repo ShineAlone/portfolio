@@ -1,5 +1,6 @@
 "use client";
 
+import { earnAch } from "./earn";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LINKS } from "@/lib/content";
 import { frameById } from "./data";
@@ -505,6 +506,7 @@ function RouteBoard() {
               onBuilt={(r) => {
                 setCustom(r);
                 setSel("custom");
+                earnAch("route");
               }}
               onPlay={togglePlay}
               playing={playing}

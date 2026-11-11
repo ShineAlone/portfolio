@@ -4,6 +4,20 @@ import type { AchievementId } from "./data";
 const GLYPHS: Record<AchievementId | "tour", React.ReactNode> = {
   tour: <path d="M8 5l11 7-11 7V5z" />,
   sticker: <path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.9l-5.3 2.5 1.2-6-4.5-4.1 6-.7z" />,
+  react: <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.4a4.3 4.3 0 017.5 2.4C19.500 15.4 12 20 12 20z" />,
+  route: (
+    <>
+      <circle cx="6" cy="18" r="2.2" />
+      <circle cx="18" cy="6" r="2.2" />
+      <path d="M8.200 18H14a3 3 0 000-6h-4a3 3 0 010-6h5.800" />
+    </>
+  ),
+  forum: (
+    <>
+      <rect x="2.500" y="6" width="19" height="9" rx="1.500" />
+      <path d="M7 19h10M12 15v4" />
+    </>
+  ),
   map: <path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5V6.5zm6-2.5v13.5m6-11v13.5" />,
   pile: (
     <>

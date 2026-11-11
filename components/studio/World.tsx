@@ -2,11 +2,13 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import { ForumBoard } from "./ForumBoard";
+import { earnAch } from "./earn";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
   ISLANDS,
   LAB_CARDS,
+  LAB_MOTION,
   SITE_FRAMES,
   frameById,
   islandById,
@@ -59,12 +61,22 @@ export function CountUp({ value, run }: { value: string; run: boolean }) {
   );
 }
 
-function HoverVideo({ video }: { video: string }) {
-  const [on, setOn] = useState(false);
+// Видео играет само, пока оно в кадре: за пределами экрана ставится на паузу, чтобы не грузить холст.
+function AutoVideo({ video }: { video: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) el.play().catch(() => {});
+      else el.pause();
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   return (
-    <div className="st-hv" onPointerEnter={() => setOn(true)} onPointerLeave={() => setOn(false)}>
-      <img src={poster(video)} alt="" draggable={false} />
-      {on && <video src={video} autoPlay muted loop playsInline />}
+    <div className="st-hv">
+      <video ref={ref} src={video} poster={poster(video)} muted loop playsInline preload="none" />
     </div>
   );
 }
@@ -349,7 +361,10 @@ export function ChatContent({ step }: { step: number }) {
                 type="button"
                 data-ui
                 className={`stchat__react${bumps[i] ? " is-mine" : ""}`}
-                onClick={() => setBumps((b) => ({ ...b, [i]: (b[i] ?? 0) + 1 }))}
+                onClick={() => {
+                  setBumps((b) => ({ ...b, [i]: (b[i] ?? 0) + 1 }));
+                  earnAch("react");
+                }}
                 aria-label="Поставить реакцию"
               >
                 <span key={bumps[i] ?? 0} className="stchat__emoji">
@@ -437,10 +452,10 @@ function PluginCard({ index, selected }: { index: number; selected: boolean }) {
   const meta = frameById(`plugin-${index}`);
   return (
     <Frame meta={meta} selected={selected} className="st-card">
-      <div className="stp" style={{ "--tc": card.tagColor } as React.CSSProperties}>
+      <div className="stp stp--small" style={{ "--tc": card.tagColor } as React.CSSProperties}>
         <div className="stp__media">
           {card.video ? (
-            <HoverVideo video={card.video} />
+            <AutoVideo video={card.video} />
           ) : card.image ? (
             <img src={card.image} alt="" loading="lazy" draggable={false} />
           ) : (
@@ -475,6 +490,42 @@ function LabIntro({ selected }: { selected: boolean }) {
         <span>Идея</span>→<span>Прототип</span>→<span>Продукт</span>
       </div>
       <p className="stl__note">Этот сайт и гараж с машинками — тоже мой вайб-код ↓</p>
+    </Frame>
+  );
+}
+
+// 3D-ролик для YouTube: пока он в работе, на месте видео — заглушка с вращающимся каркасом куба.
+function LabMotion({ selected }: { selected: boolean }) {
+  return (
+    <Frame meta={frameById("lab-motion")} selected={selected} className="st-card stm">
+      <div className="stm__screen">
+        {LAB_MOTION.video ? (
+          <AutoVideo video={LAB_MOTION.video} />
+        ) : (
+          <div className="stm__stub">
+            <div className="stm__cube" aria-hidden>
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <i key={i} />
+              ))}
+            </div>
+            <span className="stm__soon">
+              <i />
+              Ролик в работе
+            </span>
+            <div className="stm__bar" aria-hidden>
+              <b>▶</b>
+              <span />
+              <em>1920 × 1080</em>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="stm__info">
+        <span className="stm__tag">3D · моушен</span>
+        <b className="stm__name">Анимация для YouTube-канала</b>
+        <p>3D-анимация для превью видео: объёмная сцена, свет и движение камеры.</p>
+        <p className="stm__note">{LAB_MOTION.video ? "Играет сама, пока блок в кадре." : "Сейчас доделываю — скоро появится здесь."}</p>
+      </div>
     </Frame>
   );
 }
@@ -849,6 +900,7 @@ export const World = memo(function World(p: WorldProps) {
             </>
       )}
       <LabIntro selected={p.selected === "lab-intro"} />
+      <LabMotion selected={p.selected === "lab-motion"} />
       {LAB_CARDS.map((_, i) => (
         <PluginCard key={i} index={i} selected={p.selected === `plugin-${i}`} />
       ))}

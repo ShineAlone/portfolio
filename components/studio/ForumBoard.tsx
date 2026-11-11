@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { frameById } from "./data";
+import { earnAch } from "./earn";
 import { Frame } from "./Frame";
 
 /* eslint-disable @next/next/no-img-element */
@@ -59,6 +60,7 @@ export function ForumBoard({ selected }: { selected: boolean }) {
             onClick={() => {
               setAuto(false);
               setCur(i);
+              earnAch("forum");
             }}
           >
             {s.tab}

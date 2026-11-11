@@ -1,5 +1,6 @@
 "use client";
 
+import { EARN_EVENT } from "./earn";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { LINKS } from "@/lib/content";
 import { MAX_Z, MIN_Z, clamp, createCameraStore, type Cam, type CameraStore } from "./camera";
@@ -358,6 +359,13 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   );
   const earnRef = useRef(earn);
   earnRef.current = earn;
+
+  // достижения из глубины холста (реакция в чате, маршрут, сцена форума) приходят событием
+  useEffect(() => {
+    const on = (e: Event) => earnRef.current((e as CustomEvent<AchievementId>).detail);
+    window.addEventListener(EARN_EVENT, on);
+    return () => window.removeEventListener(EARN_EVENT, on);
+  }, []);
 
   // Камера → DOM: трансформация мира, фон, дальний план, мини-карта, активный остров.
   useEffect(() => {

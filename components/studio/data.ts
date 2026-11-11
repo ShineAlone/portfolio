@@ -143,16 +143,24 @@ export const SOCIAL_LAYOUT = (() => {
 // «Чек-лист презентаций» в новой версии не показываем.
 export const LAB_CARDS = AUTOMATION.cards.filter((c) => !c.title.startsWith("Чек-лист"));
 
-const SLOT_W = 640;
-const SLOT_H = 620;
-const SLOT_GAP = 40;
-const SLOT_X0 = (span(3) - (SLOT_W * 3 + SLOT_GAP * 2)) / 2;
-const SLOT_Y0 = (ROW1.h - (SLOT_H * 3 + SLOT_GAP * 2)) / 2;
-export const labSlot = (i: number, cols = 1) => ({
-  x: islandById("plugins").x + SLOT_X0 + (i % 3) * (SLOT_W + SLOT_GAP),
-  y: islandById("plugins").y + SLOT_Y0 + Math.floor(i / 3) * (SLOT_H + SLOT_GAP),
-  w: SLOT_W * cols + SLOT_GAP * (cols - 1),
-  h: SLOT_H,
+// 3D-ролик для YouTube-канала: пока видео не готово (video: null), на его месте стоит заглушка.
+export const LAB_MOTION: { video: string | null } = { video: null };
+
+/*
+ * Три ряда: вступление и крупный 3D-ролик, под ними пять плагинов в одну строку, внизу гараж во всю ширину.
+ */
+const LAB_W = 2000;
+const LAB_GAP = 40;
+const LAB_ROWS = [640, 600, 620];
+const LAB_X0 = (span(3) - LAB_W) / 2;
+const LAB_Y0 = (ROW1.h - (LAB_ROWS.reduce((a, b) => a + b, 0) + LAB_GAP * 2)) / 2;
+const LAB_INTRO_W = 520;
+const LAB_CARD_W = (LAB_W - LAB_GAP * (LAB_CARDS.length - 1)) / LAB_CARDS.length;
+const labBox = (row: number, x: number, w: number) => ({
+  x: islandById("plugins").x + LAB_X0 + x,
+  y: islandById("plugins").y + LAB_Y0 + LAB_ROWS.slice(0, row).reduce((a, b) => a + b + LAB_GAP, 0),
+  w,
+  h: LAB_ROWS[row],
 });
 
 export const FRAMES: FrameMeta[] = [
@@ -198,9 +206,19 @@ export const FRAMES: FrameMeta[] = [
     id: "lab-intro",
     name: "Не только дизайн",
     island: "plugins",
-    ...labSlot(0),
+    ...labBox(0, 0, LAB_INTRO_W),
     r: 32,
     text: "Генерирую идеи и довожу их до работающего продукта с помощью вайб-кодинга: Figma-плагины, небольшие сервисы и сайты.",
+  },
+  {
+    id: "lab-motion",
+    name: "3D-анимация",
+    island: "plugins",
+    ...labBox(0, LAB_INTRO_W + LAB_GAP, LAB_W - LAB_INTRO_W - LAB_GAP),
+    r: 32,
+    text: "3D-анимация для превью видео на YouTube-канале. Ролик ещё в работе.",
+    tags: ["3D", "Моушен"],
+    tagColor: "#c791ff",
   },
   ...LAB_CARDS.map((card, i): FrameMeta => {
     const href = card.figmaButton ? LINKS.figmaPlugin : card.link;
@@ -208,7 +226,7 @@ export const FRAMES: FrameMeta[] = [
       id: `plugin-${i}`,
       name: card.title,
       island: "plugins",
-      ...labSlot(i + 1),
+      ...labBox(1, i * (LAB_CARD_W + LAB_GAP), LAB_CARD_W),
       r: 32,
       text: card.text,
       tags: [card.tag],
@@ -220,7 +238,7 @@ export const FRAMES: FrameMeta[] = [
     id: "garage",
     name: "Гараж",
     island: "plugins",
-    ...labSlot(6, 3),
+    ...labBox(2, 0, LAB_W),
     r: 32,
     text: "Мини-игра внутри портфолио: выбери машинку и прокатись по сайту на WASD. Физика, столкновения и камера — тоже вайб-код.",
   },
@@ -364,7 +382,7 @@ export const UNBREAKABLE = ["case-hr", "case-tour"];
 
 /* ---------- достижения ---------- */
 
-export type AchievementId = "sticker" | "map" | "pile" | "orbit" | "slides" | "zoom" | "drive";
+export type AchievementId = "sticker" | "react" | "map" | "drive" | "pile" | "orbit" | "slides" | "route" | "zoom" | "forum";
 
 export const ACHIEVEMENTS: {
   id: AchievementId;
@@ -373,13 +391,16 @@ export const ACHIEVEMENTS: {
   island: string;
   color: string;
 }[] = [
-  { id: "sticker", name: "Знакомство", hint: "Кликни по любой наклейке рядом с моим фото", island: "about", color: "#FEFE78" },
+  { id: "sticker", name: "Знакомство", hint: "Кликни по любой карточке с цифрой под моим именем", island: "about", color: "#FEFE78" },
+  { id: "react", name: "Реакция", hint: "Поставь реакцию на любой мой ответ в переписке «Обо мне»", island: "about", color: "#FEFE78" },
   { id: "map", name: "Картограф", hint: "Отдались так, чтобы увидеть всё пространство целиком", island: "about", color: "#86DDFF" },
   { id: "drive", name: "Тест-драйв", hint: "Возьми машинку в гараже «Лаборатории» и врежься в любой блок", island: "plugins", color: "#86DDFF" },
   { id: "pile", name: "Сфера постов", hint: "Покрути сферу постов в «Соцсетях»", island: "social", color: "#FFB6E1" },
-  { id: "orbit", name: "Смена обоев", hint: "Кликни по любым обоям в «Обоях»", island: "wall", color: "#ACF9A2" },
-  { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов презентации в «Кейсах»", island: "cases", color: "#B8C7FF" },
-  { id: "zoom", name: "Под лупой", hint: "Приблизь любой лендинг в «Проектах» до 100%", island: "proj", color: "#FFC7B6" },
+  { id: "orbit", name: "Коллекционер", hint: "Собери обои под курсором в «Обоях» и кликни по любым", island: "wall", color: "#ACF9A2" },
+  { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов презентации в кейсе HR-платформы", island: "cases", color: "#B8C7FF" },
+  { id: "route", name: "Свой маршрут", hint: "Собери маршрут в телефоне в кейсе «Шагай и точка»", island: "cases", color: "#B8C7FF" },
+  { id: "zoom", name: "Под лупой", hint: "Приблизь любую работу в «Проектах» до 100%", island: "proj", color: "#FFC7B6" },
+  { id: "forum", name: "Режиссёр эфира", hint: "Переключи шаблон экрана на сцене форума в «Проектах»", island: "proj", color: "#FFC7B6" },
 ];
 
 // Секретное слово за все достижения: посетитель пишет его в Telegram и получает скидку.
