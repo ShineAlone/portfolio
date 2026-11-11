@@ -265,35 +265,37 @@
 }
 
 .st-frame,
-/* пять плагинов стоят в одну строку — карточки уже, текст компактнее */
-.stp--small {
-  padding: 14px;
+/* плагины — главное в лаборатории: крупные карточки, текст читается без приближения */
+.stp--big {
+  padding: 20px;
 }
 
-.stp--small .stp__tag {
+.stp--big .stp__tag {
+  margin-top: 20px;
+  font-size: 18px;
+}
+
+.stp--big .stp__name {
+  font-size: 29px;
   margin-top: 14px;
-  padding: 5px 12px;
 }
 
-.stp--small .stp__name {
-  font-size: 22px;
+.stp--big p {
+  font-size: 20px;
+  line-height: 1.45;
   margin-top: 10px;
 }
 
-.stp--small p {
-  font-size: 17px;
-  line-height: 1.35;
-}
-
-.stp--small .stp__link {
-  padding: 9px 15px;
+.stp--big .stp__link {
+  padding: 12px 20px;
+  font-size: 18px;
 }
 
 /* 3D-ролик: экран 16:9 слева, описание справа */
 .stm {
   display: flex;
   gap: 32px;
-  padding: 27px;
+  padding: 36px;
 }
 
 .stm__screen {
@@ -3647,8 +3649,9 @@
 /* гараж */
 .stg {
   display: flex;
-  gap: 32px;
-  padding: 36px;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
   background: #2b2b2b;
   color: #fff;
   overflow: hidden;
@@ -3666,15 +3669,25 @@
 
 .stg__info {
   position: relative;
-  width: 420px;
-  flex-shrink: 0;
+}
+
+.stg__info .stl__title {
+  display: block;
+  margin-top: 12px;
+  font-size: 38px;
+}
+
+/* низ карточки: подсказка по клавишам и кнопка старта */
+.stg__foot {
+  position: relative;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .stg__info p {
-  margin-top: 14px;
-  font-size: 22px;
+  margin-top: 10px;
+  font-size: 19px;
   line-height: 1.45;
   opacity: 0.85;
 }
@@ -3683,8 +3696,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 22px;
+  gap: 12px;
   font-size: 17px;
   opacity: 0.85;
 }
@@ -3731,14 +3743,12 @@
 }
 
 .stg__go {
-  margin-top: auto;
-  align-self: flex-start;
   background: #86ddff !important;
   color: #111 !important;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 20px;
-  padding: 16px 28px;
+  font-size: 19px;
+  padding: 14px 24px;
   border: 3px solid #111;
   box-shadow: 5px 5px 0 #000;
 }
@@ -3748,7 +3758,7 @@
   flex: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 
 .stg__spot {
@@ -3757,7 +3767,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 12px;
   border-radius: 20px;
   border: 3px dashed rgba(255, 255, 255, 0.35) !important;
   transition: border-color 0.2s, background 0.2s;
@@ -3773,7 +3783,7 @@
 }
 
 .stg__car {
-  height: 230px;
+  height: 128px;
   display: grid;
   place-items: center;
 }
@@ -3781,7 +3791,7 @@
 .stg__car svg {
   width: auto;
   height: 100%;
-  max-width: 130px;
+  max-width: 84px;
   filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

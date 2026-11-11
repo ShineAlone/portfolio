@@ -147,19 +147,18 @@ export const LAB_CARDS = AUTOMATION.cards.filter((c) => !c.title.startsWith("Ч�
 export const LAB_MOTION: { video: string | null } = { video: null };
 
 /*
- * Три ряда: вступление и крупный 3D-ролик, под ними пять плагинов в одну строку, внизу гараж во всю ширину.
+ * Сетка 3×3 с равными колонками. Главное — пять плагинов: они идут сразу за вступлением крупными
+ * одинаковыми карточками. Нижний ряд — второстепенное: 3D-ролик на две колонки и гараж одной карточкой.
  */
-const LAB_W = 2000;
+const LAB_COL = 642;
 const LAB_GAP = 40;
-const LAB_ROWS = [640, 600, 620];
-const LAB_X0 = (span(3) - LAB_W) / 2;
+const LAB_ROWS = [670, 670, 588];
+const LAB_X0 = (span(3) - (LAB_COL * 3 + LAB_GAP * 2)) / 2;
 const LAB_Y0 = (ROW1.h - (LAB_ROWS.reduce((a, b) => a + b, 0) + LAB_GAP * 2)) / 2;
-const LAB_INTRO_W = 520;
-const LAB_CARD_W = (LAB_W - LAB_GAP * (LAB_CARDS.length - 1)) / LAB_CARDS.length;
-const labBox = (row: number, x: number, w: number) => ({
-  x: islandById("plugins").x + LAB_X0 + x,
+const labCell = (row: number, col: number, cols = 1) => ({
+  x: islandById("plugins").x + LAB_X0 + col * (LAB_COL + LAB_GAP),
   y: islandById("plugins").y + LAB_Y0 + LAB_ROWS.slice(0, row).reduce((a, b) => a + b + LAB_GAP, 0),
-  w,
+  w: LAB_COL * cols + LAB_GAP * (cols - 1),
   h: LAB_ROWS[row],
 });
 
@@ -206,7 +205,7 @@ export const FRAMES: FrameMeta[] = [
     id: "lab-intro",
     name: "Не только дизайн",
     island: "plugins",
-    ...labBox(0, 0, LAB_INTRO_W),
+    ...labCell(0, 0),
     r: 32,
     text: "Генерирую идеи и довожу их до работающего продукта с помощью вайб-кодинга: Figma-плагины, небольшие сервисы и сайты.",
   },
@@ -214,7 +213,7 @@ export const FRAMES: FrameMeta[] = [
     id: "lab-motion",
     name: "3D-анимация",
     island: "plugins",
-    ...labBox(0, LAB_INTRO_W + LAB_GAP, LAB_W - LAB_INTRO_W - LAB_GAP),
+    ...labCell(2, 0, 2),
     r: 32,
     text: "3D-анимация для превью видео на YouTube-канале. Ролик ещё в работе.",
     tags: ["3D", "Моушен"],
@@ -226,7 +225,8 @@ export const FRAMES: FrameMeta[] = [
       id: `plugin-${i}`,
       name: card.title,
       island: "plugins",
-      ...labBox(1, i * (LAB_CARD_W + LAB_GAP), LAB_CARD_W),
+      // первая ячейка сетки занята вступлением
+      ...labCell(Math.floor((i + 1) / 3), (i + 1) % 3),
       r: 32,
       text: card.text,
       tags: [card.tag],
@@ -238,7 +238,7 @@ export const FRAMES: FrameMeta[] = [
     id: "garage",
     name: "Гараж",
     island: "plugins",
-    ...labBox(2, 0, LAB_W),
+    ...labCell(2, 2),
     r: 32,
     text: "Мини-игра внутри портфолио: выбери машинку и прокатись по сайту на WASD. Физика, столкновения и камера — тоже вайб-код.",
   },

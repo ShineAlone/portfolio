@@ -452,7 +452,7 @@ function PluginCard({ index, selected }: { index: number; selected: boolean }) {
   const meta = frameById(`plugin-${index}`);
   return (
     <Frame meta={meta} selected={selected} className="st-card">
-      <div className="stp stp--small" style={{ "--tc": card.tagColor } as React.CSSProperties}>
+      <div className="stp stp--big" style={{ "--tc": card.tagColor } as React.CSSProperties}>
         <div className="stp__media">
           {card.video ? (
             <AutoVideo video={card.video} />
@@ -603,21 +603,7 @@ function Garage({
       <div className="stg__info">
         <span className="stl__kicker">мини-игра</span>
         <b className="stl__title">Гараж</b>
-        <p>Выбери машинку — и вокруг блоков вырастет город. Три удара — и блок рассыплется, но его можно собрать.</p>
-        <div className="stg__keys">
-          <span className="stg__wasd">
-            <kbd>W</kbd>
-            <kbd>A</kbd>
-            <kbd>S</kbd>
-            <kbd>D</kbd>
-          </span>
-          руль и газ
-          <kbd className="is-wide">Esc</kbd>
-          выйти
-        </div>
-        <button type="button" data-ui className="st-btn stg__go" onClick={onDrive}>
-          {driving ? "Выйти из машины" : "Поехали!"}
-        </button>
+        <p>Выбери машинку и прокатись по сайту: вокруг блоков вырастет город.</p>
       </div>
       <div className="stg__lot">
         {CARS.map((c, i) => (
@@ -633,6 +619,20 @@ function Garage({
             <span className="stg__name">{c.name}</span>
           </button>
         ))}
+      </div>
+      <div className="stg__foot">
+        <div className="stg__keys">
+          <span className="stg__wasd">
+            <kbd>W</kbd>
+            <kbd>A</kbd>
+            <kbd>S</kbd>
+            <kbd>D</kbd>
+          </span>
+          руль и газ
+        </div>
+        <button type="button" data-ui className="st-btn stg__go" onClick={onDrive}>
+          {driving ? "Выйти из машины" : "Поехали!"}
+        </button>
       </div>
     </Frame>
   );
