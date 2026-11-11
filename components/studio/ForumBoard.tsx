@@ -8,7 +8,7 @@ import { Frame } from "./Frame";
 /* eslint-disable @next/next/no-img-element */
 
 /*
- * Оформление форума «Российское село — место силы»: экраны сцены в двух форматах.
+ * Брендинг форума «Российское село — место силы»: на борде показаны экраны сцены.
  * Борд собран как сцена: главный экран 32:9 и боковой 16:9 показывают один и тот же шаблон,
  * шаблоны листаются сами и по клику на вкладку. Фон — фирменный паттерн форума на градиенте.
  */
@@ -39,15 +39,15 @@ export function ForumBoard({ selected }: { selected: boolean }) {
 
       <header className="st-forum__head">
         <div>
-          <span className="st-forum__kicker">Оформление форума</span>
+          <span className="st-forum__kicker">Брендинг мероприятия</span>
           <h3>
             Российское село —<br />
             место силы
           </h3>
         </div>
         <p>
-          Экраны сцены для форума: заставки сессий, плашки спикеров и темы выступлений. Каждый шаблон сделан в двух
-          форматах — под главный и боковой экраны.
+          Полный брендинг форума: экраны сцены, бейджи, ленты для бейджей и другие материалы. Здесь — экраны:
+          заставки сессий, плашки спикеров и темы выступлений.
         </p>
       </header>
 
@@ -75,7 +75,7 @@ export function ForumBoard({ selected }: { selected: boolean }) {
         {SCREENS.map((s, i) => (
           <img key={s.tab} className={i === cur ? "is-on" : ""} src={`${DIR}/main-${i + 1}.webp`} alt="" loading="lazy" draggable={false} />
         ))}
-        <figcaption>Главный экран · 3840 × 1080</figcaption>
+        <figcaption>Главный экран</figcaption>
       </figure>
 
       <div className="st-forum__row">
@@ -83,7 +83,7 @@ export function ForumBoard({ selected }: { selected: boolean }) {
           {SCREENS.map((s, i) => (
             <img key={s.tab} className={i === cur ? "is-on" : ""} src={`${DIR}/side-${i + 1}.webp`} alt="" loading="lazy" draggable={false} />
           ))}
-          <figcaption>Боковой экран · 1920 × 1080</figcaption>
+          <figcaption>Боковой экран</figcaption>
         </figure>
         <figure className="st-forum__photo">
           <img src={`${DIR}/photo-1.webp`} alt="" loading="lazy" draggable={false} />
@@ -95,19 +95,6 @@ export function ForumBoard({ selected }: { selected: boolean }) {
         </figure>
       </div>
 
-      <ul className="st-forum__specs">
-        <li>
-          <b>4</b> шаблона экранов
-        </li>
-        <li>
-          <b>2</b> формата: 32:9 и 16:9
-        </li>
-        <li>
-          <i className="st-forum__grad" />
-          #1354A1 → #1E4EDB
-        </li>
-        <li>Паттерн из пиктограмм села</li>
-      </ul>
     </Frame>
   );
 }

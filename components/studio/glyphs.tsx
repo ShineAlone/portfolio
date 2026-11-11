@@ -4,31 +4,34 @@ import type { AchievementId } from "./data";
 const GLYPHS: Record<AchievementId | "tour", React.ReactNode> = {
   tour: <path d="M8 5l11 7-11 7V5z" />,
   sticker: <path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.9l-5.3 2.5 1.2-6-4.5-4.1 6-.7z" />,
-  react: <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.4a4.3 4.3 0 017.5 2.4C19.500 15.4 12 20 12 20z" />,
+  react: <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.4a4.3 4.3 0 017.5 2.4C19.5 15.4 12 20 12 20z" />,
   route: (
     <>
       <circle cx="6" cy="18" r="2.2" />
       <circle cx="18" cy="6" r="2.2" />
-      <path d="M8.200 18H14a3 3 0 000-6h-4a3 3 0 010-6h5.800" />
+      <path d="M8.2 18H14a3 3 0 000-6h-4a3 3 0 010-6h5.8" />
     </>
   ),
+  // микрофон на сцене
   forum: (
     <>
-      <rect x="2.500" y="6" width="19" height="9" rx="1.500" />
-      <path d="M7 19h10M12 15v4" />
+      <rect x="9" y="3" width="6" height="10" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0013 0M12 17.500V21m-3.5 0h7" />
     </>
   ),
   map: <path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5V6.5zm6-2.5v13.5m6-11v13.5" />,
+  // сфера постов
   pile: (
     <>
-      <rect x="8" y="8" width="12" height="12" rx="2" />
-      <path d="M5 16V6a2 2 0 012-2h10" />
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.5 12h17M12 3.500c3 3 3 14 0 17M12 3.500c-3 3-3 14 0 17" />
     </>
   ),
+  // стопка обоев
   orbit: (
     <>
-      <rect x="7.5" y="3" width="9" height="18" rx="2" />
-      <path d="M11 17.5h2" />
+      <rect x="4" y="7" width="12" height="13" rx="2" />
+      <path d="M8 4h10a2 2 0 012 2v11M4 16l4-4 3 3 2-2 3 3" />
     </>
   ),
   slides: <path d="M3 4.5h18v11H3zM12 15.5V20m-4 0h8" />,
