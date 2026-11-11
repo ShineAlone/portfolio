@@ -157,8 +157,8 @@ export const LAB_CARDS = (() => {
   return LAB_ORDER.map((i) => ({ ...cards[i], title: LAB_TITLES[cards[i].title] ?? cards[i].title, text: dot(cards[i].text) }));
 })();
 
-// 3D-ролик для YouTube-канала: пока видео не готово (video: null), на его месте стоит заглушка.
-export const LAB_MOTION: { video: string | null } = { video: null };
+// 3D-ролик для YouTube-канала (без видео на его месте показывается заглушка).
+export const LAB_MOTION: { video: string | null } = { video: "/videos/motion-youtube.mp4" };
 
 /*
  * Сетка 3×3 с равными колонками. Главное — пять плагинов: они идут сразу за вступлением крупными
@@ -234,7 +234,7 @@ export const FRAMES: FrameMeta[] = [
     island: "plugins",
     ...labCell(2, 0),
     r: 32,
-    text: "3D-анимация для превью видео на YouTube-канале. Ролик ещё в работе.",
+    text: "3D-анимация для превью видео на YouTube-канале.",
     tags: ["3D", "Моушен"],
     tagColor: "#c791ff",
   },
