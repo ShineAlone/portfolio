@@ -114,7 +114,7 @@ function MHero() {
       </div>
 
       <div className="mh__note">
-        <span>дизайнер широкого профиля</span>
+        <span>продуктовый и коммуникационный дизайнер</span>
       </div>
 
       <div className="mh__cta">

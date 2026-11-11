@@ -501,7 +501,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
 
   const tourStops = useMemo(
     () => [
-      { rect: frameById(calm ? "about-calm" : "hero"), text: "Это я — дизайнер широкого профиля, в дизайне с 2021 года" },
+      { rect: frameById(calm ? "about-calm" : "hero"), text: "Это я — продуктовый и коммуникационный дизайнер, в дизайне с 2021 года" },
       { rect: islandById("plugins"), text: "Лаборатория: плагины, сервисы и гараж — возьми машинку и прокатись по сайту" },
       { rect: frameById("social"), text: "Больше 2000 постов. Часть собрал в сферу — покрути её мышкой" },
       { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },

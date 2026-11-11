@@ -132,7 +132,7 @@ function Greeting({
       </div>
 
       <div className="sthg__note">
-        <span>дизайнер широкого профиля</span>
+        <span>продуктовый и коммуникационный дизайнер</span>
         <svg width="190" height="70" viewBox="0 0 190 70" fill="none" aria-hidden>
           <path d="M6 52c40 10 90 6 132-26" stroke="#111" strokeWidth="4" strokeLinecap="round" />
           <path d="M120 20l20 4-6 19" stroke="#111" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
@@ -205,12 +205,11 @@ export const CHAT: ChatMsg[] = [
 ];
 
 const AREAS: [string, string][] = [
-  ["Интерфейсы", "#86DDFF"],
-  ["Сайты", "#FFB6E1"],
   ["Презентации", "#C791FF"],
   ["Соцсети", "#ACF9A2"],
   ["Брендинг мероприятий", "#FFC7B6"],
   ["Реклама", "#FFFFFF"],
+  ["Айдентика", "#86DDFF"],
 ];
 
 const HOW: { icon: string; title: string; hint: string; color: string }[] = [
@@ -226,8 +225,11 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
     return (
       <>
         <p>
-          С 2021 года занимаюсь дизайном и помогаю проектам становиться <b>понятнее</b>, <b>аккуратнее</b> и{" "}
-          <b>визуально сильнее</b>. Работаю с:
+          Проектирую <b>цифровые продукты</b> от идеи до интерфейса: веб-платформы, мобильные приложения, B2B-системы.
+          Запустил <b>собственный стартап</b> и выиграл на него грант.
+        </p>
+        <p>
+          Вторая сильная сторона — <b>коммуникационный дизайн</b>:
         </p>
         <div className="stchat__chips">
           {AREAS.map(([t, c], i) => (
@@ -276,6 +278,10 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
         </div>
         <em>{EDU_YEARS}</em>
       </div>
+      <p className="stchat__small">
+        Не останавливаюсь на макете: с помощью <b>вайб-кодинга</b> довожу идеи до работающих плагинов, сервисов и сайтов.
+        Этот сайт — один из них.
+      </p>
       <div className="stchat__tools">
         {TOOLS.icons.map((t, i) => (
           <span key={t.src} className="stchat__tool" style={{ "--i": i } as React.CSSProperties}>

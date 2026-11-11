@@ -11,7 +11,7 @@ import { EDUCATION, HERO, LINKS, STATS, TOOLS, WORK } from "@/lib/content";
  * Живёт на отдельной странице /v2/about-preview — основной холст не трогает.
  */
 
-const AREAS = ["Интерфейсы", "Сайты", "Презентации", "Соцсети", "Брендинг мероприятий", "Реклама", "Айдентика", "Полиграфия"];
+const AREAS = ["Веб-платформы", "Мобильные приложения", "B2B-системы", "Сайты", "Презентации", "Соцсети", "Брендинг мероприятий", "Реклама", "Айдентика"];
 const EDU_YEARS = `${EDUCATION.years[0]}–${EDUCATION.years[1].replace(/^[–-]\s*/, "")}`;
 const TULA: [number, number] = [37.6175, 54.193];
 
@@ -102,7 +102,7 @@ export function AboutCalmBody({ on }: { on: boolean }) {
           </div>
           <div className="ab-head__text">
             <h1>
-              <span>Привет, я Арсений Кононов —</span> <span>дизайнер широкого профиля.</span>{" "}
+              <span>Привет, я Арсений Кононов —</span> <span>продуктовый и коммуникационный дизайнер.</span>{" "}
               <span className="is-muted">В дизайне с 2021 года.</span>
             </h1>
             <p>{HERO.paragraphs[0]}</p>
@@ -197,8 +197,8 @@ export function AboutCalmBody({ on }: { on: boolean }) {
             <span className="ab-tag">Вне работы</span>
             <b className="ab-title">Свой стартап и вайб-кодинг</b>
             <p>
-              Сделал туристическое приложение «Шагай и точка» — проект выиграл грант. Для себя собираю Figma-плагины и
-              небольшие сервисы.
+              Не останавливаюсь на макете: с помощью вайб-кодинга довожу идеи до работающих плагинов, сервисов и
+              сайтов. Этот сайт — один из них.
             </p>
             <a data-ui className="ab-link" href="/v2?canvas">
               Смотреть в «Лаборатории»
