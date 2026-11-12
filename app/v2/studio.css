@@ -1059,7 +1059,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 120px;
+  height: 110px;
   padding: 16px 18px;
   border-radius: 26px;
   border: 3px solid #111 !important;
@@ -1213,7 +1213,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 32px;
+  padding: 12px 32px;
   border-bottom: 1px solid #eee;
 }
 
@@ -1248,8 +1248,8 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 12px;
-  padding: 32px;
+  gap: 10px;
+  padding: 24px 32px;
   background: #f5f4ee;
 }
 
@@ -1264,7 +1264,7 @@
 
 /* вопрос и ответ — пара: внутри неё 12, между парами 32 */
 .stchat__row.is-a {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .stchat__row.is-a:last-child {
@@ -1293,14 +1293,14 @@
 
 /* ответы крупнее вопросов и шире: в них главное */
 .stchat__msg.is-a {
-  max-width: 78%;
-  padding: 20px 26px 28px;
+  max-width: 92%;
+  padding: 16px 24px 22px;
   background: #fff;
   border: 2px solid #111;
   border-bottom-left-radius: 6px;
   box-shadow: 4px 4px 0 #111;
-  font-size: 23px;
-  line-height: 1.4;
+  font-size: 21px;
+  line-height: 1.38;
 }
 
 .stchat__meta {
@@ -1358,16 +1358,16 @@
 .stchat__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 /* чипы выскакивают по очереди и подпрыгивают под курсором */
 .stchat__chips span {
-  padding: 7px 16px;
+  padding: 5px 13px;
   border: 2px solid #111;
   border-radius: 18px;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   rotate: var(--rot);
   box-shadow: 0 0 0 #111;
@@ -1390,15 +1390,15 @@
 
 /* «Как я работаю»: тёмный пузырь и три шага-наклейки, связанные пунктиром */
 .stchat__msg.is-how {
-  max-width: 90%;
+  max-width: 100%;
 }
 
 .stchat__how {
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-  margin: 18px 0 16px;
+  gap: 16px;
+  margin: 14px 0 12px;
 }
 
 /* пунктир «маршрута» за карточками */
@@ -1415,8 +1415,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 16px 16px 18px;
+  gap: 4px;
+  padding: 12px 16px 14px;
   border-radius: 20px;
   background: var(--c);
   color: #111;
@@ -1447,7 +1447,7 @@
 .stchat__icon {
   display: inline-block;
   align-self: flex-start;
-  font-size: 34px;
+  font-size: 28px;
   line-height: 1;
   animation: st-bob 2.4s calc(var(--i) * 0.4s) ease-in-out infinite;
 }
@@ -1482,21 +1482,22 @@
 }
 
 .stchat__small {
-  font-size: 18px;
+  font-size: 17.5px;
+  line-height: 1.38;
   opacity: 0.85;
 }
 
 .stchat__edu {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .stchat__diploma {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
+  padding: 9px 14px;
   border-radius: 18px;
   background: #f4ffe9;
   border: 2px dashed #111;
@@ -1624,8 +1625,8 @@
 }
 
 .stchat__tool i {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   display: block;
 }
 
@@ -1645,6 +1646,96 @@
 .stchat__tools .is-boxed img {
   width: 22px;
   height: 33px;
+}
+
+/* «Технические навыки»: кнопка в строке инструментов, список раскрывается карточкой над ней */
+.stchat__skills {
+  position: relative;
+  align-self: center;
+  margin-left: auto;
+}
+
+.stchat__skills > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 20px !important;
+  border-radius: 26px;
+  border: 2px solid #111 !important;
+  background: #fff !important;
+  font-size: 19px !important;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, translate 0.2s;
+}
+
+.stchat__skills > button:hover,
+.stchat__skills.is-open > button {
+  background: #fefe78 !important;
+  box-shadow: 3px 3px 0 #111;
+  translate: -1px -1px;
+}
+
+.stchat__skills > button:focus-visible {
+  outline: 3px solid var(--violet);
+  outline-offset: 2px;
+}
+
+/* индикатор раскрытия — галочка, которая переворачивается */
+.stchat__skills > button i {
+  width: 10px;
+  height: 10px;
+  border-right: 2.5px solid #111;
+  border-bottom: 2.5px solid #111;
+  rotate: -135deg;
+  translate: 0 3px;
+  transition: rotate 0.25s, translate 0.25s;
+}
+
+.stchat__skills.is-open > button i {
+  rotate: 45deg;
+  translate: 0 -3px;
+}
+
+.stchat__skills-body {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  z-index: 5;
+  width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 26px;
+  border-radius: 24px;
+  border: 2px solid #111;
+  background: #fff;
+  box-shadow: 6px 6px 0 #111;
+  animation: st-msg-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: 100% 100%;
+}
+
+.stchat__skills-body[hidden] {
+  display: none;
+}
+
+.stchat__skills-body div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stchat__skills-body b {
+  font: 700 21px var(--display);
+}
+
+.stchat__skills-body span {
+  font-size: 18px;
+  line-height: 1.4;
+  color: #333;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- история версий ---------- */
@@ -1829,14 +1920,14 @@
 .stv__company {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 40px;
+  font-size: 36px;
   line-height: 1.1;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 /* текущая версия — главная: крупнее и с жёлтой подложкой; прошлые приглушены */
 .stv li.is-current .stv__company {
-  font-size: 50px;
+  font-size: 42px;
 }
 
 .stv li.is-current .stv__company,
@@ -1861,17 +1952,17 @@
 }
 
 .stv__role {
-  font-size: 28px;
-  margin-top: 8px;
+  font-size: 24px;
+  margin-top: 6px;
 }
 
 .stv p {
   font-family: var(--font-open-sans);
-  font-size: 25px;
-  line-height: 1.5;
+  font-size: 19.5px;
+  line-height: 1.42;
   color: #333;
   white-space: pre-line;
-  margin: 16px 0 24px;
+  margin: 12px 0 16px;
 }
 
 .stv .st-tags {
@@ -1879,8 +1970,8 @@
 }
 
 .stv .st-tags span {
-  font-size: 20px;
-  padding: 8px 18px;
+  font-size: 17px;
+  padding: 6px 14px;
 }
 
 /* ---------- плагины ---------- */
