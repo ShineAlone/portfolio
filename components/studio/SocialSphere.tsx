@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { SOCIAL_LAYOUT, frameById } from "./data";
 import { Frame } from "./Frame";
+import { isDriving, onDriveChange } from "./drive";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -94,8 +95,10 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
       if (visible) raf = requestAnimationFrame(frame);
     };
 
-    const io = new IntersectionObserver(([e]) => {
-      const on = e.isIntersecting;
+    let seen = false;
+    const sync = () => {
+      // за рулём сфера замирает
+      const on = seen && !isDriving();
       if (on && !visible) {
         visible = true;
         last = performance.now();
@@ -104,8 +107,13 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
         visible = false;
         cancelAnimationFrame(raf);
       }
+    };
+    const io = new IntersectionObserver(([e]) => {
+      seen = e.isIntersecting;
+      sync();
     });
     io.observe(el);
+    const offDrive = onDriveChange(sync);
 
     const down = (e: PointerEvent) => {
       if (e.button !== 0) return;
@@ -158,6 +166,7 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
     el.addEventListener("pointerleave", leave);
     return () => {
       io.disconnect();
+      offDrive();
       cancelAnimationFrame(raf);
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { frameById, narrowWallpapers, wideWallpapers } from "./data";
 import { Frame } from "./Frame";
+import { isDriving, onDriveChange } from "./drive";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -113,19 +114,28 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
     el.addEventListener("pointerleave", leave);
 
     // пока блок не в кадре — поле стоит
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !visible) {
+    let seen = false;
+    const sync = () => {
+      // за рулём поле стоит
+      const on = seen && !isDriving();
+      if (on && !visible) {
         visible = true;
         last = performance.now();
         raf = requestAnimationFrame(frame);
-      } else if (!e.isIntersecting) {
+      } else if (!on) {
         visible = false;
         cancelAnimationFrame(raf);
       }
+    };
+    const io = new IntersectionObserver(([e]) => {
+      seen = e.isIntersecting;
+      sync();
     });
     io.observe(el);
+    const offDrive = onDriveChange(sync);
     return () => {
       io.disconnect();
+      offDrive();
       cancelAnimationFrame(raf);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerleave", leave);

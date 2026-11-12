@@ -4,6 +4,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { ForumBoard } from "./ForumBoard";
 import { UniModel } from "./UniModel";
 import { earnAch } from "./earn";
+import { isDriving, onDriveChange } from "./drive";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
@@ -69,12 +70,22 @@ function AutoVideo({ video }: { video: string }) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) el.play().catch(() => {});
+    let seen = false;
+    const sync = () => {
+      if (seen && !isDriving()) el.play().catch(() => {});
       else el.pause();
+    };
+    const io = new IntersectionObserver(([e]) => {
+      seen = e.isIntersecting;
+      sync();
     });
     io.observe(el);
-    return () => io.disconnect();
+    // за рулём видео стоят на паузе
+    const off = onDriveChange(sync);
+    return () => {
+      io.disconnect();
+      off();
+    };
   }, []);
   return (
     <div className="st-hv">

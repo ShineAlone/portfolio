@@ -1,6 +1,7 @@
 "use client";
 
 import { EARN_EVENT } from "./earn";
+import { setDriving as setDrivingFlag } from "./drive";
 import { useTypograph } from "./typograph";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { LINKS } from "@/lib/content";
@@ -685,6 +686,12 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     return true;
   }, [breakFrame, showToast]);
 
+  // блоки ставят тяжёлое на паузу, пока машинка на холсте
+  useEffect(() => {
+    setDrivingFlag(driving);
+    return () => setDrivingFlag(false);
+  }, [driving]);
+
   useEffect(() => {
     if (!driving) return;
     const spec = CARS[carId];
@@ -727,7 +734,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     let safeAt = 0;
     let sinkAt = 0;
     if (process.env.NODE_ENV !== "production") (window as unknown as { __car: typeof c }).__car = c;
-    const ZOOM_OUT = 0.3;
     const rnd = (a: number) => (Math.random() - 0.5) * a;
 
     const toWorld = (lx: number, ly: number) => {
@@ -959,13 +965,12 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
         }
       }
 
-      // Камера: сначала отъезжает, чтобы показать выросший город, потом возвращается к машинке
+      // Камера сразу идёт к машинке. Отъезда «показать весь город» нет: пока масштаб плавно меняется,
+      // браузер перерисовывает весь холст на каждом кадре, и первые секунды езды шли рывками.
       const cam = camera.get();
       const { w, h } = vpSize();
-      // если игрок сам покрутил масштаб — облёт города прерывается
-      const reveal = now - t0 < 2600 && !zoomTouched.current;
-      const target = reveal ? ZOOM_OUT : driveZRef.current;
-      const kz = 1 - Math.exp(-dt * (reveal ? 2.6 : zoomTouched.current ? 7 : 2.2));
+      const target = driveZRef.current;
+      const kz = 1 - Math.exp(-dt * (zoomTouched.current ? 7 : 4));
       // доводим масштаб точно до цели, иначе --z менялся бы на каждом кадре и пересчитывал стили
       const z = Math.abs(target - cam.z) < 0.002 ? target : cam.z + (target - cam.z) * kz;
       const kf = 1 - Math.exp(-dt * 16);
