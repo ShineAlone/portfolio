@@ -110,7 +110,7 @@ function MHero() {
           ))}
         </div>
         <div className="mh__photo">
-          <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
+          <img src="/images/photo.webp" alt="Арсений Кононов" draggable={false} />
         </div>
       </div>
 

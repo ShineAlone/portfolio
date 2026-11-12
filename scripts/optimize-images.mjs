@@ -1,60 +1,68 @@
-// Ресайз изображений в public/images под реальные размеры отображения (с запасом 2x
-// под retina). Оригиналы остаются в _materials — скрипт можно перезапускать безопасно.
-import sharp from "sharp";
-import { readdir, stat, rename, unlink } from "node:fs/promises";
+// Сжатие картинок сайта: всё из public/images переводится в WebP и уменьшается до размера,
+// в котором реально показывается на холсте. Запуск: node scripts/optimize-images.mjs
+// Скрипт можно запускать повторно — уже сжатые WebP он трогает, только если они больше лимита.
+import fs from "node:fs";
 import path from "node:path";
+import sharp from "sharp";
 
-const ROOT = path.resolve("public/images");
+sharp.cache(false);
+const ROOT = "public/images";
 
-// Максимальная ширина по секциям: плитка в вёрстке × 2 (retina) с запасом
-const LIMITS = [
-  { dir: "social", maxW: 640 }, // плитка 152px
-  { dir: "wallpapers", maxW: 1200 }, // широкая плитка 291px, но обои скачивают — оставим запас
-  { dir: "presentations", maxW: 800 }, // слайд 307px
-  { dir: "projects", maxW: 1200 }, // колонка 470px
-  { dir: ".", maxW: 1200 }, // photo.png (hero 470px)
+// [часть пути, максимальная ширина, качество] — первое совпадение побеждает
+const RULES = [
+  ["wallpapers", 720, 76], // карточки поля обоев: 300–620 px, под курсором чуть крупнее
+  ["social", 560, 78], // плитки сферы постов
+  ["projects/forum", 1600, 80],
+  ["projects", 1280, 80], // окна сайтов и коллажи: до 564 px на холсте, с запасом под приближение
+  ["presentations", 1280, 78],
+  ["posters", 1280, 78],
+  ["cases", 1600, 76],
+  ["scroll", 900, 82], // кадры крутящейся фигуры, с прозрачностью
+  ["crew", 800, 82],
+  ["", 1600, 82],
 ];
+// уже готовые WebP пережимаем, только если они тяжелее этого порога
+const WEBP_REPACK_OVER = 60 * 1024;
 
-const fmt = (b) => (b / 1024 / 1024).toFixed(2) + " MB";
-
-let totalBefore = 0;
-let totalAfter = 0;
-
-for (const { dir, maxW } of LIMITS) {
-  const abs = path.join(ROOT, dir);
-  const files = (await readdir(abs, { withFileTypes: true }))
-    .filter((e) => e.isFile() && /\.(jpe?g|png)$/i.test(e.name))
-    .map((e) => path.join(abs, e.name));
-
-  for (const file of files) {
-    const before = (await stat(file)).size;
-    const isPng = /\.png$/i.test(file);
-    const tmp = file + ".tmp";
-
-    const img = sharp(file);
-    const meta = await img.metadata();
-    const pipeline = img.resize({
-      width: Math.min(meta.width ?? maxW, maxW),
-      withoutEnlargement: true,
-    });
-
-    if (isPng) {
-      await pipeline.png({ compressionLevel: 9, palette: false }).toFile(tmp);
-    } else {
-      await pipeline.jpeg({ quality: 80, mozjpeg: true }).toFile(tmp);
-    }
-
-    const after = (await stat(tmp)).size;
-    if (after < before) {
-      await unlink(file);
-      await rename(tmp, file);
-    } else {
-      await unlink(tmp); // уже оптимален — оставляем как есть
-    }
-    totalBefore += before;
-    totalAfter += Math.min(after, before);
+const files = [];
+(function walk(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walk(p);
+    else if (/\.(jpe?g|png|webp)$/i.test(e.name)) files.push(p);
   }
-  console.log(`${dir}: done (${files.length} files)`);
+})(ROOT);
+
+let before = 0;
+let after = 0;
+let changed = 0;
+for (const file of files) {
+  const rel = file.replace(/\\/g, "/");
+  const size = fs.statSync(file).size;
+  before += size;
+  const isWebp = /\.webp$/i.test(file);
+  if (isWebp && size < WEBP_REPACK_OVER) {
+    after += size;
+    continue;
+  }
+  const [, maxW, q] = RULES.find(([part]) => rel.includes(`/${part}`) || part === "");
+  const input = fs.readFileSync(file);
+  const meta = await sharp(input).metadata();
+  let img = sharp(input);
+  if (meta.width > maxW) img = img.resize({ width: maxW });
+  const out = await img.webp({ quality: q, effort: 6, alphaQuality: 90 }).toBuffer();
+  const target = file.replace(/\.(jpe?g|png|webp)$/i, ".webp");
+  // пережатый WebP оставляем, только если он заметно легче исходного
+  if (isWebp && out.length > size * 0.85) {
+    after += size;
+    continue;
+  }
+  fs.writeFileSync(target, out);
+  if (target !== file) fs.unlinkSync(file);
+  after += out.length;
+  changed++;
 }
 
-console.log(`\nTotal: ${fmt(totalBefore)} -> ${fmt(totalAfter)}`);
+const mb = (n) => (n / 1024 / 1024).toFixed(1);
+console.log(`файлов: ${files.length}, изменено: ${changed}`);
+console.log(`было ${mb(before)} МБ → стало ${mb(after)} МБ`);

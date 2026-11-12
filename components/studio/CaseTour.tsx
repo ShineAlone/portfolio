@@ -120,7 +120,7 @@ function Device({
           <StatusBar light={light} />
         </div>
       </div>
-      <img className="tb-device__frame" src={BEZEL[bezel]} alt="" draggable={false} />
+      <img className="tb-device__frame" src={BEZEL[bezel]} alt="" loading="lazy" draggable={false} />
     </div>
   );
 }
@@ -278,7 +278,7 @@ function Builder({ onBuilt, onPlay, playing }: { onBuilt: (stops: number[]) => v
 function Hero() {
   return (
     <section className="tb tb-hero" style={{ height: H.hero }}>
-      <img className="tb-hero__bg" src={tourPhoto("cathedral")} alt="Успенский собор Тульского кремля" draggable={false} />
+      <img className="tb-hero__bg" src={tourPhoto("cathedral")} alt="Успенский собор Тульского кремля" loading="lazy" draggable={false} />
       <div className="tb-hero__shade" />
 
       <div className="tb-hero__text">

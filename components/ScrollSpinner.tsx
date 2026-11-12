@@ -8,7 +8,7 @@ const PX_PER_FRAME = 50;
 
 const frames = Array.from(
   { length: FRAME_COUNT },
-  (_, i) => `/images/scroll/frame-${String(i + 1).padStart(2, "0")}.png`
+  (_, i) => `/images/scroll/frame-${String(i + 1).padStart(2, "0")}.webp`
 );
 
 export function ScrollSpinner() {

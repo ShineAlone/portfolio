@@ -265,7 +265,7 @@ export function UniModel() {
   const view = (
     <div className={`st-uni__view${full ? " is-full" : ""}`}>
       {ready && <div ref={stage} className="st-uni__stage" data-ui><div ref={mount} className="st-uni__canvas" /></div>}
-      {!ready && <img className="st-uni__poster" src={POSTER} alt="Второй корпус ТГПУ — вид на фасад" draggable={false} />}
+      {!ready && <img className="st-uni__poster" src={POSTER} alt="Второй корпус ТГПУ — вид на фасад" loading="lazy" draggable={false} />}
 
       {!ready && (
         <div className="st-uni__start">

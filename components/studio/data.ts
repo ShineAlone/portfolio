@@ -382,7 +382,7 @@ export const narrowWallpapers = WALLPAPERS.rows.flatMap((r) => r.images.filter((
 export const wideWallpapers = WALLPAPERS.rows.flatMap((r) => r.images.filter((_, i) => r.cols[i] === 2));
 
 export const poster = (video: string) =>
-  video.replace("/videos/", "/images/posters/").replace(".mp4", ".jpg");
+  video.replace("/videos/", "/images/posters/").replace(".mp4", ".webp");
 
 /* ---------- гараж ---------- */
 

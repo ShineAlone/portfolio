@@ -142,7 +142,7 @@ export const AUTOMATION = {
       text: "Генерация паттернов в обновлённом фирменном стиле компании",
     },
     {
-      image: "/images/plugins/droptochat.jpg",
+      image: "/images/plugins/droptochat.webp",
       tag: "Оптимизация времени и места на диске",
       tagColor: "#ffb6e1",
       title: "DropToChat — фреймы в Telegram и Discord",
@@ -165,11 +165,11 @@ export const SOCIAL = {
     "Ежедневный поток контента: информационные и развлекательные посты, карточки-инструкции, тематические рубрики и промо грантовых конкурсов. Работаю с готовыми текстами и контент-планом: нахожу визуальный ход, собираю графику и адаптирую её под форматы разных площадок",
   // 8 рядов по 6 плиток; ряды 2 и 8 — вертикальные форматы
   rows: [1, 2, 3, 4, 5, 6, 7, 8].map((r) =>
-    [1, 2, 3, 4, 5, 6].map((c) => `/images/social/r${r}c${c}.jpg`)
+    [1, 2, 3, 4, 5, 6].map((c) => `/images/social/r${r}c${c}.webp`)
   ),
 };
 
-const wp = (n: number) => `/images/wallpapers/wp-${String(n).padStart(2, "0")}.jpg`;
+const wp = (n: number) => `/images/wallpapers/wp-${String(n).padStart(2, "0")}.webp`;
 
 export const WALLPAPERS = {
   title: "Обои для телефонов и ПК",
@@ -215,11 +215,11 @@ export const PRESENTATIONS = {
     },
   ] as MediaCard[],
   slideGroups: [
-    Array.from({ length: 18 }, (_, i) => `/images/presentations/cosmo-${String(i + 1).padStart(2, "0")}.jpg`),
+    Array.from({ length: 18 }, (_, i) => `/images/presentations/cosmo-${String(i + 1).padStart(2, "0")}.webp`),
     [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(
-      (n) => `/images/presentations/tochka-${String(n).padStart(2, "0")}.jpg`
+      (n) => `/images/presentations/tochka-${String(n).padStart(2, "0")}.webp`
     ),
-    Array.from({ length: 12 }, (_, i) => `/images/presentations/camp-${String(i + 1).padStart(2, "0")}.jpg`),
+    Array.from({ length: 12 }, (_, i) => `/images/presentations/camp-${String(i + 1).padStart(2, "0")}.webp`),
   ],
 };
 
@@ -228,26 +228,26 @@ export const PROJECTS = {
   subtitle: "Сайты, брендинг, мерч и оформление мероприятий",
   description:
     "Комплексные задачи, где дизайн живёт сразу на многих носителях: айдентика мероприятий и спецпроектов, лендинги, мерч, наружная реклама и выставочные материалы. От концепции до подготовки макетов к печати и публикации",
-  coffeeGrid: Array.from({ length: 9 }, (_, i) => `/images/projects/coffee-${i + 1}.jpg`),
+  coffeeGrid: Array.from({ length: 9 }, (_, i) => `/images/projects/coffee-${i + 1}.webp`),
   sites: {
-    tzVk: "/images/projects/tz-vk.png",
-    platforma: "/images/projects/platforma.png",
-    binghatti: "/images/projects/binghatti.png",
-    serviceSoft1: "/images/projects/service-soft-1.jpg",
-    serviceSoft2: "/images/projects/service-soft-2.jpg",
-    site1920: "/images/projects/site-1920.jpg",
-    androidCompact: "/images/projects/android-compact.jpg",
+    tzVk: "/images/projects/tz-vk.webp",
+    platforma: "/images/projects/platforma.webp",
+    binghatti: "/images/projects/binghatti.webp",
+    serviceSoft1: "/images/projects/service-soft-1.webp",
+    serviceSoft2: "/images/projects/service-soft-2.webp",
+    site1920: "/images/projects/site-1920.webp",
+    androidCompact: "/images/projects/android-compact.webp",
   },
   merch: [
-    "/images/projects/tshirt.jpg",
-    "/images/projects/badges.jpg",
-    "/images/projects/notebook.jpg",
-    "/images/projects/shopper.jpg",
+    "/images/projects/tshirt.webp",
+    "/images/projects/badges.webp",
+    "/images/projects/notebook.webp",
+    "/images/projects/shopper.webp",
   ],
-  transarctic: "/images/projects/transarctic.jpg",
+  transarctic: "/images/projects/transarctic.webp",
   er: {
-    photos: ["/images/projects/er-150.jpg", "/images/projects/er-151.jpg"],
-    banners: ["/images/projects/er-39192.jpg", "/images/projects/er-39192-1.jpg"],
-    templates: Array.from({ length: 6 }, (_, i) => `/images/projects/er-tpl-${i + 1}.jpg`),
+    photos: ["/images/projects/er-150.webp", "/images/projects/er-151.webp"],
+    banners: ["/images/projects/er-39192.webp", "/images/projects/er-39192-1.webp"],
+    templates: Array.from({ length: 6 }, (_, i) => `/images/projects/er-tpl-${i + 1}.webp`),
   },
 };

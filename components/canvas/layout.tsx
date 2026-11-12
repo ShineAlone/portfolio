@@ -56,7 +56,7 @@ const at = (section: string, x: number, y: number) => ({
 });
 
 const poster = (video: string) =>
-  video.replace("/videos/", "/images/posters/").replace(".mp4", ".jpg");
+  video.replace("/videos/", "/images/posters/").replace(".mp4", ".webp");
 
 /* ---------- содержимое фреймов ---------- */
 
@@ -77,7 +77,7 @@ function HeroFrame() {
         </div>
       </div>
       <div className="cvh__photo">
-        <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
+        <img src="/images/photo.webp" alt="Арсений Кононов" draggable={false} />
       </div>
       <div className="cvh__stats">
         {STATS.map((s) => (

@@ -91,7 +91,7 @@ function Hero() {
       <div className="hb-hero__word" aria-hidden>
         СЕЗОН 1
       </div>
-      <img className="hb-hero__astro" src={hrImg("astronaut")} alt="" draggable={false} />
+      <img className="hb-hero__astro" src={hrImg("astronaut")} alt="" loading="lazy" draggable={false} />
       <div className="hb-hero__chips">
         <span>Кейс</span>
         <span>HR Tech</span>
@@ -415,7 +415,7 @@ function Avatar() {
           ))}
         </div>
         <div className="hb-avatar__stage">
-          <img key={`${color}-${skin}`} src={skinSrc(color, skin)} alt="" draggable={false} />
+          <img key={`${color}-${skin}`} src={skinSrc(color, skin)} alt="" loading="lazy" draggable={false} />
           <span className="hb-avatar__tag">
             {c.name} коллекция · {skin + 1}/7
           </span>
@@ -632,7 +632,7 @@ function CaseCrew({ active, root }: { active: boolean; root: React.RefObject<HTM
               if (e.target === e.currentTarget) setRunners((rs) => rs.filter((x) => x.id !== r.id));
             }}
           >
-            <img src={r.src} alt="" draggable={false} />
+            <img src={r.src} alt="" loading="lazy" draggable={false} />
           </div>
         </div>
       ))}

@@ -3,6 +3,7 @@
 import { EARN_EVENT } from "./earn";
 import { setDriving as setDrivingFlag } from "./drive";
 import { useTypograph } from "./typograph";
+import { useImageQueue } from "./imageQueue";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { LINKS } from "@/lib/content";
 import { MAX_Z, MIN_Z, clamp, createCameraStore, type Cam, type CameraStore } from "./camera";
@@ -143,6 +144,7 @@ function Confetti() {
 
 export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "calm" } = {}) {
   useTypograph();
+  useImageQueue(".st-world");
   // спокойная версия: тот же холст в светлом монохроме, без игрового интро
   const calm = theme === "calm";
   const camera = useMemo(createCameraStore, []);

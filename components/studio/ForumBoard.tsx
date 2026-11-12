@@ -35,7 +35,7 @@ export function ForumBoard({ selected }: { selected: boolean }) {
 
   return (
     <Frame meta={frameById("forum")} selected={selected} className="st-forum">
-      <img className="st-forum__pattern" src={`${DIR}/pattern.svg`} alt="" draggable={false} />
+      <img className="st-forum__pattern" src={`${DIR}/pattern.svg`} alt="" loading="lazy" draggable={false} />
 
       <header className="st-forum__head">
         <div>

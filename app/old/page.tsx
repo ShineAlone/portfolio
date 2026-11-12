@@ -39,7 +39,7 @@ export default function Home() {
       {/* Hero */}
       <section className="hero">
         <div className="hero__photo">
-          <img src="/images/photo.png" alt="Арсений Кононов" />
+          <img src="/images/photo.webp" alt="Арсений Кононов" />
         </div>
         <div className="hero__text">
           <h1 className="hero__title">

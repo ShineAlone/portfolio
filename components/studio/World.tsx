@@ -151,7 +151,7 @@ function Greeting({
       <div className="sthg__stage">
         <div className="sthg__card" />
         <div className="sthg__photo">
-          <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
+          <img src="/images/photo.webp" alt="Арсений Кононов" draggable={false} />
         </div>
         {/* круглый значок с бегущим по кругу текстом */}
         <div className="sthg__badge" aria-hidden>
@@ -387,7 +387,7 @@ export function ChatContent({ step }: { step: number }) {
     <>
       <div className="stchat__head">
         <span className="stchat__avatar">
-          <img src="/images/photo.png" alt="" draggable={false} />
+          <img src="/images/photo.webp" alt="" draggable={false} />
         </span>
         <div>
           <b>Арсений Кононов</b>
@@ -824,8 +824,9 @@ export function SpinFigure({ className, ms = 75 }: { className?: string; ms?: nu
   return (
     <img
       className={className}
-      src={`/images/scroll/frame-${String(f + 1).padStart(2, "0")}.png`}
+      src={`/images/scroll/frame-${String(f + 1).padStart(2, "0")}.webp`}
       alt=""
+      loading="lazy"
       draggable={false}
     />
   );

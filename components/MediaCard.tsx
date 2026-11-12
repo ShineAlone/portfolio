@@ -11,7 +11,7 @@ export function MediaCard({ card }: { card: MediaCardType }) {
         >
           <LazyVideo
             src={card.video}
-            poster={card.video.replace("/videos/", "/images/posters/").replace(".mp4", ".jpg")}
+            poster={card.video.replace("/videos/", "/images/posters/").replace(".mp4", ".webp")}
           />
         </div>
       )}

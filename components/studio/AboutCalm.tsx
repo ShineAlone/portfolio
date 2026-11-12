@@ -98,7 +98,7 @@ export function AboutCalmBody({ on }: { on: boolean }) {
       <div className={`ab__wrap${on ? " is-on" : ""}`}>
         <header className="ab-head">
           <div className="ab-photo">
-            <img src="/images/photo.png" alt="Арсений Кононов" draggable={false} />
+            <img src="/images/photo.webp" alt="Арсений Кононов" draggable={false} />
           </div>
           <div className="ab-head__text">
             <h1>
