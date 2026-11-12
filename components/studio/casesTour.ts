@@ -9,7 +9,7 @@ const DIR = "/images/cases/tour";
 export const tourImg = (name: string) => `${DIR}/${name}.webp`;
 export const tourPhoto = (name: string) => `${DIR}/photo/${name}.webp`;
 export const deckSlide = (n: number, thumb = false) => `${DIR}/deck/${String(n).padStart(2, "0")}${thumb ? "-t" : ""}.webp`;
-export const DECK = [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+export const DECK = Array.from({ length: 15 }, (_, i) => i + 1);
 export const BEZEL = { silver: "/images/mockups/iphone-17-pro-silver.webp", blue: "/images/mockups/iphone-17-pro-blue.webp" };
 
 export const TOUR_COLORS = {
