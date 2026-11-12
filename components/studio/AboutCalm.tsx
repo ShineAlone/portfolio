@@ -200,7 +200,7 @@ export function AboutCalmBody({ on }: { on: boolean }) {
               Не останавливаюсь на макете: с помощью вайб-кодинга довожу идеи до работающих плагинов, сервисов и
               сайтов. Этот сайт — один из них.
             </p>
-            <a data-ui className="ab-link" href="/v2?canvas">
+            <a data-ui className="ab-link" href="/?canvas">
               Смотреть в «Лаборатории»
               <svg viewBox="0 0 16 16" aria-hidden>
                 <path d="M4 12L12 4M6 4h6v6" />
