@@ -732,14 +732,3 @@
   background: #fff;
 }
 
-.m-gate__skip {
-  margin-top: auto;
-  padding-top: 20px;
-  background: none;
-  border: 0;
-  font-family: inherit;
-  font-size: 15px;
-  color: #555;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}

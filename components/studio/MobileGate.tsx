@@ -8,13 +8,13 @@ import { useTypograph } from "./typograph";
 /*
  * Заглушка для телефона: сайт — большое полотно, и на маленьком экране оно не помещается.
  * Показываем само полотно в миниатюре, рядом — «твой экран» в его масштабе, и зовём открыть с компьютера.
- * Упрощённая лента остаётся запасным ходом — маленькой ссылкой внизу.
+ * Перейти отсюда в упрощённую ленту нельзя: на телефоне сайт показывает только эту заглушку.
  */
 
 const MAP_W = 190;
 const K = MAP_W / WORLD.w;
 
-export function MobileGate({ onFeed }: { onFeed: () => void }) {
+export function MobileGate() {
   const [copied, setCopied] = useState(false);
   useTypograph();
 
@@ -69,9 +69,6 @@ export function MobileGate({ onFeed }: { onFeed: () => void }) {
         </a>
       </div>
 
-      <button type="button" className="m-gate__skip" onClick={onFeed}>
-        Всё равно посмотреть упрощённую версию
-      </button>
     </main>
   );
 }

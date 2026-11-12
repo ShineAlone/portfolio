@@ -6,7 +6,7 @@ import { MobileGate } from "./MobileGate";
 import { StudioApp } from "./StudioApp";
 
 /*
- * Точка входа: на узком экране — заглушка с просьбой открыть сайт с компьютера (из неё можно уйти в ленту),
+ * Точка входа: на узком экране — заглушка с просьбой открыть сайт с компьютера (без перехода в ленту),
  * на остальных — холст. ?feed принудительно открывает ленту, ?canvas — холст, ?gate — заглушку.
  * Режим выбирается после монтирования: на сервере ширина экрана неизвестна.
  */
@@ -26,7 +26,7 @@ export function StudioEntry() {
   }, [mode]);
 
   if (!mode) return null;
-  if (mode === "gate") return <MobileGate onFeed={() => setMode("feed")} />;
+  if (mode === "gate") return <MobileGate />;
   if (mode === "feed") return <MobileApp onCanvas={() => setMode("canvas")} />;
   return <StudioApp onFeed={phone ? () => setMode("feed") : undefined} />;
 }
