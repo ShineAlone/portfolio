@@ -1051,7 +1051,8 @@
   bottom: 0;
   z-index: 4;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  /* ширина карточек — по содержимому: длинные подписи помещаются в одну строку */
+  grid-template-columns: 153fr 157fr 157fr 173fr 268fr 230fr;
   gap: 16px;
 }
 
@@ -1094,6 +1095,7 @@
 .st-stat span {
   font-size: 17px;
   line-height: 1.2;
+  white-space: nowrap;
 }
 /* наклейки с цифрами */
 .st-sticker {
@@ -1249,7 +1251,10 @@
   flex-direction: column;
   flex: 1;
   gap: 10px;
-  padding: 24px 32px;
+  /* подложка переписки — скруглённая вставка внутри карточки */
+  margin: 0 14px 14px;
+  padding: 22px 20px;
+  border-radius: 28px;
   background: #f5f4ee;
 }
 
@@ -1478,7 +1483,7 @@
 
 .stchat__step small {
   font-size: 17px;
-  opacity: 0.7;
+  color: #111;
 }
 
 .stchat__small {
