@@ -4682,7 +4682,17 @@
   border: 0 !important;
   background: none !important;
   cursor: default;
+}
+
+/* слой на карточку — только пока поле на экране и камера стоит: 130 слоёв в полёте переполняли видеопамять */
+.st-field__stage.is-live .st-field__card {
   will-change: transform;
+}
+
+/* сфера, кольца и фигура вне кадра не рисуются (см. offscreen.ts) */
+.st-ball[data-off] .st-ball__float,
+.stx-stage[data-off] > * {
+  display: none;
 }
 
 .st-field__card.is-wide {

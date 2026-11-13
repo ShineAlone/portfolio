@@ -113,11 +113,17 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerleave", leave);
 
+    // карточки сразу встают на свои места: иначе до первой остановки камеры на «Обоях»
+    // (в полёте поле на паузе) они лежали стопкой в углу блока
+    frame(performance.now());
+
     // пока блок не в кадре — поле стоит
     let seen = false;
     const sync = () => {
       // за рулём поле стоит
       const on = seen && !isStudioBusy();
+      // отдельный слой у каждой карточки — только пока поле живое; в полёте карточки рисуются вместе с блоком
+      stage.current?.classList.toggle("is-live", on);
       if (on && !visible) {
         visible = true;
         last = performance.now();

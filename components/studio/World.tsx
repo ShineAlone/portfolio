@@ -5,6 +5,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { ForumBoard } from "./ForumBoard";
 import { UniModel } from "./UniModel";
 import { earnAch } from "./earn";
+import { useOffscreen } from "./offscreen";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
@@ -820,6 +821,8 @@ const RING_MAIN = "НАПИШИ МНЕ • ОБСУДИМ ЗАДАЧУ • ";
 const RING_SUB = `TELEGRAM • @${LINKS.telegram.split("/").pop()!.toUpperCase()} • ОТКРЫТ ДЛЯ СОТРУДНИЧЕСТВА • `;
 
 function Contact({ selected }: { selected: boolean }) {
+  const deco = useRef<HTMLDivElement>(null);
+  useOffscreen(deco);
   const isl = islandById("contact");
   const card = frameById("contact");
   // сцена занимает всё место справа от карточки
@@ -847,7 +850,7 @@ function Contact({ selected }: { selected: boolean }) {
           Написать в Telegram ↗
         </a>
       </Frame>
-      <div className="st-deco stx-stage" style={{ left: stage.x, top: stage.y, width: stage.w, height: stage.h }}>
+      <div ref={deco} className="st-deco stx-stage" style={{ left: stage.x, top: stage.y, width: stage.w, height: stage.h }}>
         {rings(true)}
         <SpinFigure className="stx-stage__me" ms={150} />
         {rings(false)}

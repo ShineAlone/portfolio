@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { SOCIAL_LAYOUT, frameById } from "./data";
 import { Frame } from "./Frame";
 import { isStudioBusy, onStudioActivity } from "./drive";
+import { useOffscreen } from "./offscreen";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -49,6 +50,7 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
   const stage = useRef<HTMLDivElement>(null);
   const ball = useRef<HTMLDivElement>(null);
   const spun = useRef(false);
+  useOffscreen(stage);
 
   useEffect(() => {
     const el = stage.current!;
