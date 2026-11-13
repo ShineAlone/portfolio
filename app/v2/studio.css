@@ -577,11 +577,6 @@
   transition: opacity 0.45s, translate 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* во время перелёта холст — один слой, который браузер просто масштабирует */
-.st-world.is-flying {
-  will-change: transform;
-}
-
 .is-far .st-frame,
 .is-far .st-slot {
   opacity: 0.16;

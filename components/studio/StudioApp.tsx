@@ -152,8 +152,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   const cursorLabelRef = useRef<HTMLSpanElement>(null);
   const miniViewRef = useRef<HTMLDivElement>(null);
   const animRef = useRef(0);
-  // идёт перелёт камеры: пока он длится, тяжёлые стили (--z, «общий план») не пересчитываются
-  const flyingRef = useRef(false);
   const farRef = useRef(false);
   const introTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -253,35 +251,17 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     [vpSize]
   );
 
-  // перелёт закончился или прерван: возвращаем обычный режим, следующий кадр пересчитает --z и «общий план»
-  const endFlight = useCallback(() => {
-    if (!flyingRef.current) return;
-    flyingRef.current = false;
-    worldRef.current?.classList.remove("is-flying");
-  }, []);
-  // прервать перелёт (пользователь сам взялся за холст)
-  const stopFlight = useCallback(() => {
-    cancelAnimationFrame(animRef.current);
-    if (!flyingRef.current) return;
-    endFlight();
-    camera.set(camera.get());
-  }, [camera, endFlight]);
-
   const animateTo = useCallback(
     (target: Cam, ms = 700) => {
       // во время езды камерой управляет только машинка
       if (drivingRef.current) return;
-      stopFlight();
+      cancelAnimationFrame(animRef.current);
       const { w, h } = vpSize();
       const from = camera.get();
-      // На время перелёта холст становится одним готовым слоем: браузер масштабирует уже отрисованную
-      // картинку, а не перерисовывает весь холст под новый масштаб каждый кадр. В конце — одна чёткая перерисовка.
-      flyingRef.current = true;
-      worldRef.current?.classList.add("is-flying");
       const fc = { x: (w / 2 - from.x) / from.z, y: (h / 2 - from.y) / from.z };
       const tc = { x: (w / 2 - target.x) / target.z, y: (h / 2 - target.y) / target.z };
       // Дуга «отъехать и приехать»: на середине длинного перелёта камера чуть отдаляется.
-      const dip = clamp(Math.hypot(tc.x - fc.x, tc.y - fc.y) / 6000, 0, 0.25);
+      const dip = clamp(Math.hypot(tc.x - fc.x, tc.y - fc.y) / 4000, 0, 0.45);
       const t0 = performance.now();
       const step = (now: number) => {
         const p = Math.min(1, (now - t0) / ms);
@@ -290,13 +270,12 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
         const z = Math.exp(lz) * (1 - dip * Math.sin(Math.PI * p));
         const cx = fc.x + (tc.x - fc.x) * e;
         const cy = fc.y + (tc.y - fc.y) * e;
-        if (p >= 1) endFlight();
         camera.set({ z, x: w / 2 - cx * z, y: h / 2 - cy * z });
         if (p < 1) animRef.current = requestAnimationFrame(step);
       };
       animRef.current = requestAnimationFrame(step);
     },
-    [camera, vpSize, endFlight, stopFlight]
+    [camera, vpSize]
   );
 
   const zoomAt = useCallback(
@@ -401,7 +380,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
 
       // За рулём масштаб плавно меняется почти каждый кадр, а от --z зависят стили сотен подписей и рамок:
       // пока едем, обновляем его шагами по 4% — глазу не видно, а пересчёта стилей в разы меньше.
-      if (flyingRef.current) return;
       const zq = drivingRef.current ? Math.round(z * 25) / 25 : z;
       if (zq !== lastZq) {
         lastZq = zq;
@@ -559,7 +537,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     keysRef.current.clear();
     setSelected(null);
     // камерой во время езды управляет только цикл машинки — отдельный перелёт с ним спорил бы
-    stopFlight();
+    cancelAnimationFrame(animRef.current);
     setCityOn(true);
     setCityNotice(true);
     // на узком экране отдаляемся сильнее, чтобы впереди было видно дорогу
@@ -997,7 +975,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
       const k = e.deltaMode === 1 ? 16 : 1;
       // за рулём колесо ничего не делает: камера привязана к машинке, масштаб зафиксирован
       if (drivingRef.current) return;
-      stopFlight();
+      cancelAnimationFrame(animRef.current);
       const r = v.getBoundingClientRect();
       if (e.ctrlKey || e.metaKey) {
         const d = clamp(e.deltaY * k, -60, 60);
@@ -1090,7 +1068,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    stopFlight();
+    cancelAnimationFrame(animRef.current);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
