@@ -101,7 +101,6 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
     const sync = () => {
       // за рулём сфера замирает
       const on = seen && !isDriving();
-      el.classList.toggle("is-paused", !on);
       if (on && !visible) {
         visible = true;
         last = performance.now();
