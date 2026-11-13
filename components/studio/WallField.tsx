@@ -68,6 +68,8 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
     let raf = 0;
     let last = 0;
     let visible = false;
+    // цикл крутится, только пока карточки движутся: в покое поле не перерисовывается вовсе
+    let running = false;
 
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000 || 0);
@@ -75,13 +77,13 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
       // сила линзы плавно нарастает, когда курсор входит в блок, и спадает, когда уходит
       mouse.k += ((mouse.on ? 1 : 0) - mouse.k) * Math.min(1, dt * 5);
       const ease = Math.min(1, dt * 7);
-      const t = now / 1000;
+      let moving = 0;
       for (let i = 0; i < CARDS.length; i++) {
         const c = CARDS[i];
         const p = cur[i];
-        // в покое карточки едва заметно покачиваются
-        const hx = c.hx * W + Math.sin(t * 0.35 + c.phase) * 10;
-        const hy = c.hy * H + Math.cos(t * 0.3 + c.phase) * 10;
+        // карточки стоят на своих местах; покачивание убрано — оно перерисовывало холст каждый кадр
+        const hx = c.hx * W;
+        const hy = c.hy * H;
         const d = Math.hypot(mouse.x - hx, mouse.y - hy);
         let f = Math.max(0, 1 - d / REACH);
         f = f * f * (3 - 2 * f) * mouse.k;
@@ -91,6 +93,7 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
         p.x += (tx - p.x) * ease;
         p.y += (ty - p.y) * ease;
         p.s += (ts - p.s) * ease;
+        moving = Math.max(moving, Math.abs(tx - p.x), Math.abs(ty - p.y), Math.abs(ts - p.s) * 300);
         els[i].style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%) scale(${p.s.toFixed(3)})`;
         // крупные карточки лежат поверх мелких
         const z = Math.round(p.s * 100);
@@ -99,7 +102,15 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
           els[i].style.zIndex = String(z);
         }
       }
-      if (visible) raf = requestAnimationFrame(frame);
+      // всё встало и курсор ушёл — останавливаемся до следующего движения мыши
+      running = visible && (moving > 0.3 || mouse.on || mouse.k > 0.01);
+      if (running) raf = requestAnimationFrame(frame);
+    };
+    const wake = () => {
+      if (!visible || running) return;
+      running = true;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
     };
 
     // курсор — в координатах блока: холст масштабируется, поэтому пересчитываем через рамку
@@ -108,8 +119,12 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
       mouse.x = ((e.clientX - r.left) / r.width) * W;
       mouse.y = ((e.clientY - r.top) / r.height) * H;
       mouse.on = true;
+      wake();
     };
-    const leave = () => (mouse.on = false);
+    const leave = () => {
+      mouse.on = false;
+      wake();
+    };
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerleave", leave);
 
@@ -120,10 +135,10 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
       const on = seen && !isDriving();
       if (on && !visible) {
         visible = true;
-        last = performance.now();
-        raf = requestAnimationFrame(frame);
+        wake();
       } else if (!on) {
         visible = false;
+        running = false;
         cancelAnimationFrame(raf);
       }
     };

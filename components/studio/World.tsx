@@ -815,20 +815,12 @@ function Projects({ selected }: { selected: string | null }) {
 /* ---------- Контакты: финальная точка маршрута ---------- */
 
 /*
- * Та самая крутящаяся фигура из 16 кадров. Все кадры лежат стопкой и уже декодированы,
- * а показывает их CSS-анимация по очереди. Раньше кадры менял таймер через смену src:
- * браузер каждый раз заново доставал картинку, и при нагрузке вращение подвисало.
+ * Та самая крутящаяся фигура из 16 кадров. Кадры склеены в одну полосу, CSS-анимация сдвигает фон
+ * шагами. Это один элемент и одна картинка: раньше 16 кадров лежали стопкой и мигали прозрачностью —
+ * браузер держал под каждый кадр отдельный слой, и на слабых видеокартах холст начинал мерцать.
  */
-const SPIN_FRAMES = Array.from({ length: 16 }, (_, i) => `/images/scroll/frame-${String(i + 1).padStart(2, "0")}.webp`);
-
 export function SpinFigure({ className, ms = 75 }: { className?: string; ms?: number }) {
-  return (
-    <span className={`st-spin ${className ?? ""}`} style={{ "--spin": `${ms * 16}ms` } as React.CSSProperties} aria-hidden>
-      {SPIN_FRAMES.map((src, i) => (
-        <img key={src} src={src} alt="" draggable={false} style={{ "--i": i } as React.CSSProperties} />
-      ))}
-    </span>
-  );
+  return <span className={`st-spin ${className ?? ""}`} style={{ "--spin": `${ms * 16}ms` } as React.CSSProperties} aria-hidden />;
 }
 
 /*

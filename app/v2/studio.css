@@ -3005,32 +3005,17 @@
   clip-path: inset(-700px -400px 0 -400px);
 }
 
-/* крутящаяся фигура: 16 кадров стопкой, виден один — его выбирает анимация */
+/* крутящаяся фигура: полоса из 16 кадров, фон сдвигается на кадр за шаг */
 .st-spin {
   position: relative;
   display: block;
-}
-
-.st-spin img,
-.st-world .st-spin img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: none !important;
-  opacity: 0;
-  animation: st-spin-frame var(--spin) steps(1, end) infinite;
-  animation-delay: calc(var(--spin) * var(--i) / 16 - var(--spin));
+  background: url("/images/scroll/spin-sprite.webp") 0 0 / 1600% 100% no-repeat;
+  animation: st-spin-frame var(--spin) steps(16, jump-none) infinite;
 }
 
 @keyframes st-spin-frame {
-  0% {
-    opacity: 1;
-  }
-  6.25%,
-  100% {
-    opacity: 0;
+  to {
+    background-position: 100% 0;
   }
 }
 
@@ -4814,6 +4799,12 @@
   50% {
     transform: translateY(-26px);
   }
+}
+
+/* пока сфера не в кадре, её парение и тень стоят — не тратят кадры видеокарты */
+.st-ball.is-paused .st-ball__float,
+.st-ball.is-paused .st-ball__shadow {
+  animation-play-state: paused;
 }
 
 .st-ball__sphere {
