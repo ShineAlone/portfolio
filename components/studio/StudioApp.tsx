@@ -257,6 +257,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   const endFlight = useCallback(() => {
     if (!flyingRef.current) return;
     flyingRef.current = false;
+    worldRef.current?.classList.remove("is-flying");
   }, []);
   // прервать перелёт (пользователь сам взялся за холст)
   const stopFlight = useCallback(() => {
@@ -273,8 +274,10 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
       stopFlight();
       const { w, h } = vpSize();
       const from = camera.get();
-      // пока камера летит, --z и «общий план» не пересчитываются — это делается один раз в конце
+      // На время перелёта холст становится одним готовым слоем: браузер масштабирует уже отрисованную
+      // картинку, а не перерисовывает весь холст под новый масштаб каждый кадр. В конце — одна чёткая перерисовка.
       flyingRef.current = true;
+      worldRef.current?.classList.add("is-flying");
       const fc = { x: (w / 2 - from.x) / from.z, y: (h / 2 - from.y) / from.z };
       const tc = { x: (w / 2 - target.x) / target.z, y: (h / 2 - target.y) / target.z };
       // Дуга «отъехать и приехать»: на середине длинного перелёта камера чуть отдаляется.
