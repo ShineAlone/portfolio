@@ -28,7 +28,7 @@ export default async function PortfolioCasePage(props: Props) {
   return (
     <div className="m-app">
       <main className="m-main m-case">
-        <a href="/?feed#m-cases">← Все кейсы</a>
+        <a href="/?section=cases">← Все кейсы</a>
         <header>
           <p>{item.category}</p>
           <h1>{item.title}</h1>

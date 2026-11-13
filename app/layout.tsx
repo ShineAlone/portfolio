@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -39,7 +38,6 @@ export default function RootLayout({
     <html lang="ru">
       <body className={openSans.variable}>
         {children}
-        <Analytics />
       </body>
     </html>
   );
