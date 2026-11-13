@@ -1,10 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { memo, useEffect, useRef, useState } from "react";
 import { ForumBoard } from "./ForumBoard";
 import { UniModel } from "./UniModel";
 import { earnAch } from "./earn";
-import { isDriving, onDriveChange } from "./drive";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
 import {
   CARS,
@@ -17,28 +17,21 @@ import {
   islandById,
   poster,
   type CarSpec,
-  type FrameMeta,
 } from "./data";
 import { Frame } from "./Frame";
 import { SocialSphere } from "./SocialSphere";
 import { WallField } from "./WallField";
 import { AboutCalmBody } from "./AboutCalm";
-import { CaseHR } from "./CaseHR";
-import { CaseTour } from "./CaseTour";
+const CaseHR = dynamic(() => import("./CaseHR").then((module) => module.CaseHR));
+const CaseTour = dynamic(() => import("./CaseTour").then((module) => module.CaseTour));
 
 /* eslint-disable @next/next/no-img-element */
 
-export const NAME_LINES = ["я Арсений", "Кононов"];
+const NAME_LINES = ["я Арсений", "Кононов"];
 export const NAME_CHARS = NAME_LINES.join("").length;
-export const HELLO = "Привет!";
+const HELLO = "Привет!";
 
-// Округление обязательно: на сервере и в браузере Math.sin даёт разные хвосты после запятой.
-const rand = (seed: number) => {
-  const x = Math.sin(seed * 127.1) * 43758.5453;
-  return Math.round((x - Math.floor(x)) * 1000) / 1000;
-};
-
-export function CountUp({ value, run }: { value: string; run: boolean }) {
+function CountUp({ value, run }: { value: string; run: boolean }) {
   const m = /^(\D*)(\d+)(.*)$/.exec(value);
   const target = m ? Number(m[2]) : 0;
   const [n, setN] = useState(0);
@@ -64,54 +57,23 @@ export function CountUp({ value, run }: { value: string; run: boolean }) {
   );
 }
 
-// Видео играет само, пока оно в кадре: за пределами экрана ставится на паузу, чтобы не грузить холст.
 function AutoVideo({ video }: { video: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let seen = false;
-    const sync = () => {
-      if (seen && !isDriving()) el.play().catch(() => {});
-      else el.pause();
-    };
-    const io = new IntersectionObserver(([e]) => {
-      seen = e.isIntersecting;
-      sync();
-    });
-    io.observe(el);
-    // за рулём видео стоят на паузе
-    const off = onDriveChange(sync);
-    return () => {
-      io.disconnect();
-      off();
-    };
-  }, []);
+    const element = ref.current;
+    if (!element) return;
+    element.muted = true;
+    void element.play().catch(() => {});
+  }, [video]);
+
   return (
     <div className="st-hv">
-      <video ref={ref} src={video} poster={poster(video)} muted loop playsInline preload="none" />
+      <video ref={ref} src={video} poster={poster(video)} autoPlay muted loop playsInline />
     </div>
   );
 }
 
 /* ---------- Обо мне: приветствие-коллаж ---------- */
-
-type StickerShape = "circle" | "burst" | "pill" | "square";
-
-export const STICKERS: { shape: StickerShape; x: number; y: number; w: number; h: number; rot: number; color: string }[] = [
-  { shape: "circle", x: 1110, y: 140, w: 180, h: 180, rot: 10, color: "#FEFE78" },
-  { shape: "burst", x: 1090, y: 390, w: 210, h: 210, rot: -8, color: "#FFB6E1" },
-  { shape: "pill", x: 560, y: 690, w: 250, h: 96, rot: -4, color: "#86DDFF" },
-  { shape: "square", x: 840, y: 636, w: 170, h: 150, rot: 7, color: "#ACF9A2" },
-  { shape: "burst", x: 0, y: 628, w: 200, h: 200, rot: -6, color: "#C791FF" },
-  { shape: "pill", x: 220, y: 690, w: 270, h: 96, rot: 5, color: "#FFC7B6" },
-];
-
-export const BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
-  const a = (i / 28) * Math.PI * 2;
-  const r = i % 2 ? 41 : 49;
-  return `${(50 + Math.cos(a) * r).toFixed(2)},${(50 + Math.sin(a) * r).toFixed(2)}`;
-}).join(" ");
 
 // две главные цифры выделены цветом — остальные не спорят с ними
 const STAT_ACCENT: Record<string, string> = { "лет в дизайне": "#fefe78", проектов: "#c9a8ff" };
@@ -151,7 +113,8 @@ function Greeting({
       <div className="sthg__stage">
         <div className="sthg__card" />
         <div className="sthg__photo">
-          <img src="/images/photo.webp" alt="Арсений Кононов" draggable={false} />
+          <img src="/images/photo.webp" srcSet="/images/photo-480.webp 480w, /images/photo.webp 1200w"
+            sizes="(max-width: 760px) 240px, 440px" alt="Арсений Кононов" fetchPriority="high" decoding="async" draggable={false} />
         </div>
         {/* круглый значок с бегущим по кругу текстом */}
         <div className="sthg__badge" aria-hidden>
@@ -359,7 +322,7 @@ function Answer({ kind }: { kind: "intro" | "how" | "edu" }) {
         {TOOLS.icons.map((t, i) => (
           <span key={t.src} className="stchat__tool" style={{ "--i": i } as React.CSSProperties}>
             <i className={t.boxed ? "is-boxed" : ""}>
-              <img src={t.src} alt="" draggable={false} />
+              <img src={t.src} alt="" loading="lazy" decoding="async" draggable={false} />
             </i>
             {t.alt}
           </span>
@@ -379,7 +342,7 @@ function Chat({ step, selected }: { step: number; selected: boolean }) {
 }
 
 // Содержимое переписки — общее для холста и мобильной ленты.
-export function ChatContent({ step }: { step: number }) {
+function ChatContent({ step }: { step: number }) {
   const typing = step < CHAT.length && step > 0 && !CHAT[step].q;
   // реакции можно «докинуть» кликом — счётчик растёт, эмодзи подпрыгивает
   const [bumps, setBumps] = useState<Record<number, number>>({});
@@ -387,7 +350,7 @@ export function ChatContent({ step }: { step: number }) {
     <>
       <div className="stchat__head">
         <span className="stchat__avatar">
-          <img src="/images/photo.webp" alt="" draggable={false} />
+          <img src="/images/photo.webp" alt="" loading="lazy" decoding="async" draggable={false} />
         </span>
         <div>
           <b>Арсений Кононов</b>
@@ -447,7 +410,7 @@ function History({ selected }: { selected: boolean }) {
 }
 
 // История версий — общая для холста и мобильной ленты.
-export function HistoryContent() {
+function HistoryContent() {
   return (
     <div className="stv">
         <div className="stv__head">
@@ -595,7 +558,7 @@ function LabUni({ selected }: { selected: boolean }) {
 
 // Машинки нарисованы сверху, носом вверх.
 export function CarSvg({ car }: { car: CarSpec }) {
-  const wheels = (w: number, h: number, ys: number[]) =>
+  const wheels = (w: number, ys: number[]) =>
     ys.flatMap((y) => [
       <rect key={`l${y}`} x={0} y={y} width={12} height={24} rx={4} fill="#111" />,
       <rect key={`r${y}`} x={w - 12} y={y} width={12} height={24} rx={4} fill="#111" />,
@@ -603,7 +566,7 @@ export function CarSvg({ car }: { car: CarSpec }) {
   if (car.id === "pickup") {
     return (
       <svg viewBox="0 0 78 132" width={car.w} height={car.h} aria-hidden>
-        {wheels(78, 132, [18, 96])}
+        {wheels(78, [18, 96])}
         <rect x="7" y="4" width="64" height="124" rx="12" fill={car.color} stroke="#111" strokeWidth="3" />
         <rect x="15" y="26" width="48" height="16" rx="5" fill="#2a2a2a" />
         <rect x="15" y="44" width="48" height="16" rx="4" fill="#fff" stroke="#111" strokeWidth="2" />
@@ -617,7 +580,7 @@ export function CarSvg({ car }: { car: CarSpec }) {
   if (car.id === "bug") {
     return (
       <svg viewBox="0 0 72 100" width={car.w} height={car.h} aria-hidden>
-        {wheels(72, 100, [14, 64])}
+        {wheels(72, [14, 64])}
         <ellipse cx="36" cy="50" rx="30" ry="47" fill={car.color} stroke="#111" strokeWidth="3" />
         <ellipse cx="36" cy="34" rx="20" ry="9" fill="#2a2a2a" />
         <ellipse cx="36" cy="74" rx="15" ry="6" fill="#2a2a2a" />
@@ -631,7 +594,7 @@ export function CarSvg({ car }: { car: CarSpec }) {
   }
   return (
     <svg viewBox="0 0 70 124" width={car.w} height={car.h} aria-hidden>
-      {wheels(70, 124, [18, 88])}
+      {wheels(70, [18, 88])}
       <path
         d="M14 10Q35 0 56 10L62 42V112Q62 121 53 121H17Q8 121 8 112V42Z"
         fill={car.color}
@@ -825,7 +788,7 @@ export function SpinFigure({ className, ms = 75 }: { className?: string; ms?: nu
   return (
     <span className={`st-spin ${className ?? ""}`} style={{ "--spin": `${ms * 16}ms` } as React.CSSProperties} aria-hidden>
       {SPIN_FRAMES.map((src, i) => (
-        <img key={src} src={src} alt="" draggable={false} style={{ "--i": i } as React.CSSProperties} />
+        <img key={src} src={src} alt="" loading="lazy" decoding="async" draggable={false} style={{ "--i": i } as React.CSSProperties} />
       ))}
     </span>
   );
@@ -913,12 +876,6 @@ function Islands() {
           }
         >
           <div className="st-island__label">{isl.name}</div>
-          <div
-            className="st-island__title"
-            style={{ fontSize: Math.min(380, (isl.w * 0.86) / (isl.name.length * 0.8)) }}
-          >
-            {isl.name}
-          </div>
         </div>
       ))}
     </>
@@ -930,8 +887,7 @@ type WorldProps = {
   typed: number;
   chatStep: number;
   selected: string | null;
-  spread: boolean;
-  onToggleSpread: () => void;
+  onSpin: () => void;
   onSticker: () => void;
   onPhone: () => void;
   /** слайд презентации HR-кейса: листается и в кейсе, и стрелками клавиатуры */
@@ -943,6 +899,7 @@ type WorldProps = {
   onDrive: () => void;
   /** камера сейчас на острове кейсов, где стоит презентация (и мы не за рулём) */
   presView: boolean;
+  casesRequested: boolean;
   /** спокойная версия: вместо приветствия, чата и истории — блок-визитка */
   calm?: boolean;
 };
@@ -980,10 +937,14 @@ export const World = memo(function World(p: WorldProps) {
         onPick={p.onPickCar}
         onDrive={p.onDrive}
       />
-      <SocialSphere selected={p.selected === "social"} onSpin={p.onToggleSpread} />
+      <SocialSphere selected={p.selected === "social"} onSpin={p.onSpin} />
       <WallField selected={p.selected === "wall"} onPick={p.onPhone} />
-      <CaseHR selected={p.selected} active={p.presView} slide={p.slide} onSlide={p.onSlide} />
-      <CaseTour selected={p.selected} />
+      {p.casesRequested && (
+        <>
+          <CaseHR selected={p.selected} active={p.presView} slide={p.slide} onSlide={p.onSlide} />
+          <CaseTour selected={p.selected} />
+        </>
+      )}
       <Projects selected={p.selected} />
       <Contact selected={p.selected === "contact"} />
     </>

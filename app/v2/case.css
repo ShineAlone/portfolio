@@ -29,6 +29,10 @@
   --my: 0;
 }
 
+.st-viewport .hb {
+  content-visibility: auto;
+}
+
 .hb h3 {
   font-family: var(--display);
   font-weight: 800;

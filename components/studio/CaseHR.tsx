@@ -1,5 +1,7 @@
 "use client";
 
+import "@/app/v2/case.css";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LINKS } from "@/lib/content";
 import { frameById } from "./data";

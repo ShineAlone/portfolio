@@ -27,6 +27,10 @@
   color: var(--t-ink);
 }
 
+.st-viewport .tb {
+  content-visibility: auto;
+}
+
 .tb-case .tb img {
   display: block;
 }

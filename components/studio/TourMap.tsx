@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { isStudioBusy, onStudioActivity } from "./drive";
 import { KIND_COLOR, PLACES, legOf, type Legs } from "./casesTour";
+import { loadMapLibre } from "./maplibre";
 
 /*
  * Живая карта Тулы для кейса: MapLibre + векторные тайлы OpenFreeMap (данные OpenStreetMap),
@@ -37,7 +39,7 @@ function heading([x1, y1]: LngLat, [x2, y2]: LngLat) {
 }
 
 function restyle(map: MlMap) {
-  const paint: Record<string, [string, string | number]> = {
+  const paint: Record<string, [Parameters<MlMap["setPaintProperty"]>[1], string]> = {
     background: ["background-color", "#F3EEE5"],
     water: ["fill-color", "#9DCBEB"],
     park: ["fill-color", "#CFE5B9"],
@@ -117,6 +119,7 @@ export function TourMap({
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState(false);
   const [seen, setSeen] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const padS = (): Pad => ({ top: pad.top / S, bottom: pad.bottom / S, left: pad.left / S, right: pad.right / S });
   const fit = (duration = 1100) => {
@@ -142,6 +145,7 @@ export function TourMap({
     let t = 0;
     let last = 0;
     const apply = () => {
+      if (isStudioBusy()) return;
       const pr = pixelRatio();
       if (Math.abs(pr - last) > 0.05) {
         last = pr;
@@ -158,18 +162,31 @@ export function TourMap({
   }, [ready]);
   // карта поднимается, только когда борд впервые попал в кадр
   useEffect(() => {
-    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setSeen(true), { rootMargin: "400px" });
-    io.observe(outer.current!);
-    return () => io.disconnect();
-  }, []);
+    if (seen) return;
+    const el = outer.current;
+    if (!el) return;
+    let visible = false;
+    const start = () => {
+      if (visible && !isStudioBusy()) setSeen(true);
+    };
+    const io = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting && entry.intersectionRect.height >= 120;
+      start();
+    }, { threshold: [0, 0.05, 0.15, 0.3] });
+    io.observe(el);
+    const off = onStudioActivity(start);
+    return () => {
+      io.disconnect();
+      off();
+    };
+  }, [seen]);
 
   useEffect(() => {
     if (!seen) return;
     let dead = false;
-    import("maplibre-gl").then((mod) => {
+    loadMapLibre().then((ml) => {
       if (dead || !inner.current) return;
-      const ml = mod.default;
-      mlRef.current = mod;
+      mlRef.current = ml;
       const map = new ml.Map({
         container: inner.current,
         style: STYLE,
@@ -198,6 +215,11 @@ export function TourMap({
         setReady(true);
       });
       mapRef.current = map;
+      map.on("error", () => {
+        if (!map.loaded()) setFailed(true);
+      });
+    }).catch(() => {
+      if (!dead) setFailed(true);
     });
     return () => {
       dead = true;
@@ -353,7 +375,7 @@ export function TourMap({
       <span className="tb-mapbox__hint">
         {active ? "Колесо — масштаб, тяни — двигай, правой кнопкой — поворот" : "Нажми на карту, чтобы её двигать"}
       </span>
-      {!ready && <span className="tb-mapbox__load">Загружаем карту Тулы…</span>}
+      {!ready && <span className="tb-mapbox__load">{failed ? "Карта Тулы недоступна" : "Загружаем карту Тулы…"}</span>}
     </div>
   );
 }

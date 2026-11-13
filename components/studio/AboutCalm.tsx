@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { EDUCATION, HERO, LINKS, STATS, TOOLS, WORK } from "@/lib/content";
+import { loadMapLibre } from "./maplibre";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -46,9 +47,9 @@ function CityMap() {
   useEffect(() => {
     let dead = false;
     let map: import("maplibre-gl").Map | undefined;
-    import("maplibre-gl").then(({ default: ml }) => {
+    loadMapLibre().then((ml) => {
       if (dead || !ref.current) return;
-      map = new ml.Map({
+      const cityMap = new ml.Map({
         container: ref.current,
         style: "https://tiles.openfreemap.org/styles/positron",
         center: TULA,
@@ -57,16 +58,17 @@ function CityMap() {
         attributionControl: { compact: true },
         fadeDuration: 0,
       });
-      map.on("load", () => {
-        for (const l of map!.getStyle().layers) {
-          if (l.type !== "symbol" || !map!.getLayoutProperty(l.id, "text-field")) continue;
+      map = cityMap;
+      cityMap.on("load", () => {
+        for (const l of cityMap.getStyle().layers) {
+          if (l.type !== "symbol" || !cityMap.getLayoutProperty(l.id, "text-field")) continue;
           try {
-            map!.setLayoutProperty(l.id, "text-field", ["coalesce", ["get", "name:ru"], ["get", "name"]]);
+            cityMap.setLayoutProperty(l.id, "text-field", ["coalesce", ["get", "name:ru"], ["get", "name"]]);
           } catch {}
         }
         const el = document.createElement("i");
         el.className = "ab-pin";
-        new ml.Marker({ element: el }).setLngLat(TULA).addTo(map!);
+        new ml.Marker({ element: el }).setLngLat(TULA).addTo(cityMap);
       });
     });
     return () => {

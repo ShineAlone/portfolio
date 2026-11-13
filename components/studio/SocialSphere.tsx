@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { SOCIAL_LAYOUT, frameById } from "./data";
 import { Frame } from "./Frame";
-import { isDriving, onDriveChange } from "./drive";
+import { isStudioBusy, onStudioActivity } from "./drive";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -100,7 +100,7 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
     let seen = false;
     const sync = () => {
       // за рулём сфера замирает
-      const on = seen && !isDriving();
+      const on = seen && !isStudioBusy();
       if (on && !visible) {
         visible = true;
         last = performance.now();
@@ -115,7 +115,7 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
       sync();
     });
     io.observe(el);
-    const offDrive = onDriveChange(sync);
+    const offDrive = onStudioActivity(sync);
 
     // Сфера крутится, только когда на неё смотрят: на экране она не меньше трети и не больше экрана.
     // На общем плане она мелкая, а вплотную занимает весь экран — тогда перетаскивание двигает холст,

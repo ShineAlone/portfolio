@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { PerspectiveCamera, Scene, WebGLRenderer } from "three";
-import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import type { PerspectiveCamera, WebGLRenderer } from "three";
+import { isStudioBusy, onStudioActivity } from "./drive";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -26,9 +26,7 @@ type Status = "idle" | "loading" | "ready" | "error" | "nogl";
 
 type Rig = {
   renderer: WebGLRenderer;
-  scene: Scene;
   camera: PerspectiveCamera;
-  controls: OrbitControls;
   base: number; // стартовая дальность камеры
   fly: (az: number, pol: number, dist: number) => void;
   zoom: (k: number) => void;
@@ -50,6 +48,7 @@ export function UniModel() {
   const [status, setStatus] = useState<Status>("idle");
   const [full, setFull] = useState(false);
   const rig = useRef<Rig | null>(null);
+  const mounted = useRef(false);
   const host = useRef<HTMLDivElement | null>(null);
   const openBtn = useRef<HTMLButtonElement>(null);
   const fullBtn = useRef<HTMLButtonElement | null>(null);
@@ -60,7 +59,6 @@ export function UniModel() {
     const r = rig.current;
     if (!el || !r) return;
     el.appendChild(r.renderer.domElement);
-    r.wake();
     const fit = () => {
       const w = el.clientWidth;
       const h = el.clientHeight;
@@ -68,6 +66,7 @@ export function UniModel() {
       r.renderer.setSize(w, h, false);
       r.camera.aspect = w / h;
       r.camera.updateProjectionMatrix();
+      r.wake();
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -86,9 +85,10 @@ export function UniModel() {
         import("three/examples/jsm/controls/OrbitControls.js"),
         import("three/examples/jsm/environments/RoomEnvironment.js"),
       ]);
+      if (!mounted.current) return;
       const draco = new DRACOLoader().setDecoderPath(DRACO);
-      const gltf = await new GLTFLoader().setDRACOLoader(draco).loadAsync(MODEL);
-      draco.dispose();
+      const gltf = await new GLTFLoader().setDRACOLoader(draco).loadAsync(MODEL).finally(() => draco.dispose());
+      if (!mounted.current) return;
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 760 ? 1.5 : 2));
@@ -98,7 +98,11 @@ export function UniModel() {
 
       const scene = new THREE.Scene();
       const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      const room = new RoomEnvironment();
+      const environment = pmrem.fromScene(room, 0.04);
+      room.dispose();
+      pmrem.dispose();
+      scene.environment = environment.texture;
       // свет приглушён, чтобы стены остались бежевыми, а крыша серо-голубой — без пересвета
       scene.environmentIntensity = 0.5;
       const sun = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -158,6 +162,21 @@ export function UniModel() {
       place(HOME.az * RAD, HOME.pol * RAD, base);
       controls.update();
 
+      let raf = 0;
+      let visible = false;
+      const canRender = () => visible && !document.hidden && !isStudioBusy();
+      const draw = () => {
+        if (raf || !canRender()) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          if (!canRender()) return;
+          const moving = controls.update();
+          renderer.render(scene, camera);
+          if (moving) draw();
+        });
+      };
+      controls.addEventListener("change", draw);
+
       // плавный перелёт к ракурсу: азимут идёт кратчайшей дугой
       let flight = 0;
       const fly = (az: number, pol: number, dist: number) => {
@@ -170,6 +189,7 @@ export function UniModel() {
           const f = Math.min(1, (now - t0) / 800);
           const e = f * f * (3 - 2 * f);
           place(from.theta + d * e, from.phi + (pol - from.phi) * e, from.radius + (dist - from.radius) * e);
+          draw();
           if (f < 1) flight = requestAnimationFrame(step);
         };
         flight = requestAnimationFrame(step);
@@ -181,56 +201,55 @@ export function UniModel() {
       // начал крутить сам — перелёт отменяется
       controls.addEventListener("start", () => cancelAnimationFrame(flight));
 
-      // рисуем, только пока окно с моделью в кадре
-      let raf = 0;
-      let visible = true;
-      const loop = () => {
-        controls.update();
-        renderer.render(scene, camera);
-        if (visible) raf = requestAnimationFrame(loop);
-      };
-      const io = new IntersectionObserver(([e]) => {
-        const on = e.isIntersecting;
-        if (on && !visible) {
-          visible = true;
-          raf = requestAnimationFrame(loop);
-        } else if (!on) {
-          visible = false;
-          cancelAnimationFrame(raf);
-        }
+      const io = new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        draw();
       });
       io.observe(renderer.domElement);
-      raf = requestAnimationFrame(loop);
+      const off = onStudioActivity(draw);
+      document.addEventListener("visibilitychange", draw);
 
       rig.current = {
         renderer,
-        scene,
         camera,
-        controls,
         base,
         fly,
         zoom,
         wake: () => {
           io.unobserve(renderer.domElement);
           io.observe(renderer.domElement);
+          draw();
         },
         dispose: () => {
           io.disconnect();
+          off();
+          document.removeEventListener("visibilitychange", draw);
           cancelAnimationFrame(raf);
           cancelAnimationFrame(flight);
           controls.dispose();
-          pmrem.dispose();
+          environment.dispose();
+          ground.geometry.dispose();
+          ground.material.map?.dispose();
+          ground.material.dispose();
           renderer.dispose();
+          renderer.forceContextLoss();
           renderer.domElement.remove();
         },
       };
       setStatus("ready");
     } catch {
-      setStatus("error");
+      if (mounted.current) setStatus("error");
     }
   }, []);
 
-  useEffect(() => () => rig.current?.dispose(), []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      rig.current?.dispose();
+      rig.current = null;
+    };
+  }, []);
 
   // в полноэкранном окне Escape закрывает его и возвращает фокус на кнопку
   useEffect(() => {

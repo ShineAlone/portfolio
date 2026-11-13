@@ -29,15 +29,22 @@ const SKIP = "script, style, textarea, input, code, svg, canvas, .maplibregl-map
 function fix(node: Text) {
   const v = node.nodeValue;
   if (!v || v.length < 3 || !v.includes(" ")) return;
-  if (node.parentElement?.closest(SKIP)) return;
   const t = typograph(v);
   if (t !== v) node.nodeValue = t;
 }
 
 function walk(root: Node) {
-  if (root.nodeType === Node.TEXT_NODE) return fix(root as Text);
-  if (root.nodeType !== Node.ELEMENT_NODE) return;
-  const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  if (root.nodeType === Node.TEXT_NODE) {
+    if (!root.parentElement?.closest(SKIP)) fix(root as Text);
+    return;
+  }
+  if (!(root instanceof Element) || root.closest(SKIP)) return;
+  const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
+    acceptNode(node) {
+      if (node instanceof Element) return node.matches(SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
   let n: Node | null;
   while ((n = tw.nextNode())) fix(n as Text);
 }
@@ -47,7 +54,7 @@ export function useTypograph() {
     walk(document.body);
     const mo = new MutationObserver((list) => {
       for (const m of list) {
-        if (m.type === "characterData") fix(m.target as Text);
+        if (m.type === "characterData") walk(m.target);
         else m.addedNodes.forEach(walk);
       }
     });

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { isStudioBusy, onStudioActivity } from "./drive";
 import { frameById } from "./data";
 import { earnAch } from "./earn";
 import { Frame } from "./Frame";
@@ -25,16 +26,38 @@ const STEP_MS = 3600;
 export function ForumBoard({ selected }: { selected: boolean }) {
   const [cur, setCur] = useState(0);
   const [auto, setAuto] = useState(true);
+  const stage = useRef<HTMLDivElement>(null);
 
-  // шаблоны листаются сами, пока посетитель не выбрал вкладку
   useEffect(() => {
-    if (!auto) return;
-    const id = setInterval(() => setCur((v) => (v + 1) % SCREENS.length), STEP_MS);
-    return () => clearInterval(id);
+    const element = stage.current;
+    if (!auto || !element) return;
+    let visible = false;
+    let timer = 0;
+    const sync = () => {
+      window.clearInterval(timer);
+      if (visible && !document.hidden && !isStudioBusy() &&
+          !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        timer = window.setInterval(() => setCur((value) => (value + 1) % SCREENS.length), STEP_MS);
+      }
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      sync();
+    });
+    observer.observe(element);
+    const off = onStudioActivity(sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      observer.disconnect();
+      off();
+      document.removeEventListener("visibilitychange", sync);
+      window.clearInterval(timer);
+    };
   }, [auto]);
 
   return (
     <Frame meta={frameById("forum")} selected={selected} className="st-forum">
+      <span ref={stage} className="st-forum__visibility" aria-hidden />
       <img className="st-forum__pattern" src={`${DIR}/pattern.svg`} alt="" loading="lazy" draggable={false} />
 
       <header className="st-forum__head">

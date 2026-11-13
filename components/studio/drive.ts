@@ -1,21 +1,25 @@
 /*
- * Режим езды: пока машинка на холсте, всё тяжёлое в блоках (видео, сфера постов, поле обоев)
- * встаёт на паузу — кадры нужны камере, городу и самой машинке. Блоки узнают о езде через событие.
+ * Видео, сфера и поле обоев приостанавливаются, пока движется камера или идёт игра.
  */
-const DRIVE_EVENT = "st-drive";
+const ACTIVITY_EVENT = "st-activity";
 let driving = false;
+let flying = false;
 
-export const isDriving = () => driving;
+export const isStudioBusy = () => driving || flying;
 
 export function setDriving(on: boolean) {
   if (driving === on) return;
   driving = on;
-  window.dispatchEvent(new CustomEvent(DRIVE_EVENT));
+  window.dispatchEvent(new Event(ACTIVITY_EVENT));
 }
 
-/** Подписка на начало и конец езды; возвращает отписку. */
-export function onDriveChange(cb: (driving: boolean) => void) {
-  const h = () => cb(driving);
-  window.addEventListener(DRIVE_EVENT, h);
-  return () => window.removeEventListener(DRIVE_EVENT, h);
+export function setFlying(on: boolean) {
+  if (flying === on) return;
+  flying = on;
+  window.dispatchEvent(new Event(ACTIVITY_EVENT));
+}
+
+export function onStudioActivity(cb: () => void) {
+  window.addEventListener(ACTIVITY_EVENT, cb);
+  return () => window.removeEventListener(ACTIVITY_EVENT, cb);
 }

@@ -12,23 +12,6 @@
   text-transform: none;
 }
 
-.th-calm .st-spread {
-  border-color: var(--calm-line) !important;
-  box-shadow: none;
-}
-
-.th-calm .st-spread:hover {
-  box-shadow: none;
-}
-
-.th-calm .st-spread:active {
-  box-shadow: none;
-}
-
-.th-calm .st-spread__deck i {
-  border-color: var(--calm-line);
-}
-
 .th-calm .sthg__hello {
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -192,11 +175,6 @@
 .th-calm .st-brand__logo {
   font-weight: 500;
   letter-spacing: -0.02em;
-}
-
-.th-calm .st-feed {
-  border-color: var(--calm-line) !important;
-  box-shadow: none;
 }
 
 .th-calm .st-win__word {

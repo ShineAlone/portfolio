@@ -1,9 +1,10 @@
 "use client";
 
+import "@/app/v2/studio.css";
+
 import { EARN_EVENT } from "./earn";
-import { setDriving as setDrivingFlag } from "./drive";
+import { setDriving as setDrivingFlag, setFlying } from "./drive";
 import { useTypograph } from "./typograph";
-import { useImageQueue } from "./imageQueue";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { LINKS } from "@/lib/content";
 import { MAX_Z, MIN_Z, clamp, createCameraStore, type Cam, type CameraStore } from "./camera";
@@ -31,7 +32,6 @@ import { CityLayer } from "./CityLayer";
 import { SEA_LIMIT, SURFACES, getCity, seaDepth, surfaceAt, type Surface } from "./city";
 import { addParticle, drawFx, makeCrack, shatter, type Mark, type Particle } from "./effects";
 
-const BASE_BG = "#ECEAE4";
 const DRIVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 // новый ключ обнуляет прогресс у всех, кто заходил раньше
 const STORAGE_KEY = "ak-achievements-v2";
@@ -140,18 +140,26 @@ function Confetti() {
   );
 }
 
-export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "calm" } = {}) {
+export function StudioApp({ theme }: { theme?: "calm" } = {}) {
   useTypograph();
-  useImageQueue(".st-world");
   // спокойная версия: тот же холст в светлом монохроме, без игрового интро
   const calm = theme === "calm";
   const camera = useMemo(createCameraStore, []);
   const viewportRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorLabelRef = useRef<HTMLSpanElement>(null);
   const miniViewRef = useRef<HTMLDivElement>(null);
   const animRef = useRef(0);
+  const flightTarget = useRef<string | null>(null);
+  const [casesRequested, setCasesRequested] = useState(false);
+  const casesRequestedRef = useRef(false);
+  const requestCases = useCallback(() => {
+    if (casesRequestedRef.current) return;
+    casesRequestedRef.current = true;
+    setCasesRequested(true);
+  }, []);
   const farRef = useRef(false);
   const introTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -164,7 +172,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     return { x: h.x + h.w + 220, y: h.y + h.h, visible: false, bubble: null };
   });
   const [selected, setSelected] = useState<string | null>(null);
-  const [spread, setSpread] = useState(false);
   // слайд презентации HR-кейса: листается в кейсе и стрелками, пока камера на «Кейсах»
   const [slide, setSlide] = useState(0);
   const [spaceHeld, setSpaceHeld] = useState(false);
@@ -177,7 +184,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   const [driving, setDriving] = useState(false);
   const drivingRef = useRef(driving);
   drivingRef.current = driving;
-  const [cityOn, setCityOn] = useState(false);
   // масштаб камеры за рулём: колесо и +/− меняют его, не выходя из машины
   const driveZRef = useRef(0.6);
   const [cityNotice, setCityNotice] = useState(false);
@@ -251,31 +257,59 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     [vpSize]
   );
 
+  const endFlight = useCallback(() => {
+    cancelAnimationFrame(animRef.current);
+    animRef.current = 0;
+    flightTarget.current = null;
+    viewportRef.current?.parentElement?.removeAttribute("data-flying");
+    setFlying(false);
+  }, []);
+
+  useEffect(() => endFlight, [endFlight]);
+
   const animateTo = useCallback(
-    (target: Cam, ms = 700) => {
-      // во время езды камерой управляет только машинка
+    (target: Cam, ms = 700, island?: string) => {
       if (drivingRef.current) return;
       cancelAnimationFrame(animRef.current);
+      animRef.current = 0;
+      flightTarget.current = island ?? null;
+      if (island) {
+        activeRef.current = island;
+        setActiveIsland(island);
+      }
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        endFlight();
+        camera.set(target);
+        return;
+      }
+      viewportRef.current?.parentElement?.setAttribute("data-flying", "");
+      setFlying(true);
       const { w, h } = vpSize();
       const from = camera.get();
       const fc = { x: (w / 2 - from.x) / from.z, y: (h / 2 - from.y) / from.z };
       const tc = { x: (w / 2 - target.x) / target.z, y: (h / 2 - target.y) / target.z };
       // Дуга «отъехать и приехать»: на середине длинного перелёта камера чуть отдаляется.
-      const dip = clamp(Math.hypot(tc.x - fc.x, tc.y - fc.y) / 4000, 0, 0.45);
+      const dip = clamp(Math.hypot(tc.x - fc.x, tc.y - fc.y) / 8000, 0, 0.16);
+      const logStart = Math.log(from.z);
+      const logRange = Math.log(target.z) - logStart;
       const t0 = performance.now();
       const step = (now: number) => {
         const p = Math.min(1, (now - t0) / ms);
+        if (p === 1) {
+          endFlight();
+          camera.set(target);
+          return;
+        }
         const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-        const lz = Math.log(from.z) + (Math.log(target.z) - Math.log(from.z)) * e;
-        const z = Math.exp(lz) * (1 - dip * Math.sin(Math.PI * p));
+        const z = Math.max(MIN_Z, Math.exp(logStart + logRange * e) * (1 - dip * Math.sin(Math.PI * p)));
         const cx = fc.x + (tc.x - fc.x) * e;
         const cy = fc.y + (tc.y - fc.y) * e;
         camera.set({ z, x: w / 2 - cx * z, y: h / 2 - cy * z });
-        if (p < 1) animRef.current = requestAnimationFrame(step);
+        animRef.current = requestAnimationFrame(step);
       };
       animRef.current = requestAnimationFrame(step);
     },
-    [camera, vpSize]
+    [camera, endFlight, vpSize]
   );
 
   const zoomAt = useCallback(
@@ -304,8 +338,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   );
 
   const flyTo = useCallback(
-    // перелёт по меню небыстрый: блоки по пути успевают подгрузиться и отрисоваться
-    (r: Rect, p = 80, maxZ = 1) => animateTo(clampCam(fit(r, p, maxZ)), 1600),
+    (r: Rect, island?: string) => animateTo(clampCam(fit(r, 50)), 1000, island),
     [animateTo, clampCam, fit]
   );
   const showAll = useCallback(() => animateTo(fit(WORLD, 30), 1400), [animateTo, fit]);
@@ -368,55 +401,68 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   useEffect(() => {
     // Пишем в DOM только то, что реально поменялось: при панорамировании меняется лишь сдвиг,
     // а переустановка --z и фона заставляла браузер пересчитывать стили сотен элементов каждый кадр.
-    let lastZ = -1;
     let lastZq = -1;
-    let lastIsland = "";
+    let lastMapZ = -1;
+    let lastMapW = -1;
+    let lastMapH = -1;
+    const cases = islandById("cases");
     const apply = () => {
       const { x, y, z } = camera.get();
       const w = worldRef.current;
       const v = viewportRef.current;
       if (!w || !v) return;
-      w.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${z})`;
-      v.style.backgroundPosition = `${x}px ${y}px`;
-
-      // За рулём масштаб плавно меняется почти каждый кадр, а от --z зависят стили сотен подписей и рамок:
-      // пока едем, обновляем его шагами по 4% — глазу не видно, а пересчёта стилей в разы меньше.
-      const zq = drivingRef.current ? Math.round(z * 25) / 25 : z;
+      const transform = `translate3d(${x}px, ${y}px, 0) scale(${z})`;
+      w.style.transform = transform;
+      // Масштаб подписей и рамок не нужен на каждом кадре перелёта.
+      const zq = animRef.current || drivingRef.current ? Math.max(MIN_Z, Math.round(z * 25) / 25) : z;
       if (zq !== lastZq) {
         lastZq = zq;
         w.style.setProperty("--z", String(zq));
       }
-      if (z !== lastZ) {
-        lastZ = z;
-        v.style.backgroundColor = BASE_BG;
-        v.style.backgroundImage = z < 0.35 ? "none" : "radial-gradient(rgba(0,0,0,.13) 1.1px, transparent 1.4px)";
-        v.style.backgroundSize = `${28 * z}px ${28 * z}px`;
-
-        if (!farRef.current && z < 0.26) {
+      if (!animRef.current) {
+        if (!farRef.current && z < 0.18) {
           farRef.current = true;
-          w.classList.add("is-far");
+          v.classList.add("is-far");
           if (introDoneRef.current) earnRef.current("map");
-        } else if (farRef.current && z > 0.3) {
+        } else if (farRef.current && z > 0.21) {
           farRef.current = false;
-          w.classList.remove("is-far");
+          v.classList.remove("is-far");
         }
       }
+
+      const overview = overviewRef.current;
+      if (overview && farRef.current && !animRef.current) overview.style.transform = transform;
 
       const { w: vw, h: vh } = vpSize();
       const mv = miniViewRef.current;
       if (mv) {
         const s = MAP_W / WORLD.w;
         mv.style.transform = `translate(${(-x / z - WORLD.x) * s}px, ${(-y / z - WORLD.y) * s}px)`;
-        mv.style.width = `${(vw / z) * s}px`;
-        mv.style.height = `${(vh / z) * s}px`;
+        if (z !== lastMapZ || vw !== lastMapW || vh !== lastMapH) {
+          lastMapZ = z;
+          lastMapW = vw;
+          lastMapH = vh;
+          mv.style.width = `${(vw / z) * s}px`;
+          mv.style.height = `${(vh / z) * s}px`;
+        }
       }
 
-      const cx = (vw / 2 - x) / z;
-      const cy = (vh / 2 - y) / z;
+      if (flightTarget.current) return;
+      const left = -x / z;
+      const top = -y / z;
+      const width = vw / z;
+      const height = vh / z;
+      if (
+        !casesRequestedRef.current &&
+        cases.x <= left + width + 400 && cases.x + cases.w >= left - 400 &&
+        cases.y <= top + height + 400 && cases.y + cases.h >= top - 400
+      ) requestCases();
+      const cx = left + width / 2;
+      const cy = top + height / 2;
       const isl = ISLANDS.find((i) => cx >= i.x && cx <= i.x + i.w && cy >= i.y && cy <= i.y + i.h);
       if (isl) {
-        if (isl.id !== lastIsland) {
-          lastIsland = isl.id;
+        if (isl.id !== activeRef.current) {
+          activeRef.current = isl.id;
           setActiveIsland(isl.id);
         }
         if (isl.id === "proj" && z >= 0.95) earnRef.current("zoom");
@@ -424,18 +470,25 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     };
     apply();
     return camera.subscribe(apply);
-  }, [camera, vpSize]);
+  }, [camera, requestCases, vpSize]);
 
   /* ---------- интро: Арсений собирает приветствие на глазах ---------- */
 
-  const finishIntro = useCallback(() => {
+  const finishIntro = useCallback((returnToAbout = true) => {
     introTimers.current.forEach(clearTimeout);
     introTimers.current = [];
     setIntro(6);
     setTyped(NAME_CHARS);
     setAgent((a) => ({ ...a, visible: false, bubble: null }));
-    flyTo(islandById("about"), 50);
+    if (returnToAbout) flyTo(islandById("about"), "about");
   }, [flyTo]);
+
+  const goToIsland = (island: (typeof ISLANDS)[number]) => {
+    if (drivingRef.current) return;
+    if (!introDone) finishIntro(false);
+    if (island.id === "cases") requestCases();
+    flyTo(islandFocus(island), island.id);
+  };
 
   useEffect(() => {
     if (calm) {
@@ -449,6 +502,22 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     const h = frameById("hero");
     camera.set(fit(pad(h, 120), 40));
     setReady(true);
+    const params = new URLSearchParams(window.location.search);
+    const initial = ISLANDS.find((island) => island.id === params.get("section"));
+    if (initial || !params.has("intro") || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIntro(6);
+      setTyped(NAME_CHARS);
+      setChatStep(CHAT.length);
+      if (initial) {
+        const caseId = params.get("case");
+        const frame = initial.id === "cases" && (caseId === "hr" || caseId === "tour")
+          ? frameById(`case-${caseId}`)
+          : null;
+        const focus = frame ? { ...frame, h: 1200 } : islandFocus(initial);
+        camera.set(clampCam(fit(focus, 50)));
+      }
+      return;
+    }
     const to = (x: number, y: number, bubble: string | null = null) =>
       setAgent((a) => ({ ...a, x: h.x + x, y: h.y + y, bubble }));
     const steps: [number, () => void][] = [
@@ -474,7 +543,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
         setIntro(5);
         to(520, 500, "Привет! Дальше по пространству — мои работы. А внизу можно собрать достижения");
       }],
-      [9200, () => finishIntro()],
+      [9200, finishIntro],
     ];
     introTimers.current = steps.map(([t, fn]) => setTimeout(fn, t));
     return () => introTimers.current.forEach(clearTimeout);
@@ -488,13 +557,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     return () => clearInterval(id);
   }, [intro]);
 
-  // Город собирается заранее, пока он скрыт: иначе тысячи элементов создавались бы в момент старта и давали рывок.
-  useEffect(() => {
-    if (!introDone) return;
-    const t = setTimeout(() => setCityOn(true), 2500);
-    return () => clearTimeout(t);
-  }, [introDone]);
-
   // Переписка в «Обо мне» оживает после интро: вопросы приходят быстро, ответы — после «печатает…».
   useEffect(() => {
     if (!introDone || chatStep >= CHAT.length) return;
@@ -504,10 +566,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
 
   /* ---------- интерактив работ ---------- */
 
-  const toggleSpread = useCallback(() => {
-    setSpread((s) => !s);
-    earnRef.current("pile");
-  }, []);
+  const onSpin = useCallback(() => earnRef.current("pile"), []);
   const onSticker = useCallback(() => earnRef.current("sticker"), []);
   const onPhone = useCallback(() => earnRef.current("orbit"), []);
 
@@ -538,8 +597,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     keysRef.current.clear();
     setSelected(null);
     // камерой во время езды управляет только цикл машинки — отдельный перелёт с ним спорил бы
-    cancelAnimationFrame(animRef.current);
-    setCityOn(true);
+    endFlight();
     setCityNotice(true);
     // на узком экране отдаляемся сильнее, чтобы впереди было видно дорогу
     driveZRef.current = vpSize().w < 760 ? DRIVE_Z * 0.75 : DRIVE_Z;
@@ -547,7 +605,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     clearTimeout(noticeTimer.current);
     noticeTimer.current = setTimeout(() => setCityNotice(false), 4200);
     setDriving(true);
-  }, [stopDrive, vpSize]);
+  }, [endFlight, stopDrive, vpSize]);
 
   /* ---------- блоки, разбитые машинкой ---------- */
 
@@ -976,9 +1034,9 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
       const k = e.deltaMode === 1 ? 16 : 1;
       // за рулём колесо ничего не делает: камера привязана к машинке, масштаб зафиксирован
       if (drivingRef.current) return;
-      cancelAnimationFrame(animRef.current);
-      const r = v.getBoundingClientRect();
+      endFlight();
       if (e.ctrlKey || e.metaKey) {
+        const r = v.getBoundingClientRect();
         const d = clamp(e.deltaY * k, -60, 60);
         zoomAt(camera.get().z * Math.exp(-d * 0.012), e.clientX - r.left, e.clientY - r.top);
         return;
@@ -994,7 +1052,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     };
     v.addEventListener("wheel", onWheel, { passive: false });
     return () => v.removeEventListener("wheel", onWheel);
-  }, [camera, clampCam, zoomAt]);
+  }, [camera, clampCam, endFlight, zoomAt]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -1069,7 +1127,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    cancelAnimationFrame(animRef.current);
+    endFlight();
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
@@ -1169,14 +1227,13 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
         onAuxClick={(e) => e.preventDefault()}
       >
         <div ref={worldRef} className={`st-world${ready ? " is-shown" : ""}`}>
-          {cityOn && <CityLayer ref={cityFxRef} />}
+          {driving && <CityLayer ref={cityFxRef} />}
           <World
             introStep={intro}
             typed={typed}
             chatStep={chatStep}
             selected={selected}
-            spread={spread}
-            onToggleSpread={toggleSpread}
+            onSpin={onSpin}
             onSticker={onSticker}
             onPhone={onPhone}
             slide={slide}
@@ -1186,6 +1243,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
             onPickCar={setCarId}
             onDrive={startDrive}
             presView={activeIsland === "cases" && !driving}
+            casesRequested={casesRequested}
             calm={calm}
           />
 
@@ -1272,233 +1330,245 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
             {agent.bubble && <div className="st-agent__bubble">{agent.bubble}</div>}
           </div>
         </div>
+        <div ref={overviewRef} className="st-overview" aria-hidden="true">
+          {ISLANDS.map((island) => (
+            <div
+              key={island.id}
+              className={`st-island__title${island.dark ? " is-dark" : ""}`}
+              style={{
+                left: island.x,
+                top: island.y,
+                width: island.w,
+                height: island.h,
+                fontSize: Math.min(380, (island.w * 0.86) / (island.name.length * 0.8)),
+                "--c": island.color,
+              } as React.CSSProperties}
+            >
+              <span>{island.name}</span>
+            </div>
+          ))}
+        </div>
       </main>
 
-      {/* ---------- шапка ---------- */}
-      <div className="st-brand">
-        <span className="st-brand__logo">АК</span>
-        <span>
-          <b>Арсений Кононов</b> дизайнер
-        </span>
-      </div>
-
-      <nav className="st-chips" aria-label="Разделы">
-        {ISLANDS.map((i) => (
-          <button
-            key={i.id}
-            type="button"
-            className={`${activeIsland === i.id ? "is-active" : ""}${i.dark ? " is-dark" : ""}`}
-            style={{ "--c": i.color } as React.CSSProperties}
-            onClick={() => {
-              flyTo(islandFocus(i), 50);
-            }}
-          >
-            {i.name}
-          </button>
-        ))}
-      </nav>
-
-      {onFeed && (
-        // на телефоне холст открыт по желанию — отсюда можно вернуться в ленту
-        <button type="button" className="st-feed" onClick={onFeed}>
-          ← Лента
-        </button>
-      )}
-
-      <a className="st-contact" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
-        <i />
-        Написать
-      </a>
-
-      {/* ---------- карта ---------- */}
-      <div className="st-map">
-        <div className="st-map__head">
-          <span>Карта</span>
-          <ZoomLabel camera={camera} />
+      <div className="st-interface">
+        {/* ---------- шапка ---------- */}
+        <div className="st-brand">
+          <span className="st-brand__logo">АК</span>
+          <span>
+            <b>Арсений Кононов</b> дизайнер
+          </span>
         </div>
-        <div className="st-map__area" style={{ height: WORLD.h * mapS }} onClick={onMapClick}>
+
+        <nav className="st-chips" aria-label="Разделы">
           {ISLANDS.map((i) => (
             <button
               key={i.id}
               type="button"
-              className={`st-map__isl${activeIsland === i.id ? " is-active" : ""}${i.dark ? " is-dark" : ""}`}
-              style={
-                {
-                  left: (i.x - WORLD.x) * mapS,
-                  top: (i.y - WORLD.y) * mapS,
-                  width: i.w * mapS,
-                  height: i.h * mapS,
-                  "--c": i.color,
-                } as React.CSSProperties
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                flyTo(islandFocus(i), 50);
-              }}
+              className={`${activeIsland === i.id ? "is-active" : ""}${i.dark ? " is-dark" : ""}`}
+              style={{ "--c": i.color } as React.CSSProperties}
+              onPointerEnter={i.id === "cases" ? requestCases : undefined}
+              onClick={() => goToIsland(i)}
             >
               {i.name}
             </button>
           ))}
-          <div ref={miniViewRef} className="st-map__view" />
-          {driving && <i ref={mapCarRef} className="st-map__car" style={{ "--c": CARS[carId].color } as React.CSSProperties} />}
-        </div>
-        <div className="st-map__ctrl">
-          <button type="button" onClick={() => zoomCenter(camera.get().z / 1.3)} aria-label="Уменьшить">
-            −
-          </button>
-          <button type="button" onClick={() => zoomCenter(camera.get().z * 1.3)} aria-label="Увеличить">
-            +
-          </button>
-          <button type="button" className="is-wide" onClick={showAll}>
-            Показать всё
-          </button>
-        </div>
-      </div>
+        </nav>
 
-      {/* ---------- достижения ---------- */}
-      {ach && !celebrate && (
-        <div className="st-pop" style={{ "--c": ach.color } as React.CSSProperties}>
-          <div className="st-pop__head">
-            <span className={`st-pop__icon${earned.includes(ach.id) ? "" : " is-locked"}`}>
-              <Glyph id={ach.id} size={20} />
-            </span>
+        <a className="st-contact" href={LINKS.telegram} target="_blank" rel="noopener noreferrer">
+          <i />
+          Написать
+        </a>
+
+        {/* ---------- карта ---------- */}
+        <div className="st-map">
+          <div className="st-map__head">
+            <span>Карта</span>
+            <ZoomLabel camera={camera} />
+          </div>
+          <div className="st-map__area" style={{ height: WORLD.h * mapS }} onClick={onMapClick}>
+            {ISLANDS.map((i) => (
+              <button
+                key={i.id}
+                type="button"
+                className={`st-map__isl${activeIsland === i.id ? " is-active" : ""}${i.dark ? " is-dark" : ""}`}
+                style={
+                  {
+                    left: (i.x - WORLD.x) * mapS,
+                    top: (i.y - WORLD.y) * mapS,
+                    width: i.w * mapS,
+                    height: i.h * mapS,
+                    "--c": i.color,
+                  } as React.CSSProperties
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToIsland(i);
+                }}
+              >
+                {i.name}
+              </button>
+            ))}
+            <div ref={miniViewRef} className="st-map__view" />
+            {driving && <i ref={mapCarRef} className="st-map__car" style={{ "--c": CARS[carId].color } as React.CSSProperties} />}
+          </div>
+          <div className="st-map__ctrl">
+            <button type="button" onClick={() => zoomCenter(camera.get().z / 1.3)} aria-label="Уменьшить">
+              −
+            </button>
+            <button type="button" onClick={() => zoomCenter(camera.get().z * 1.3)} aria-label="Увеличить">
+              +
+            </button>
+            <button type="button" className="is-wide" onClick={showAll}>
+              Показать всё
+            </button>
+          </div>
+        </div>
+
+        {/* ---------- достижения ---------- */}
+        {ach && !celebrate && (
+          <div className="st-pop" style={{ "--c": ach.color } as React.CSSProperties}>
+            <div className="st-pop__head">
+              <span className={`st-pop__icon${earned.includes(ach.id) ? "" : " is-locked"}`}>
+                <Glyph id={ach.id} size={20} />
+              </span>
+              <div>
+                <small>достижение · {earned.length} из {ACHIEVEMENTS.length}</small>
+                <b>{ach.name}</b>
+              </div>
+              <button type="button" className="st-pop__close" onClick={() => setOpenAch(null)} aria-label="Закрыть">
+                ✕
+              </button>
+            </div>
+            <p>{earned.includes(ach.id) ? "Получено! Осталось найти остальные." : ach.hint}</p>
+            {!earned.includes(ach.id) && (
+              <div className="st-pop__row">
+                <button
+                  type="button"
+                  className="st-btn st-btn--small"
+                  onClick={() => {
+                    goToIsland(islandById(ach.island));
+                    setOpenAch(null);
+                  }}
+                >
+                  Показать где
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {celebrate && (
+          <>
+            <Confetti />
+            <div className="st-win-backdrop" onClick={() => setCelebrate(false)} />
+            <div className="st-pop st-pop--win" role="dialog" aria-modal="true">
+              <SpinFigure className="st-win-figure" />
+              <small className="st-win__kicker">
+                {ACHIEVEMENTS.length} из {ACHIEVEMENTS.length} достижений
+              </small>
+              <b>Ты открыл все достижения!</b>
+              <p>
+                Раз ты задержался здесь так надолго — похоже, тебе нравятся мои работы. За это у меня есть
+                подарок: секретное слово. Напиши его мне в Telegram — и получишь скидку {SECRET_DISCOUNT} на
+                проект.
+              </p>
+              <div className="st-win__word">{SECRET_WORD}</div>
+              <div className="st-pop__row">
+                <button
+                  type="button"
+                  className="st-btn st-btn--small"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(SECRET_WORD).catch(() => {});
+                    window.open(LINKS.telegram, "_blank", "noopener,noreferrer");
+                    showToast({ text: "Слово скопировано — вставь его в чат" });
+                  }}
+                >
+                  Скопировать и написать
+                </button>
+                <button type="button" className="st-btn st-btn--ghost" onClick={() => setCelebrate(false)}>
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="st-dock" role="toolbar" aria-label="Достижения">
+          <span className="st-dock__caption">
+            Достижения
+            <b>
+              {earned.length}/{ACHIEVEMENTS.length}
+            </b>
+          </span>
+          {ACHIEVEMENTS.map((a) => {
+            const got = earned.includes(a.id);
+            return (
+              <button
+                key={a.id}
+                type="button"
+                className={`st-badge${got ? " is-earned" : ""}${openAch === a.id ? " is-open" : ""}`}
+                style={{ "--c": a.color } as React.CSSProperties}
+                onClick={() => setOpenAch((o) => (o === a.id ? null : a.id))}
+                title={a.name}
+              >
+                <Glyph id={a.id} size={20} />
+                {got && <i>✓</i>}
+              </button>
+            );
+          })}
+        </div>
+
+        {!introDone && (
+          <button type="button" className="st-skip" onClick={() => finishIntro()}>
+            Пропустить интро
+          </button>
+        )}
+
+        {driving && (
+          <div className="st-hud" style={{ "--c": CARS[carId].color } as React.CSSProperties}>
+            <span className="st-hud__car">{CARS[carId].name}</span>
+            <b>
+              <span ref={speedRef}>0</span> км/ч
+            </b>
+            <span ref={surfRef} className="st-hud__surf" />
+            <span className="st-hud__keys">W/S — газ · A/D — поворот · Esc — выйти</span>
+            <button type="button" onClick={stopDrive}>
+              Выйти из машины
+            </button>
+          </div>
+        )}
+
+        {driving && touch && <Joystick stick={stickRef} />}
+
+        {cityNotice && (
+          <div className="st-notice" role="status">
+            <span className="st-notice__sign">!</span>
             <div>
-              <small>достижение · {earned.length} из {ACHIEVEMENTS.length}</small>
-              <b>{ach.name}</b>
-            </div>
-            <button type="button" className="st-pop__close" onClick={() => setOpenAch(null)} aria-label="Закрыть">
-              ✕
-            </button>
-          </div>
-          <p>{earned.includes(ach.id) ? "Получено! Осталось найти остальные." : ach.hint}</p>
-          {!earned.includes(ach.id) && (
-            <div className="st-pop__row">
-              <button
-                type="button"
-                className="st-btn st-btn--small"
-                onClick={() => {
-                  flyTo(islandFocus(islandById(ach.island)), 50);
-                  setOpenAch(null);
-                }}
-              >
-                Показать где
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {celebrate && (
-        <>
-          <Confetti />
-          <div className="st-win-backdrop" onClick={() => setCelebrate(false)} />
-          <div className="st-pop st-pop--win" role="dialog" aria-modal="true">
-            <SpinFigure className="st-win-figure" />
-            <small className="st-win__kicker">
-              {ACHIEVEMENTS.length} из {ACHIEVEMENTS.length} достижений
-            </small>
-            <b>Ты открыл все достижения!</b>
-            <p>
-              Раз ты задержался здесь так надолго — похоже, тебе нравятся мои работы. За это у меня есть
-              подарок: секретное слово. Напиши его мне в Telegram — и получишь скидку {SECRET_DISCOUNT} на
-              проект.
-            </p>
-            <div className="st-win__word">{SECRET_WORD}</div>
-            <div className="st-pop__row">
-              <button
-                type="button"
-                className="st-btn st-btn--small"
-                onClick={() => {
-                  navigator.clipboard?.writeText(SECRET_WORD).catch(() => {});
-                  window.open(LINKS.telegram, "_blank", "noopener,noreferrer");
-                  showToast({ text: "Слово скопировано — вставь его в чат" });
-                }}
-              >
-                Скопировать и написать
-              </button>
-              <button type="button" className="st-btn st-btn--ghost" onClick={() => setCelebrate(false)}>
-                Закрыть
-              </button>
+              <b>Внимание: вокруг блоков вырос город</b>
+              <small>Катайся по улицам. На траве и грунте машинка вязнет, в прудах — буксует</small>
             </div>
           </div>
-        </>
-      )}
+        )}
 
-      <div className="st-dock" role="toolbar" aria-label="Достижения">
-        <span className="st-dock__caption">
-          Достижения
-          <b>
-            {earned.length}/{ACHIEVEMENTS.length}
-          </b>
-        </span>
-        {ACHIEVEMENTS.map((a) => {
-          const got = earned.includes(a.id);
-          return (
-            <button
-              key={a.id}
-              type="button"
-              className={`st-badge${got ? " is-earned" : ""}${openAch === a.id ? " is-open" : ""}`}
-              style={{ "--c": a.color } as React.CSSProperties}
-              onClick={() => setOpenAch((o) => (o === a.id ? null : a.id))}
-              title={a.name}
-            >
-              <Glyph id={a.id} size={20} />
-              {got && <i>✓</i>}
-            </button>
-          );
-        })}
-      </div>
-
-      {!introDone && (
-        <button type="button" className="st-skip" onClick={finishIntro}>
-          Пропустить интро
-        </button>
-      )}
-
-      {driving && (
-        <div className="st-hud" style={{ "--c": CARS[carId].color } as React.CSSProperties}>
-          <span className="st-hud__car">{CARS[carId].name}</span>
-          <b>
-            <span ref={speedRef}>0</span> км/ч
-          </b>
-          <span ref={surfRef} className="st-hud__surf" />
-          <span className="st-hud__keys">W/S — газ · A/D — поворот · Esc — выйти</span>
-          <button type="button" onClick={stopDrive}>
-            Выйти из машины
-          </button>
-        </div>
-      )}
-
-      {driving && touch && <Joystick stick={stickRef} />}
-
-      {cityNotice && (
-        <div className="st-notice" role="status">
-          <span className="st-notice__sign">!</span>
-          <div>
-            <b>Внимание: вокруг блоков вырос город</b>
-            <small>Катайся по улицам. На траве и грунте машинка вязнет, в прудах — буксует</small>
+        {toast && (
+          <div className="st-toast" style={toast.id ? ({ "--c": ACHIEVEMENTS.find((a) => a.id === toast.id)!.color } as React.CSSProperties) : undefined}>
+            {toast.id && (
+              <span className="st-toast__icon">
+                <Glyph id={toast.id} size={16} />
+              </span>
+            )}
+            {toast.text}
           </div>
-        </div>
-      )}
+        )}
 
-      {toast && (
-        <div className="st-toast" style={toast.id ? ({ "--c": ACHIEVEMENTS.find((a) => a.id === toast.id)!.color } as React.CSSProperties) : undefined}>
-          {toast.id && (
-            <span className="st-toast__icon">
-              <Glyph id={toast.id} size={16} />
-            </span>
-          )}
-          {toast.text}
+        <div ref={cursorRef} className={`st-cursor${spaceHeld ? " is-hidden" : ""}`} aria-hidden>
+          <svg width="22" height="24" viewBox="0 0 22 24">
+            <path d="M3 2.5l15 7.2-6.4 1.9-2.6 6.4L3 2.5z" fill="#111" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" />
+          </svg>
+          <span ref={cursorLabelRef} className="st-cursor__label">
+            Ты
+          </span>
         </div>
-      )}
-
-      <div ref={cursorRef} className={`st-cursor${spaceHeld ? " is-hidden" : ""}`} aria-hidden>
-        <svg width="22" height="24" viewBox="0 0 22 24">
-          <path d="M3 2.5l15 7.2-6.4 1.9-2.6 6.4L3 2.5z" fill="#111" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" />
-        </svg>
-        <span ref={cursorLabelRef} className="st-cursor__label">
-          Ты
-        </span>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ const openSans = Open_Sans({
   subsets: ["latin", "cyrillic"],
   weight: ["400", "700"],
   variable: "--font-open-sans-var",
+  preload: false,
 });
 
 export const metadata: Metadata = {

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { frameById, narrowWallpapers, wideWallpapers } from "./data";
 import { Frame } from "./Frame";
-import { isDriving, onDriveChange } from "./drive";
+import { isStudioBusy, onStudioActivity } from "./drive";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -117,7 +117,7 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
     let seen = false;
     const sync = () => {
       // за рулём поле стоит
-      const on = seen && !isDriving();
+      const on = seen && !isStudioBusy();
       if (on && !visible) {
         visible = true;
         last = performance.now();
@@ -132,7 +132,7 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
       sync();
     });
     io.observe(el);
-    const offDrive = onDriveChange(sync);
+    const offDrive = onStudioActivity(sync);
     return () => {
       io.disconnect();
       offDrive();

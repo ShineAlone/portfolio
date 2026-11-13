@@ -1,5 +1,7 @@
 "use client";
 
+import "@/app/v2/tour.css";
+
 import { earnAch } from "./earn";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LINKS } from "@/lib/content";
@@ -126,7 +128,7 @@ function Device({
 }
 
 // Статичный экран; длинный может сам медленно листаться
-function Phone({ screen, scroll, bezel, className }: { screen: string; scroll?: boolean; bezel?: keyof typeof BEZEL; className?: string }) {
+function Phone({ screen, scroll, bezel, className, cover = false }: { screen: string; scroll?: boolean; bezel?: keyof typeof BEZEL; className?: string; cover?: boolean }) {
   const s = PHONE_SCREENS[screen];
   const k = s.h / (s.photo ? 896 : 841);
   return (
@@ -135,7 +137,7 @@ function Phone({ screen, scroll, bezel, className }: { screen: string; scroll?: 
         <img
           className={scroll && k > 1.05 ? "is-autoscroll" : ""}
           style={{ "--k": k } as React.CSSProperties}
-          src={tourImg(screen)}
+          src={tourImg(cover ? `${screen}-cover` : screen)}
           alt={s.title}
           loading="lazy"
           draggable={false}
@@ -317,8 +319,8 @@ function Hero() {
       </div>
 
       <div className="tb-hero__phones">
-        <Phone screen="route" className="tb-hero__back" />
-        <Phone screen="home" bezel="blue" className="tb-hero__front" />
+        <Phone screen="route" className="tb-hero__back" cover />
+        <Phone screen="home" bezel="blue" className="tb-hero__front" cover />
       </div>
 
       <div className="tb-hero__foot">

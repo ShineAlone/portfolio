@@ -1,32 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MobileApp } from "./MobileApp";
-import { MobileGate } from "./MobileGate";
-import { StudioApp } from "./StudioApp";
+import dynamic from "next/dynamic";
+import { useEffect, useState, type ReactNode } from "react";
+const MobileGate = dynamic(() => import("./MobileGate").then((module) => module.MobileGate));
 
-/*
- * Точка входа: на узком экране — заглушка с просьбой открыть сайт с компьютера (без перехода в ленту),
- * на остальных — холст. ?feed принудительно открывает ленту, ?canvas — холст, ?gate — заглушку.
- * Режим выбирается после монтирования: на сервере ширина экрана неизвестна.
- */
-export function StudioEntry() {
-  const [mode, setMode] = useState<"gate" | "feed" | "canvas" | null>(null);
-  const [phone, setPhone] = useState(false);
+const StudioApp = dynamic(() => import("./StudioApp").then((module) => module.StudioApp), {
+  loading: () => <p className="m-opening" role="status">Открываем холст…</p>,
+});
+
+type Mode = "auto" | "gate" | "feed" | "canvas";
+
+export function StudioEntry({ feed }: { feed: ReactNode }) {
+  const [mode, setMode] = useState<Mode>("auto");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const narrow = window.matchMedia("(max-width: 760px)").matches;
-    setPhone(narrow || params.has("feed"));
-    setMode(params.has("canvas") ? "canvas" : params.has("feed") ? "feed" : narrow || params.has("gate") ? "gate" : "canvas");
+    if (params.has("canvas")) setMode("canvas");
+    else if (params.has("feed")) setMode("feed");
+    else if (params.has("gate")) setMode("gate");
+    else setMode(window.matchMedia("(max-width: 760px)").matches ? "feed" : "canvas");
   }, []);
 
-  useEffect(() => {
-    if (mode) window.scrollTo(0, 0);
-  }, [mode]);
-
-  if (!mode) return null;
   if (mode === "gate") return <MobileGate />;
-  if (mode === "feed") return <MobileApp onCanvas={() => setMode("canvas")} />;
-  return <StudioApp onFeed={phone ? () => setMode("feed") : undefined} />;
+  if (mode === "canvas") return <StudioApp />;
+  return <div className={mode === "auto" ? "m-feed-auto" : undefined}>{feed}</div>;
 }
