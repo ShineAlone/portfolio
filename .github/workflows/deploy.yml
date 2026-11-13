@@ -1,0 +1,45 @@
+# Выкладка на хостинг reg.ru: пуш в master → сборка в папку файлов → загрузка по SSH.
+# Нужен секрет репозитория DEPLOY_SSH_KEY — закрытый ключ, открытая часть которого лежит
+# на хостинге в ~/.ssh/authorized_keys.
+name: Deploy to reg.ru
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Upload to hosting
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: server66.hosting.reg.ru
+          USER: u3725973
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -t ed25519 "$HOST" >> ~/.ssh/known_hosts
+          # старые скрипты Next.js не удаляем: кто открыл сайт до выкладки, догрузит их без ошибок;
+          # .well-known — проверка домена для SSL-сертификата Let's Encrypt
+          rsync -az --delete \
+            --filter='P _next/static/' \
+            --filter='P .well-known/' \
+            -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes" \
+            out/ "$USER@$HOST:www/kononov-design.ru/"
