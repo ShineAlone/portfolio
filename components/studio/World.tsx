@@ -119,14 +119,17 @@ function Greeting({
         </div>
         {/* круглый значок с бегущим по кругу текстом */}
         <div className="sthg__badge" aria-hidden>
-          <svg viewBox="0 0 200 200">
-            <defs>
-              <path id="sthg-ring" d="M100 100m-74 0a74 74 0 1 1 148 0a74 74 0 1 1 -148 0" />
-            </defs>
-            <text>
-              <textPath href="#sthg-ring">открыт для сотрудничества • пиши в telegram •</textPath>
-            </text>
-          </svg>
+          {/* крутится обёртка, а не сам svg: вращение svg браузер пересчитывает на процессоре каждый кадр */}
+          <span className="sthg__ring">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <path id="sthg-ring" d="M100 100m-74 0a74 74 0 1 1 148 0a74 74 0 1 1 -148 0" />
+              </defs>
+              <text>
+                <textPath href="#sthg-ring">открыт для сотрудничества • пиши в telegram •</textPath>
+              </text>
+            </svg>
+          </span>
           <i>↗</i>
         </div>
         <span className="sthg__place">
@@ -492,6 +495,14 @@ const LAB_STEPS = [
 ];
 
 function LabIntro({ selected }: { selected: boolean }) {
+  // Шаги подсвечиваются по очереди. Раньше это была бесконечная CSS-анимация цвета: браузер
+  // перерисовывал карточку на каждом кадре, даже когда ничего не менялось. Теперь класс
+  // переключается раз в 2,5 с, а смену цвета делает короткий transition.
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setStep((s) => (s + 1) % LAB_STEPS.length), 2500);
+    return () => clearInterval(id);
+  }, []);
   return (
     <Frame meta={frameById("lab-intro")} selected={selected} className="stl">
       <span className="stl__kicker">не только дизайн</span>
@@ -499,7 +510,7 @@ function LabIntro({ selected }: { selected: boolean }) {
       <p>Довожу идеи до работающего продукта: Figma-плагины, сервисы и сайты.</p>
       <ol className="stl__steps">
         {LAB_STEPS.map(([name, text], i) => (
-          <li key={name} style={{ "--i": i } as React.CSSProperties}>
+          <li key={name} className={step === i ? "is-on" : undefined}>
             <em>0{i + 1}</em>
             <span>
               <b>{name}</b>

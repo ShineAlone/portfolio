@@ -417,12 +417,16 @@
   border-radius: 50%;
   border: 6px solid #e3ecf9;
   border-top-color: var(--t-blue);
+  will-change: transform;
   animation: tb-spin 0.8s linear infinite;
 }
 
 @keyframes tb-spin {
+  from {
+    transform: rotate(0deg);
+  }
   to {
-    rotate: 360deg;
+    transform: rotate(360deg);
   }
 }
 
@@ -867,14 +871,26 @@
 }
 
 .tb-route__how li.is-on em {
+  position: relative;
   background: #fff;
   color: var(--t-blue);
+}
+
+/* Пульс — отдельным кольцом через прозрачность: анимация box-shadow перерисовывала страницу каждый кадр */
+.tb-route__how li.is-on em::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.3);
+  opacity: 0;
+  will-change: opacity;
   animation: tb-step-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes tb-step-pulse {
   50% {
-    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.3);
+    opacity: 1;
   }
 }
 
@@ -1268,14 +1284,33 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
+}
+
+/* сама точка — поверх ореола */
+.tb-walker::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   background: var(--t-red);
-  box-shadow: 0 0 0 4px #fff, 0 0 0 11px rgba(238, 93, 92, 0.25);
+  box-shadow: 0 0 0 4px #fff;
+}
+
+/* ореол «дышит» через transform и прозрачность — это считает видеокарта, без перерисовки карты */
+.tb-walker::before {
+  content: "";
+  position: absolute;
+  inset: -11px;
+  border-radius: 50%;
+  background: rgba(238, 93, 92, 0.25);
+  will-change: transform, opacity;
   animation: tb-walker 1.2s ease-in-out infinite;
 }
 
 @keyframes tb-walker {
   50% {
-    box-shadow: 0 0 0 4px #fff, 0 0 0 18px rgba(238, 93, 92, 0.1);
+    transform: scale(1.62);
+    opacity: 0.4;
   }
 }
 

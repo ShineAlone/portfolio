@@ -5,6 +5,7 @@ import "@/app/v2/studio.css";
 import { EARN_EVENT } from "./earn";
 import { setDriving as setDrivingFlag, setFlying } from "./drive";
 import { useTypograph } from "./typograph";
+import { setCullTarget, useCulling } from "./culling";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { LINKS } from "@/lib/content";
 import { MAX_Z, MIN_Z, clamp, createCameraStore, type Cam, type CameraStore } from "./camera";
@@ -241,6 +242,18 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
     ro.observe(v);
     return () => ro.disconnect();
   }, []);
+  // всё, что далеко за кадром, браузер не обрабатывает (см. culling.ts)
+  useCulling(worldRef, camera, vpSize);
+
+  // Зелёные точки «на связи» мигают переключением класса, а не бесконечной CSS-анимацией:
+  // та заставляла браузер работать на каждом кадре, даже когда на экране ничего не менялось.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      for (const el of document.querySelectorAll(".sth__status i, .st-contact i, .stx__status i")) el.classList.toggle("is-dim");
+    }, 800);
+    return () => clearInterval(id);
+  }, []);
 
   const clampCam = useCallback(
     (c: Cam): Cam => {
@@ -269,6 +282,7 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
     cancelAnimationFrame(animRef.current);
     animRef.current = 0;
     flightTarget.current = null;
+    setCullTarget(null);
     viewportRef.current?.parentElement?.removeAttribute("data-flying");
     setFlying(false);
   }, []);
@@ -293,6 +307,8 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
       viewportRef.current?.parentElement?.setAttribute("data-flying", "");
       setFlying(true);
       const { w, h } = vpSize();
+      // место назначения начинает рисоваться сразу, пока камера ещё в пути
+      setCullTarget({ x: -target.x / target.z, y: -target.y / target.z, w: w / target.z, h: h / target.z });
       const from = camera.get();
       const fc = { x: (w / 2 - from.x) / from.z, y: (h / 2 - from.y) / from.z };
       const tc = { x: (w / 2 - target.x) / target.z, y: (h / 2 - target.y) / target.z };

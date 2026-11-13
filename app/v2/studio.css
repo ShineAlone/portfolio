@@ -93,6 +93,11 @@
 
 /* ---------- острова ---------- */
 
+/* блок далеко за кадром: браузер не считает для него стили, раскладку и слои (см. culling.ts) */
+.st-world .is-culled {
+  content-visibility: hidden;
+}
+
 .st-island {
   position: absolute;
   border-radius: 72px;
@@ -608,13 +613,16 @@
   height: 10px;
   border-radius: 50%;
   background: #1fbf4b;
-  animation: st-blink 1.6s ease-in-out infinite;
+  /*
+   * Мигание — классом .is-dim, который раз в 0,8 с переключает StudioApp. Бесконечная CSS-анимация
+   * заставляла браузер перерисовывать страницу на каждом кадре: на слабых ноутбуках это съедало
+   * больше половины процессора даже в покое.
+   */
+  transition: opacity 0.3s ease-in-out;
 }
 
-@keyframes st-blink {
-  50% {
-    opacity: 0.25;
-  }
+:is(.sth__status, .st-contact, .stx__status) i.is-dim {
+  opacity: 0.25;
 }
 
 /* ---------- приветствие-коллаж ---------- */
@@ -716,15 +724,25 @@
   box-shadow: 5px 5px 0 #111;
 }
 
-.sthg__badge svg {
+/* вращается HTML-обёртка через transform — это делает видеокарта, без перерисовки на процессоре */
+.sthg__ring {
   position: absolute;
   inset: 0;
+  will-change: transform;
   animation: sthg-spin 16s linear infinite;
 }
 
+.sthg__ring svg {
+  position: absolute;
+  inset: 0;
+}
+
 @keyframes sthg-spin {
+  from {
+    transform: rotate(0deg);
+  }
   to {
-    rotate: 360deg;
+    transform: rotate(360deg);
   }
 }
 
@@ -2740,7 +2758,7 @@
   height: 10px;
   border-radius: 50%;
   background: #1fbf4b;
-  animation: st-blink 1.6s ease-in-out infinite;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .stx__title {
@@ -3667,22 +3685,14 @@
   padding: 0 22px;
   border-radius: 22px;
   border: 2px solid rgba(255, 255, 255, 0.28);
-  animation: stl-step 7.5s calc(var(--i) * 2.5s) infinite;
+  transition: background 0.45s, border-color 0.45s, color 0.45s;
 }
 
-@keyframes stl-step {
-  0%,
-  30% {
-    background: #86ddff;
-    border-color: #86ddff;
-    color: #111;
-  }
-  36%,
-  100% {
-    background: transparent;
-    border-color: rgba(255, 255, 255, 0.28);
-    color: #fff;
-  }
+/* активный шаг: класс переключает LabIntro раз в 2,5 с */
+.stl__steps li.is-on {
+  background: #86ddff;
+  border-color: #86ddff;
+  color: #111;
 }
 
 .stl__steps em {
