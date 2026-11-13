@@ -3495,8 +3495,7 @@
   transform: translateY(-1px);
 }
 
-.st-nudge__close,
-.st-hello__close {
+.st-nudge__close {
   width: 26px;
   height: 26px;
   flex-shrink: 0;
@@ -3539,7 +3538,7 @@
   gap: 8px;
   /* верх карточки уходит под шапку */
   margin-top: -22px;
-  padding: 30px 6px 8px 12px;
+  padding: 30px 8px 9px 14px;
   border-radius: 0 0 22px 22px;
   background: #fefe78;
   box-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.4);
@@ -3564,15 +3563,16 @@
 .st-hello__text b {
   overflow: hidden;
   /* основной шрифт уже Unbounded — заголовок помещается в ширину шапки */
-  font-size: 14.5px;
+  font-size: 16.5px;
   font-weight: 700;
+  line-height: 1.2;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .st-hello__text small {
   overflow: hidden;
-  font-size: 11.5px;
+  font-size: 13px;
   color: #555;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -3580,27 +3580,18 @@
 
 .st-hello__btn {
   flex-shrink: 0;
-  padding: 7px 11px;
+  margin-left: auto;
+  padding: 8px 13px;
   border-radius: 16px;
   background: #111;
   color: #fff !important;
-  font-size: 12.5px;
+  font-size: 13.5px;
   white-space: nowrap;
   transition: transform 0.2s;
 }
 
 .st-hello__btn:hover {
   transform: translateY(-1px);
-}
-
-.st-hello__close {
-  width: 22px;
-  height: 22px;
-  margin-left: -4px;
-}
-
-.st-hello__close:hover {
-  background: rgba(0, 0, 0, 0.08) !important;
 }
 
 .st-nudge__count {
@@ -3664,6 +3655,9 @@
 }
 
 .st-win__kicker {
+  /* лежит поверх фигуры — прячет обрезанные ноги */
+  position: relative;
+  z-index: 1;
   display: inline-block;
   padding: 4px 12px;
   border-radius: 12px;
@@ -3696,7 +3690,8 @@
   display: block;
   width: 180px;
   height: 180px;
-  margin: -96px auto 4px;
+  /* фигура опущена: нижний край кадра (обрезанные ноги) уходит под зелёную плашку */
+  margin: -70px auto -16px;
   filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.3));
 }
 
@@ -4535,12 +4530,16 @@
 .is-driving .st-hud button,
 .is-driving .st-ruin__btn,
 .is-driving .st-joy,
-.is-driving .st-joy * {
+.is-driving .st-joy *,
+.is-driving .st-pop,
+.is-driving .st-pop *,
+.is-driving .st-win-backdrop {
   pointer-events: auto !important;
 }
 
 .is-driving .st-hud button,
-.is-driving .st-ruin__btn {
+.is-driving .st-ruin__btn,
+.is-driving .st-pop button {
   cursor: pointer !important;
 }
 

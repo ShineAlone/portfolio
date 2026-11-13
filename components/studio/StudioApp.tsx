@@ -667,6 +667,12 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
     setTimeout(() => animateTo(clampCam(camera.get()), 800), 0);
   }, [animateTo, camera, clampCam]);
 
+  // Последнее достижение получено за рулём: машинка паркуется, чтобы окно награды можно было
+  // закрыть и скопировать слово — за рулём курсор и клики по сайту отключены.
+  useEffect(() => {
+    if (celebrate && drivingRef.current) stopDrive();
+  }, [celebrate, stopDrive]);
+
   const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const startDrive = useCallback(() => {
     if (drivingRef.current) return stopDrive();
@@ -1525,9 +1531,6 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
               <a className="st-hello__btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer" onClick={() => setNudge(null)}>
                 Обсудить ↗
               </a>
-              <button type="button" className="st-hello__close" onClick={() => setNudge(null)} aria-label="Закрыть">
-                ✕
-              </button>
             </div>
           )}
         </div>
