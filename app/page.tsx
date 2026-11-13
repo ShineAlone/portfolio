@@ -1,7 +1,6 @@
 ﻿import { Montserrat, Unbounded } from "next/font/google";
 import { StudioEntry } from "@/components/studio/StudioEntry";
 import "./v2/mobile.css";
-import { PortfolioFeed } from "@/components/studio/PortfolioFeed";
 
 // Главная — холст-портфолио. Прежняя версия сайта осталась по адресу /old.
 
@@ -23,7 +22,7 @@ const montserrat = Montserrat({
 export default function HomePage() {
   return (
     <div className={`${unbounded.variable} ${montserrat.variable}`}>
-      <StudioEntry feed={<PortfolioFeed />} />
+      <StudioEntry />
     </div>
   );
 }

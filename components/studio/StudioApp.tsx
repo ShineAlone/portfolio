@@ -504,7 +504,8 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
     setReady(true);
     const params = new URLSearchParams(window.location.search);
     const initial = ISLANDS.find((island) => island.id === params.get("section"));
-    if (initial || !params.has("intro") || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // интро играет всегда, кроме прямой ссылки на раздел и системной настройки «меньше движения»
+    if (initial || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setIntro(6);
       setTyped(NAME_CHARS);
       setChatStep(CHAT.length);
