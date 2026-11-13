@@ -4750,6 +4750,20 @@
   will-change: transform;
 }
 
+/* спокойное вращение — на видеокарте; длительность и стартовый угол задаёт SocialSphere */
+.st-ball__sphere.is-auto {
+  animation: st-ball-spin 40s linear infinite;
+}
+
+@keyframes st-ball-spin {
+  from {
+    transform: rotateX(-12deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-12deg) rotateY(360deg);
+  }
+}
+
 .st-ball__tile {
   position: absolute;
   left: 0;

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { frameById, narrowWallpapers, wideWallpapers } from "./data";
 import { Frame } from "./Frame";
 import { isStudioBusy, onStudioActivity } from "./drive";
+import { isLowPower } from "./device";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -67,27 +68,38 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
     const mouse = { x: 0, y: 0, on: false, k: 0 };
     let raf = 0;
     let last = 0;
-    let visible = false;
+    // running — цикл крутится; он нужен, только пока курсор над полем или карточки ещё возвращаются на места
+    let running = false;
+    let seen = false;
+    const low = isLowPower();
+    let skip = false;
 
     const frame = (now: number) => {
+      // на слабых устройствах — через кадр, 30 раз в секунду
+      if (low && running && (skip = !skip)) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const dt = Math.min(0.05, (now - last) / 1000 || 0);
       last = now;
       // сила линзы плавно нарастает, когда курсор входит в блок, и спадает, когда уходит
       mouse.k += ((mouse.on ? 1 : 0) - mouse.k) * Math.min(1, dt * 5);
       const ease = Math.min(1, dt * 7);
       const t = now / 1000;
+      let moved = 0;
       for (let i = 0; i < CARDS.length; i++) {
         const c = CARDS[i];
         const p = cur[i];
-        // в покое карточки едва заметно покачиваются
-        const hx = c.hx * W + Math.sin(t * 0.35 + c.phase) * 10;
-        const hy = c.hy * H + Math.cos(t * 0.3 + c.phase) * 10;
+        // под курсором карточки покачиваются; без курсора стоят ровно — и поле не нагружает процессор
+        const hx = c.hx * W + Math.sin(t * 0.35 + c.phase) * 10 * mouse.k;
+        const hy = c.hy * H + Math.cos(t * 0.3 + c.phase) * 10 * mouse.k;
         const d = Math.hypot(mouse.x - hx, mouse.y - hy);
         let f = Math.max(0, 1 - d / REACH);
         f = f * f * (3 - 2 * f) * mouse.k;
         const tx = hx + (mouse.x - hx) * f * PULL;
         const ty = hy + (mouse.y - hy) * f * PULL;
         const ts = c.base + (c.top - c.base) * f;
+        moved = Math.max(moved, Math.abs(tx - p.x), Math.abs(ty - p.y), Math.abs(ts - p.s) * 300);
         p.x += (tx - p.x) * ease;
         p.y += (ty - p.y) * ease;
         p.s += (ts - p.s) * ease;
@@ -99,7 +111,24 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
           els[i].style.zIndex = String(z);
         }
       }
-      if (visible) raf = requestAnimationFrame(frame);
+      // курсор ушёл, линза погасла, карточки вернулись на места — цикл засыпает до следующего наведения
+      if (running && !mouse.on && mouse.k < 0.005 && moved < 0.05) stop();
+      else if (running) raf = requestAnimationFrame(frame);
+    };
+
+    const start = () => {
+      // пока блок не в кадре или камера летит / идёт езда — поле стоит
+      if (running || !seen || isStudioBusy()) return;
+      running = true;
+      // отдельный слой у каждой карточки — только пока поле живое; в покое карточки рисуются вместе с блоком
+      el.classList.add("is-live");
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      el.classList.remove("is-live");
     };
 
     // курсор — в координатах блока: холст масштабируется, поэтому пересчитываем через рамку
@@ -108,6 +137,7 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
       mouse.x = ((e.clientX - r.left) / r.width) * W;
       mouse.y = ((e.clientY - r.top) / r.height) * H;
       mouse.on = true;
+      start();
     };
     const leave = () => (mouse.on = false);
     el.addEventListener("pointermove", move);
@@ -117,20 +147,13 @@ export function WallField({ selected, onPick }: { selected: boolean; onPick: () 
     // (в полёте поле на паузе) они лежали стопкой в углу блока
     frame(performance.now());
 
-    // пока блок не в кадре — поле стоит
-    let seen = false;
     const sync = () => {
-      // за рулём поле стоит
-      const on = seen && !isStudioBusy();
-      // отдельный слой у каждой карточки — только пока поле живое; в полёте карточки рисуются вместе с блоком
-      stage.current?.classList.toggle("is-live", on);
-      if (on && !visible) {
-        visible = true;
-        last = performance.now();
-        raf = requestAnimationFrame(frame);
-      } else if (!on) {
-        visible = false;
-        cancelAnimationFrame(raf);
+      if (!seen || isStudioBusy()) {
+        // камера улетела — курсор над полем больше не считается
+        mouse.on = false;
+        stop();
+      } else if (mouse.on || mouse.k > 0.005) {
+        start();
       }
     };
     const io = new IntersectionObserver(([e]) => {

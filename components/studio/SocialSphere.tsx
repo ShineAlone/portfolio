@@ -5,6 +5,7 @@ import { SOCIAL_LAYOUT, frameById } from "./data";
 import { Frame } from "./Frame";
 import { isStudioBusy, onStudioActivity } from "./drive";
 import { useOffscreen } from "./offscreen";
+import { isLowPower } from "./device";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -59,26 +60,14 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
     // rx/ry — углы сферы, vx/vy — скорость (градусов в секунду)
     const s = { rx: -12, ry: 0, vx: 0, vy: 9, drag: false, hover: false, px: 0, py: 0, moved: 0 };
     const AUTO = 9;
+    // полный оборот спокойного вращения, секунд
+    const PERIOD = 360 / AUTO;
     let raf = 0;
     let last = 0;
     let visible = false;
 
-    const frame = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000 || 0);
-      last = now;
-      if (!s.drag) {
-        // инерция затухает к спокойному вращению; над постом сфера почти замирает, чтобы в него попасть
-        const target = s.hover ? 1.5 : AUTO;
-        s.vy += (target - s.vy) * Math.min(1, dt * 1.6);
-        s.vx += (0 - s.vx) * Math.min(1, dt * 1.6);
-        s.ry += s.vy * dt;
-        s.rx += s.vx * dt;
-        // наклон мягко возвращается к лёгкому «виду сверху»
-        s.rx += (-12 - s.rx) * Math.min(1, dt * 0.35);
-      }
-      s.rx = Math.max(-70, Math.min(70, s.rx));
-      sphere.style.transform = `rotateX(${s.rx.toFixed(2)}deg) rotateY(${s.ry.toFixed(2)}deg)`;
-      // посты на дальней стороне приглушаем и не даём им перехватывать курсор
+    // посты на дальней стороне приглушаем и не даём им перехватывать курсор
+    const updateBack = () => {
       const sy = Math.sin(s.ry * RAD);
       const cy = Math.cos(s.ry * RAD);
       const sx = Math.sin(s.rx * RAD);
@@ -96,6 +85,82 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
           tiles[i].classList.toggle("is-back", back);
         }
       }
+    };
+
+    /*
+     * Спокойное вращение отдаём видеокарте: пока сферу не трогают и не наводят на пост, она крутится
+     * CSS-анимацией (.is-auto), а скрипт раз в 250 мс только пересчитывает приглушённые дальние посты.
+     * Покадровый пересчёт 3D-сцены из скрипта занимал почти весь процессор на слабых ноутбуках.
+     * Как только курсор над постом или сферу тянут — управление возвращается скрипту с того же угла.
+     */
+    let auto = false;
+    let autoT0 = 0;
+    let autoRy0 = 0;
+    let backTimer = 0;
+    const autoRy = () => autoRy0 + (AUTO * (performance.now() - autoT0)) / 1000;
+    const enterAuto = () => {
+      auto = true;
+      s.rx = -12;
+      s.vx = 0;
+      s.vy = AUTO;
+      cancelAnimationFrame(raf);
+      raf = 0;
+      const phase = ((s.ry % 360) + 360) % 360;
+      sphere.style.transform = "";
+      sphere.style.animationDuration = `${PERIOD}s`;
+      sphere.style.animationDelay = `${(-(phase / 360) * PERIOD).toFixed(3)}s`;
+      sphere.classList.add("is-auto");
+      autoT0 = performance.now();
+      autoRy0 = s.ry;
+      backTimer = window.setInterval(() => {
+        s.ry = autoRy();
+        updateBack();
+      }, 250);
+    };
+    const leaveAuto = () => {
+      if (!auto) return;
+      auto = false;
+      clearInterval(backTimer);
+      s.ry = autoRy();
+      sphere.classList.remove("is-auto");
+      sphere.style.animationDelay = "";
+      sphere.style.transform = `rotateX(${s.rx.toFixed(2)}deg) rotateY(${s.ry.toFixed(2)}deg)`;
+    };
+    const run = () => {
+      if (!visible || auto || raf) return;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+
+    // на слабых устройствах сфера обновляется через кадр — 30 раз в секунду (во время перетаскивания — каждый кадр)
+    const low = isLowPower();
+    let skip = false;
+    const frame = (now: number) => {
+      raf = 0;
+      if (low && !s.drag && (skip = !skip)) {
+        if (visible) raf = requestAnimationFrame(frame);
+        return;
+      }
+      const dt = Math.min(0.05, (now - last) / 1000 || 0);
+      last = now;
+      if (!s.drag) {
+        // инерция затухает к спокойному вращению; над постом сфера почти замирает, чтобы в него попасть
+        const target = s.hover ? 1.5 : AUTO;
+        s.vy += (target - s.vy) * Math.min(1, dt * 1.6);
+        s.vx += (0 - s.vx) * Math.min(1, dt * 1.6);
+        s.ry += s.vy * dt;
+        s.rx += s.vx * dt;
+        // наклон мягко возвращается к лёгкому «виду сверху»
+        s.rx += (-12 - s.rx) * Math.min(1, dt * 0.35);
+      }
+      s.rx = Math.max(-70, Math.min(70, s.rx));
+      sphere.style.transform = `rotateX(${s.rx.toFixed(2)}deg) rotateY(${s.ry.toFixed(2)}deg)`;
+      updateBack();
+      // сфера успокоилась — дальше крутит видеокарта
+      if (!s.drag && !s.hover && Math.abs(s.vy - AUTO) < 0.25 && Math.abs(s.vx) < 0.25 && Math.abs(s.rx + 12) < 0.3) {
+        enterAuto();
+        return;
+      }
       if (visible) raf = requestAnimationFrame(frame);
     };
 
@@ -105,14 +170,16 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
       const on = seen && !isStudioBusy();
       if (on && !visible) {
         visible = true;
-        last = performance.now();
-        raf = requestAnimationFrame(frame);
+        run();
       } else if (!on) {
         visible = false;
         // Камера улетела, а курсор над постом остался «висеть»: без сброса сфера по возвращении
         // крутилась со скоростью «прицеливания» (1,5° в секунду) и казалась остановившейся.
         s.hover = false;
         cancelAnimationFrame(raf);
+        raf = 0;
+        // CSS-вращение тоже останавливаем — сфера замирает на текущем угле
+        leaveAuto();
       }
     };
     const io = new IntersectionObserver(([e]) => {
@@ -136,7 +203,9 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
       // перетаскивание крутит сферу, а не двигает холст
       e.stopPropagation();
       el.setPointerCapture(e.pointerId);
+      leaveAuto();
       s.drag = true;
+      run();
       s.px = e.clientX;
       s.py = e.clientY;
       s.vx = s.vy = 0;
@@ -146,6 +215,11 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
     let lastMove = 0;
     const move = (e: PointerEvent) => {
       s.hover = !!(e.target as HTMLElement).closest?.(".st-ball__tile");
+      // навели на пост — сфера плавно притормаживает, это уже работа скрипта
+      if (s.hover && auto) {
+        leaveAuto();
+        run();
+      }
       if (!s.drag) return;
       e.stopPropagation();
       const now = performance.now();
@@ -184,6 +258,7 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
       io.disconnect();
       offDrive();
       cancelAnimationFrame(raf);
+      clearInterval(backTimer);
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
