@@ -23,9 +23,12 @@ AddType image/svg+xml .svg
   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
   RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 
-  # HTTPS включаем, когда выпущен сертификат: раскомментировать две строки ниже
-  # RewriteCond %{HTTPS} off
-  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  # http → https (сертификат Let's Encrypt, продлевается в ISPmanager сам).
+  # Перед Apache у reg.ru стоит nginx: за ним %{HTTPS} бывает off и для https-запросов,
+  # поэтому смотрим ещё и X-Forwarded-Proto — иначе переадресация зациклится.
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
   # холст переехал на главную
   RewriteRule ^v2/?$ / [R=301,L]
