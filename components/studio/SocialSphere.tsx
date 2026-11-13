@@ -109,6 +109,9 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
         raf = requestAnimationFrame(frame);
       } else if (!on) {
         visible = false;
+        // Камера улетела, а курсор над постом остался «висеть»: без сброса сфера по возвращении
+        // крутилась со скоростью «прицеливания» (1,5° в секунду) и казалась остановившейся.
+        s.hover = false;
         cancelAnimationFrame(raf);
       }
     };

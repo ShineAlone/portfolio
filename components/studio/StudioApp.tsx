@@ -38,6 +38,10 @@ const STORAGE_KEY = "ak-achievements-v2";
 const MAP_W = 172;
 // фары и стоп-сигналы стоят там, где они нарисованы у каждой машинки (доли ширины и высоты)
 const DRIVE_Z = 0.6;
+// монетки за рулём: сколько собрать до достижения, сколько лежит на дороге одновременно, радиус (единицы холста)
+const COIN_GOAL = 10;
+const COIN_MAX = 3;
+const COIN_R = 42;
 const LAMPS: Record<string, [number, number]> = { sport: [0.26, 0.11], pickup: [0.23, 0.08], bug: [0.36, 0.1] };
 
 type Solid = Rect & { id: string; frame: boolean };
@@ -194,6 +198,10 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
   const cityFxRef = useRef<HTMLDivElement>(null);
   const mapCarRef = useRef<HTMLElement>(null);
   const carState = useRef({ x: 0, y: 0, a: 0, v: 0 });
+  // монетки на дорогах: собранные не сгорают при выходе из машины
+  const coinLayerRef = useRef<HTMLDivElement>(null);
+  const coinCountRef = useRef<HTMLSpanElement>(null);
+  const coinsGot = useRef(0);
   const keysRef = useRef(new Set<string>());
   const stickRef = useRef<Stick>({ x: 0, y: 0, on: false });
   // на сенсорных экранах вместо клавиш — джойстик
@@ -669,7 +677,6 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
         hitsRef.current.set(s.id, n);
         if (n >= 3) {
           breakFrame(s.id, px - s.x, py - s.y);
-          earnRef.current("drive");
           return true;
         }
         if (n === 2) showToast({ text: "Блок трещит — ещё удар, и он рассыплется" });
@@ -695,7 +702,6 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
       }
       makeCrack(host, px - s.x, py - s.y, angle, power, Math.min(s.w, s.h) * 0.5, "10px");
     }
-    earnRef.current("drive");
     return true;
   }, [breakFrame, showToast]);
 
@@ -748,6 +754,53 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
     let sinkAt = 0;
     if (process.env.NODE_ENV !== "production") (window as unknown as { __car: typeof c }).__car = c;
     const rnd = (a: number) => (Math.random() - 0.5) * a;
+
+    /* ---------- монетки ---------- */
+    // Появляются только на асфальте и только в кадре: масштаб за рулём зафиксирован, поэтому
+    // видимую область можно посчитать по камере. Монетка, оставшаяся за кадром, через пару секунд
+    // исчезает и появляется снова перед глазами — искать их по карте не нужно.
+    const layer = coinLayerRef.current;
+    type Coin = { x: number; y: number; el: HTMLElement; out: number };
+    const coins: Coin[] = [];
+    const showCount = () => {
+      if (coinCountRef.current) coinCountRef.current.textContent = String(Math.min(coinsGot.current, COIN_GOAL));
+    };
+    showCount();
+    const view = () => {
+      const cm = camera.get();
+      const { w, h } = vpSize();
+      return { x: -cm.x / cm.z, y: -cm.y / cm.z, w: w / cm.z, h: h / cm.z };
+    };
+    const freeSpot = (x: number, y: number) =>
+      surfaceAt(city, x, y) === "road" &&
+      !city.buildings.some((b) => x > b.x - COIN_R * 2 && x < b.x + b.w + COIN_R * 2 && y > b.y - COIN_R * 2 && y < b.y + b.h + COIN_R * 2) &&
+      coins.every((o) => Math.hypot(o.x - x, o.y - y) > 420);
+    const spawnCoin = () => {
+      if (!layer) return false;
+      const v = view();
+      for (let i = 0; i < 80; i++) {
+        // поля по краям — чтобы монетка не пряталась под меню, HUD и картой
+        const x = v.x + v.w * (0.12 + Math.random() * 0.62);
+        const y = v.y + v.h * (0.2 + Math.random() * 0.62);
+        if (Math.hypot(x - c.x, y - c.y) < 380 || !freeSpot(x, y)) continue;
+        const el = document.createElement("i");
+        el.className = "st-coin";
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.appendChild(document.createElement("b"));
+        layer.appendChild(el);
+        coins.push({ x, y, el, out: 0 });
+        return true;
+      }
+      return false;
+    };
+    const dropCoin = (i: number, cls: string) => {
+      const [o] = coins.splice(i, 1);
+      o.el.classList.add(cls);
+      setTimeout(() => o.el.remove(), 520);
+    };
+    // первые монетки — когда камера уже приехала к машинке
+    let nextCoin = t0 / 1000 + 1.1;
 
     const toWorld = (lx: number, ly: number) => {
       const cos = Math.cos(c.a);
@@ -960,6 +1013,34 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
         kick(surf, p.x, p.y, back.x, back.y, t);
       }
 
+      // монетки: подбор, уход за кадр и новые взамен собранных
+      if (!sinkAt) {
+        const v = view();
+        for (let i = coins.length - 1; i >= 0; i--) {
+          const o = coins[i];
+          if (Math.hypot(o.x - c.x, o.y - c.y) < R + COIN_R) {
+            dropCoin(i, "is-got");
+            for (let j = 0; j < 14; j++)
+              addParticle(parts, { x: o.x, y: o.y, vx: rnd(520), vy: rnd(520), t, life: 0.55, r0: 7, r1: 2, rgb: j % 3 ? "255,206,48" : "255,255,255", a: 1 });
+            coinsGot.current++;
+            showCount();
+            const hud = coinCountRef.current?.parentElement;
+            if (hud) {
+              hud.classList.remove("is-bump");
+              void hud.offsetWidth;
+              hud.classList.add("is-bump");
+            }
+            if (coinsGot.current === COIN_GOAL) earnRef.current("drive");
+            nextCoin = Math.min(nextCoin, t + 0.5);
+            continue;
+          }
+          const inView = o.x > v.x && o.x < v.x + v.w && o.y > v.y && o.y < v.y + v.h;
+          o.out = inView ? 0 : o.out + dt;
+          if (o.out > 2) dropCoin(i, "is-gone");
+        }
+        if (coins.length < COIN_MAX && t >= nextCoin) nextCoin = t + (spawnCoin() ? 0.45 : 0.25);
+      }
+
       const el = carElRef.current;
       if (el) {
         el.style.transform = `translate(${c.x - spec.w / 2}px, ${c.y - spec.h / 2}px) rotate(${c.a}rad)`;
@@ -1016,6 +1097,7 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
       window.removeEventListener("blur", release);
       ctx?.clearRect(0, 0, canvas!.width, canvas!.height);
       carElRef.current?.classList.remove("is-braking");
+      layer?.replaceChildren();
     };
   }, [driving, carId, camera, vpSize, hitSolid, showToast, calm]);
 
@@ -1273,6 +1355,7 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
           })}
 
           <canvas ref={fxRef} className={`st-fx${driving ? " is-on" : ""}`} aria-hidden />
+          <div ref={coinLayerRef} className="st-coins" aria-hidden />
 
           <div
             ref={carElRef}
@@ -1532,6 +1615,12 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
               <span ref={speedRef}>0</span> км/ч
             </b>
             <span ref={surfRef} className="st-hud__surf" />
+            <span className="st-hud__coins" title={`Собери ${COIN_GOAL} монеток`}>
+              <i aria-hidden />
+              <span>
+                <span ref={coinCountRef}>0</span>/{COIN_GOAL}
+              </span>
+            </span>
             <span className="st-hud__keys">W/S — газ · A/D — поворот · Esc — выйти</span>
             <button type="button" onClick={stopDrive}>
               Выйти из машины
@@ -1546,7 +1635,7 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
             <span className="st-notice__sign">!</span>
             <div>
               <b>Внимание: вокруг блоков вырос город</b>
-              <small>Катайся по улицам. На траве и грунте машинка вязнет, в прудах — буксует</small>
+              <small>Собери на дорогах {COIN_GOAL} монеток. На траве и грунте машинка вязнет, в прудах — буксует</small>
             </div>
           </div>
         )}

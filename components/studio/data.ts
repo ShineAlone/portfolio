@@ -425,7 +425,7 @@ export const ACHIEVEMENTS: {
   { id: "sticker", name: "Знакомство", hint: "Кликни по любой карточке с цифрой под моим именем", island: "about", color: "#FEFE78" },
   { id: "react", name: "Реакция", hint: "Поставь реакцию на любой мой ответ в переписке «Обо мне»", island: "about", color: "#FF7566" },
   { id: "map", name: "Картограф", hint: "Отдались так, чтобы увидеть всё пространство целиком", island: "about", color: "#86DDFF" },
-  { id: "drive", name: "Тест-драйв", hint: "Возьми машинку в гараже «Лаборатории» и врежься в любой блок", island: "plugins", color: "#FFB454" },
+  { id: "drive", name: "Инкассатор", hint: "Возьми машинку в гараже «Лаборатории» и собери на дорогах 10 монеток", island: "plugins", color: "#FFB454" },
   { id: "pile", name: "Сфера постов", hint: "Покрути сферу постов в «Соцсетях»", island: "social", color: "#FFB6E1" },
   { id: "orbit", name: "Коллекционер", hint: "Собери обои под курсором в «Обоях» и кликни по любым", island: "wall", color: "#ACF9A2" },
   { id: "slides", name: "Слайдшоу", hint: "Пролистай пять слайдов презентации в кейсе HR-платформы", island: "cases", color: "#B8C7FF" },

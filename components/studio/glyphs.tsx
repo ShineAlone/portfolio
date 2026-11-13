@@ -37,10 +37,9 @@ const GLYPHS: Record<AchievementId, React.ReactNode> = {
   zoom: <path d="M10.5 4a6.5 6.5 0 110 13 6.5 6.5 0 010-13zM20 20l-4.8-4.8M10.5 8v5M8 10.5h5" />,
   drive: (
     <>
-      <path d="M5 16V11.5L7 6.5h10l2 5V16H5z" />
-      <path d="M5 11.5h14M7.5 16v2M16.5 16v2" />
-      <circle cx="8" cy="13.6" r="0.8" />
-      <circle cx="16" cy="13.6" r="0.8" />
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="5" />
+      <path d="M12 9.5v5" />
     </>
   ),
 };

@@ -3530,6 +3530,11 @@
   backdrop-filter: blur(8px);
 }
 
+/* за рулём на этом месте полоска со скоростью — уведомления встают под неё */
+.is-driving .st-toast {
+  top: 136px;
+}
+
 .st-toast {
   position: fixed;
   left: 50%;
@@ -4377,6 +4382,134 @@
   font-family: var(--display);
   font-size: 18px;
   min-width: 96px;
+}
+
+/* счётчик монеток: подпрыгивает при каждой подобранной */
+.st-hud__coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 14px;
+  background: #2a2a2e;
+  font-family: var(--display);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.st-hud__coins i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6b0, #ffd23f 50%, #e8a400);
+  box-shadow: inset 0 0 0 2px #b77f00;
+}
+
+.st-hud__coins.is-bump {
+  animation: st-coin-bump 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes st-coin-bump {
+  40% {
+    transform: scale(1.18);
+    background: #ffd23f;
+    color: #111;
+  }
+}
+
+/* монетки на дороге: в координатах холста, поверх города, под машинкой */
+.st-coins {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 79;
+  pointer-events: none;
+}
+
+.st-coin {
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  animation: st-coin-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* мягкий ореол, чтобы монетку было видно на любом асфальте */
+.st-coin::before {
+  content: "";
+  position: absolute;
+  inset: -26px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 214, 64, 0.55), transparent);
+  animation: st-coin-glow 1.6s ease-in-out infinite;
+}
+
+.st-coin b {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6b0, #ffd23f 48%, #e8a400);
+  border: 5px solid #111;
+  box-shadow: inset 0 0 0 7px rgba(183, 127, 0, 0.45), 0 12px 14px -6px rgba(0, 0, 0, 0.4);
+  animation: st-coin-spin 1.5s ease-in-out infinite;
+}
+
+/* насечка по центру, как на монете */
+.st-coin b::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 24%;
+  width: 9px;
+  height: 52%;
+  margin-left: -4.5px;
+  border-radius: 5px;
+  background: #b77f00;
+}
+
+.st-coin.is-got {
+  animation: st-coin-got 0.5s ease-out forwards;
+}
+
+.st-coin.is-gone {
+  animation: st-coin-out 0.4s ease-in forwards;
+}
+
+@keyframes st-coin-in {
+  from {
+    transform: scale(0);
+  }
+}
+
+@keyframes st-coin-spin {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.22);
+  }
+}
+
+@keyframes st-coin-glow {
+  50% {
+    transform: scale(1.15);
+    opacity: 0.6;
+  }
+}
+
+@keyframes st-coin-got {
+  to {
+    transform: translateY(-90px) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes st-coin-out {
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
 }
 
 .st-hud__keys {
