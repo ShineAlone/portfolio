@@ -304,10 +304,11 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   );
 
   const flyTo = useCallback(
-    (r: Rect, p = 80, maxZ = 1) => animateTo(clampCam(fit(r, p, maxZ)), 950),
+    // перелёт по меню небыстрый: блоки по пути успевают подгрузиться и отрисоваться
+    (r: Rect, p = 80, maxZ = 1) => animateTo(clampCam(fit(r, p, maxZ)), 1600),
     [animateTo, clampCam, fit]
   );
-  const showAll = useCallback(() => animateTo(fit(WORLD, 30), 900), [animateTo, fit]);
+  const showAll = useCallback(() => animateTo(fit(WORLD, 30), 1400), [animateTo, fit]);
 
   const showToast = useCallback((t: Toast) => {
     setToast(t);
