@@ -1506,11 +1506,30 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
 
       <div className="st-interface">
         {/* ---------- шапка ---------- */}
-        <div className="st-brand">
-          <span className="st-brand__logo">АК</span>
-          <span>
-            <b>Арсений Кононов</b> дизайнер
-          </span>
+        {/* шапка и выезжающий из-под неё призыв обсудить проект — одна связка */}
+        <div className="st-brand-wrap">
+          <div className="st-brand">
+            <span className="st-brand__logo">АК</span>
+            <span>
+              <b>Арсений Кононов</b> дизайнер
+            </span>
+          </div>
+          {nudge === "contact" && (
+            <div className="st-hello" role="status">
+              <span className="st-hello__text">
+                <b>Есть задача?</b>
+                <small>
+                  <i className="st-nudge__online" /> отвечу в Telegram
+                </small>
+              </span>
+              <a className="st-hello__btn" href={LINKS.telegram} target="_blank" rel="noopener noreferrer" onClick={() => setNudge(null)}>
+                Обсудить ↗
+              </a>
+              <button type="button" className="st-hello__close" onClick={() => setNudge(null)} aria-label="Закрыть">
+                ✕
+              </button>
+            </div>
+          )}
         </div>
 
         <nav className="st-chips" aria-label="Разделы">
@@ -1580,64 +1599,25 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
 
         {/* ---------- подсказки над доком ---------- */}
         {nudge === "ach" && !ach && !celebrate && (
-          <div className="st-pop st-nudge" role="status">
-            <div className="st-pop__head">
-              <span className="st-nudge__count">{ACHIEVEMENTS.length}</span>
-              <div>
-                <small>достижения · {earned.length} из {ACHIEVEMENTS.length}</small>
-                <b>На холсте спрятаны достижения</b>
-              </div>
-              <button type="button" className="st-pop__close" onClick={() => setNudge(null)} aria-label="Закрыть">
-                ✕
-              </button>
-            </div>
-            <p>
-              Исследуй сайт: листай кейсы, крути сферу, прокатись на машинке. Собери все — и получишь секретное слово со
-              скидкой {SECRET_DISCOUNT} на проект.
-            </p>
-            <div className="st-pop__row">
-              <button
-                type="button"
-                className="st-btn st-btn--small"
-                onClick={() => {
-                  setNudge(null);
-                  setOpenAch(ACHIEVEMENTS.find((a) => !earned.includes(a.id))?.id ?? null);
-                }}
-              >
-                С чего начать
-              </button>
-            </div>
-          </div>
-        )}
-
-        {nudge === "contact" && !ach && !celebrate && (
-          <div className="st-pop st-nudge st-nudge--contact" role="status">
-            <div className="st-pop__head">
-              <span className="st-nudge__avatar">
-                <img src="/images/photo-480.webp" alt="" draggable={false} />
-              </span>
-              <div>
-                <small>
-                  <i className="st-nudge__online" /> Арсений · на связи
-                </small>
-                <b>Есть задача? Давай обсудим</b>
-              </div>
-              <button type="button" className="st-pop__close" onClick={() => setNudge(null)} aria-label="Закрыть">
-                ✕
-              </button>
-            </div>
-            <p>Расскажи о проекте в Telegram — отвечу и предложу, как его сделать.</p>
-            <div className="st-pop__row">
-              <a
-                className="st-btn st-btn--small"
-                href={LINKS.telegram}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setNudge(null)}
-              >
-                Написать в Telegram ↗
-              </a>
-            </div>
+          <div className="st-nudge" role="status">
+            <span className="st-nudge__count">{ACHIEVEMENTS.length}</span>
+            <span className="st-nudge__text">
+              <b>На холсте спрятаны {ACHIEVEMENTS.length} достижений</b>
+              <small>Собери все — получишь скидку {SECRET_DISCOUNT} на проект</small>
+            </span>
+            <button
+              type="button"
+              className="st-nudge__btn"
+              onClick={() => {
+                setNudge(null);
+                setOpenAch(ACHIEVEMENTS.find((a) => !earned.includes(a.id))?.id ?? null);
+              }}
+            >
+              С чего начать
+            </button>
+            <button type="button" className="st-nudge__close" onClick={() => setNudge(null)} aria-label="Закрыть">
+              ✕
+            </button>
           </div>
         )}
 

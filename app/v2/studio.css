@@ -3438,72 +3438,181 @@
   margin-top: 14px;
 }
 
-/* ---------- подсказки над доком: компактные, с «хвостиком» к доку ---------- */
-.st-pop.st-nudge {
-  width: 340px;
-  padding: 16px 16px 16px 18px;
-  border: 2px solid #111;
-  box-shadow: 5px 5px 0 #111, 0 30px 60px -24px rgba(0, 0, 0, 0.35);
-  animation: st-nudge-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.st-pop.st-nudge::after {
-  content: "";
-  position: absolute;
+/* ---------- подсказка про достижения: одна строка над доком ---------- */
+.st-nudge {
+  position: fixed;
   left: 50%;
-  bottom: -9px;
-  width: 16px;
-  height: 16px;
-  margin-left: -8px;
-  border-right: 2px solid #111;
-  border-bottom: 2px solid #111;
+  bottom: 92px;
+  z-index: 31;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 10px;
+  border: 2px solid #111;
+  border-radius: 22px;
   background: #fff;
-  transform: rotate(45deg);
+  box-shadow: 4px 4px 0 #111, 0 24px 50px -24px rgba(0, 0, 0, 0.35);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: auto;
+  animation: st-nudge-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes st-nudge-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 24px) scale(0.92);
+    transform: translate(-50%, 20px) scale(0.94);
   }
 }
 
-.st-pop.st-nudge p {
-  margin-top: 10px;
-  font-size: 13.5px;
+.st-nudge__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-right: 4px;
 }
 
-.st-pop.st-nudge .st-pop__row {
-  margin-top: 12px;
+.st-nudge__text b {
+  font: 700 14px var(--display);
+}
+
+.st-nudge__text small {
+  font-size: 12.5px;
+  color: #666;
+}
+
+.st-nudge__btn {
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: #111 !important;
+  color: #fff !important;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.st-nudge__btn:hover {
+  transform: translateY(-1px);
+}
+
+.st-nudge__close,
+.st-hello__close {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  color: #888 !important;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.st-nudge__close:hover {
+  background: #f1f1f1 !important;
+}
+
+/* ---------- призыв обсудить: выезжает из-под чёрной шапки слева сверху ---------- */
+.st-brand-wrap {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+}
+
+.st-brand-wrap .st-brand {
+  position: relative;
+  left: auto;
+  top: auto;
+  z-index: 1;
+}
+
+.st-hello {
+  position: relative;
+  z-index: 0;
+  /* ширина — ровно как у шапки: карточка не раздвигает связку */
+  width: 0;
+  min-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* верх карточки уходит под шапку */
+  margin-top: -22px;
+  padding: 30px 6px 8px 12px;
+  border-radius: 0 0 22px 22px;
+  background: #fefe78;
+  box-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  animation: st-hello-in 0.55s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+@keyframes st-hello-in {
+  from {
+    transform: translateY(-70%);
+  }
+}
+
+.st-hello__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.st-hello__text b {
+  overflow: hidden;
+  /* основной шрифт уже Unbounded — заголовок помещается в ширину шапки */
+  font-size: 14.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.st-hello__text small {
+  overflow: hidden;
+  font-size: 11.5px;
+  color: #555;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.st-hello__btn {
+  flex-shrink: 0;
+  padding: 7px 11px;
+  border-radius: 16px;
+  background: #111;
+  color: #fff !important;
+  font-size: 12.5px;
+  white-space: nowrap;
+  transition: transform 0.2s;
+}
+
+.st-hello__btn:hover {
+  transform: translateY(-1px);
+}
+
+.st-hello__close {
+  width: 22px;
+  height: 22px;
+  margin-left: -4px;
+}
+
+.st-hello__close:hover {
+  background: rgba(0, 0, 0, 0.08) !important;
 }
 
 .st-nudge__count {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border: 2px solid #111;
   border-radius: 50%;
   background: #fefe78;
   font: 800 15px var(--display);
-}
-
-.st-nudge__avatar {
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border: 2px solid #111;
-  border-radius: 50%;
-  background: #c9a8ff;
-}
-
-.st-app .st-nudge__avatar img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .st-nudge__online {
@@ -3514,19 +3623,6 @@
   border-radius: 50%;
   background: #1fbf4b;
   vertical-align: 1px;
-}
-
-.st-nudge--contact {
-  background: #fefe78 !important;
-}
-
-.st-pop.st-nudge--contact::after {
-  background: #fefe78;
-}
-
-.st-nudge--contact p,
-.st-nudge--contact .st-pop__head small {
-  color: #333;
 }
 
 /* окно награды за все достижения — по центру экрана, поверх затемнения */
