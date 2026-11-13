@@ -1,0 +1,258 @@
+<!doctype html>
+<!--
+  Экраны «Service Soft II» для окна в «Проектах»: те же макеты из Figma, но без заглушек —
+  с правдоподобными (вымышленными) данными и разными иконками в меню.
+  Собрать картинку: node scripts/screens/render.mjs  →  public/images/projects/service-soft-2-v2.webp
+-->
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<style>
+@font-face { font-family: "PT Root UI"; src: url("../../public/fonts/pt-root-ui-regular.woff") format("woff"); font-weight: 400; }
+@font-face { font-family: "PT Root UI"; src: url("../../public/fonts/pt-root-ui-medium.woff") format("woff"); font-weight: 500; }
+@font-face { font-family: "PT Root UI"; src: url("../../public/fonts/pt-root-ui-bold.woff") format("woff"); font-weight: 700; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #f6f7f9; --line: #eef1f5; --ink: #27272e; --gray: #667085; --muted: #98a2b3; --acc: #7ea7e0; --err-bg: #ffece5; --err: #c4471b; --ok-bg: #f0fbf4; --ok: #1c8a4a; }
+body { width: 1920px; background: #e9ecf1; font-family: "PT Root UI", sans-serif; color: var(--ink); font-size: 14px; }
+.screen { position: relative; display: flex; width: 1920px; height: 1080px; background: var(--bg); overflow: hidden; }
+.screen + .screen { margin-top: 16px; }
+.screen.is-tall { height: 1290px; }
+svg { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* боковая панель */
+.rail { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 80px; flex-shrink: 0; padding: 28px 0; }
+.rail .logo { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 30px; border-radius: 50%; background: linear-gradient(135deg, #8fb4e8, #4f7fc4); color: #fff; font-weight: 700; font-size: 15px; }
+.rail .ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: #7d8696; }
+.rail .ic.on { background: var(--acc); color: #fff; }
+.rail .sep { height: 26px; }
+
+/* общие элементы */
+.main { flex: 1; min-width: 0; display: flex; gap: 20px; padding: 28px 28px 24px 8px; }
+.col { display: flex; flex-direction: column; min-width: 0; }
+h1 { font-size: 36px; font-weight: 500; line-height: 1.1; }
+.sub { margin-top: 4px; font-size: 22px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.mt { margin-top: 16px; }
+.muted { color: var(--gray); }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px; border-radius: 66px; background: #fff; color: var(--gray); white-space: nowrap; }
+.pill.on { background: var(--acc); color: #fff; }
+.pill svg { width: 15px; height: 15px; }
+.input { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 66px; background: #fff; color: var(--muted); }
+.input svg { width: 16px; height: 16px; }
+.card { border-radius: 14px; background: #fff; }
+.tag { display: inline-flex; padding: 3px 10px; border-radius: 66px; background: var(--err-bg); color: var(--err); font-size: 13px; white-space: nowrap; }
+.tag.ok { background: var(--ok-bg); color: var(--ok); }
+
+/* таблицы */
+.table { display: flex; flex-direction: column; overflow: hidden; }
+.tr { position: relative; display: grid; align-items: center; gap: 14px; height: 50px; padding: 0 20px 0 26px; border-bottom: 1px solid var(--line); color: var(--gray); white-space: nowrap; }
+.tr > span { overflow: hidden; text-overflow: ellipsis; }
+.tr.head { height: 52px; color: var(--ink); font-weight: 500; }
+.tr.on { background: var(--acc); color: #fff; }
+.tr.on .tag { background: rgba(255, 255, 255, 0.9); }
+.tr .g { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+.tags { display: flex; gap: 6px; }
+.good { color: var(--ok); }
+.bad { color: var(--err); }
+.tr.on .good, .tr.on .bad { color: #fff; }
+.pages { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 14px; color: var(--gray); }
+.pages .nums { display: flex; gap: 4px; }
+.pages .nums b, .pages .nums span { display: grid; place-items: center; min-width: 26px; height: 26px; border-radius: 7px; font-weight: 400; }
+.pages .nums b { background: #dfe5ee; color: var(--ink); }
+.pages .nav { display: flex; gap: 20px; color: var(--ink); }
+
+/* правая часть с объектом */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tabs .pill { height: 28px; padding: 0 12px; background: #f3f5f8; font-size: 13.5px; }
+.tabs .pill.on { background: var(--acc); }
+.toggle { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #3f4a5c; color: #fff; }
+
+/* график */
+.graph { display: flex; gap: 20px; margin-top: 16px; flex: 1; min-height: 0; }
+.vals { width: 260px; flex-shrink: 0; }
+.vals .tr { grid-template-columns: 1fr 1.3fr; height: 42px; padding: 0 12px; }
+.chart { flex: 1; }
+.chart svg, svg.chart { stroke: none; }
+.chart rect { stroke: #e6eaf0; stroke-width: 0; }
+.chart line { stroke: var(--line); }
+.chart text { fill: var(--muted); stroke: none; font: 12px "PT Root UI"; }
+.chart .area { fill: rgba(126, 167, 224, 0.16); }
+.chart .line { fill: none; stroke: var(--acc); stroke-width: 2.4; stroke-linejoin: round; }
+.chart .band { fill: #f7f8fa; }
+.ibtn { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--acc); color: #fff; }
+.ibtn svg { width: 15px; height: 15px; }
+
+/* настройки канала */
+.snav { width: 420px; flex-shrink: 0; padding: 30px 22px; background: #e4eaf2; }
+.snav h2 { font-size: 26px; font-weight: 500; line-height: 1.2; }
+.snav .item { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 14px; border-radius: 10px; color: #3f4a5c; font-size: 15px; }
+.snav .item.on { background: var(--acc); color: #fff; }
+.form { display: flex; flex-direction: column; gap: 14px; width: 600px; padding: 30px 26px; }
+.form .card { padding: 22px 24px; }
+.form h3 { font-size: 22px; font-weight: 500; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.field label { font-size: 13px; color: var(--gray); }
+.box { display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 14px; border-radius: 10px; background: #f3f5f8; color: var(--ink); }
+.box svg { width: 16px; height: 16px; color: var(--gray); }
+.list { border-radius: 10px; background: #f3f5f8; overflow: hidden; }
+.list span { display: block; padding: 9px 14px; }
+.list span.on { background: #dfe7f4; }
+.check { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--gray); font-size: 13.5px; }
+.check i { width: 16px; height: 16px; border: 1.5px solid #c4cad4; border-radius: 4px; }
+.check i.on { background: var(--acc); border-color: var(--acc); }
+.icons { display: flex; gap: 8px; }
+.icons span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #f3f5f8; color: var(--gray); }
+.icons span.on { background: var(--acc); color: #fff; }
+.btns { display: flex; gap: 10px; margin-top: 6px; }
+.btn { display: inline-flex; align-items: center; height: 38px; padding: 0 20px; border-radius: 66px; background: var(--acc); color: #fff; }
+.btn.cancel { background: #ffe4dc; color: var(--err); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const P = {
+  list: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  map: '<path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5V6.5zm6-2.5v13.5m6-11v13.5"/>',
+  chart: '<path d="M4 19V5m0 14h16M8 15l3.5-4 3 2.5L19 8"/>',
+  bell: '<path d="M6 16v-5a6 6 0 0112 0v5l1.5 2h-15L6 16zm4 4.5h4"/>',
+  users: '<path d="M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm-6 9a6 6 0 0112 0M16 4.5a3.5 3.5 0 010 6.5M17 14a6 6 0 014 6"/>',
+  log: '<path d="M6 3h9l4 4v14H6V3zm8 0v5h5M9 12h7M9 16h7"/>',
+  gauge: '<path d="M4 16a8 8 0 1116 0M12 16l4-5"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5 9-5zm-9 9l9 5 9-5M3 16l9 5 9-5"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/>',
+  file: '<path d="M7 3h7l5 5v13H7V3zm7 0v5h5"/>',
+  clock: '<path d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 4v4l3 2"/>',
+  settings: '<path d="M12 9a3 3 0 100 6 3 3 0 000-6z"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+  search: '<path d="M10.5 4a6.5 6.5 0 110 13 6.5 6.5 0 010-13zM20 20l-4.8-4.8"/>',
+  filter: '<path d="M4 5h16l-6 7.5V19l-4 1.5v-8L4 5z"/>',
+  globe: '<path d="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  link: '<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+  chev: '<path d="M8 10l4 4 4-4"/>',
+  right: '<path d="M5 12h14m-5-5l5 5-5 5"/>',
+  left: '<path d="M19 12H5m5-5l-5 5 5 5"/>',
+  dash: '<path d="M4 4h7v7H4V4zm9 0h7v4h-7V4zm0 6h7v10h-7V10zM4 13h7v7H4v-7z"/>',
+  scheme: '<path d="M4 6h5v5H4V6zm11 0h5v5h-5V6zM9.5 17h5M12 11v6M9 8.5h6"/>',
+  image: '<path d="M4 5h16v14H4V5zm0 11l5-5 4 4 3-3 4 4"/>',
+  msg: '<path d="M4 5h16v11H9l-5 4V5z"/>',
+  alert: '<path d="M12 4l9 15.5H3L12 4zm0 6v4m0 3v.5"/>',
+  box: '<path d="M4 7l8-4 8 4v10l-8 4-8-4V7zm0 0l8 4 8-4M12 11v10"/>',
+  bolt: '<path d="M13 3L5 13h6l-1 8 8-10h-6l1-8z"/>',
+  pipe: '<path d="M3 9h7v6H3M21 9h-7v6h7M10 12h4"/>',
+  folder: '<path d="M3 6h7l2 2h9v11H3V6z"/>',
+  refresh: '<path d="M20 11a8 8 0 00-14.5-4.5M4 4v4h4M4 13a8 8 0 0014.5 4.5M20 20v-4h-4"/>',
+  zoom: '<path d="M10.5 4a6.5 6.5 0 110 13 6.5 6.5 0 010-13zM20 20l-4.8-4.8M10.5 8v5M8 10.5h5"/>',
+  dl: '<path d="M12 4v11m-5-5l5 5 5-5M5 20h14"/>',
+  pause: '<path d="M8 5v14M16 5v14"/>',
+  bug: '<path d="M9 7a3 3 0 016 0v1H9V7zm-2 3h10v5a5 5 0 01-10 0v-5zM4 12h3m10 0h3M5 7l2 2m12-2l-2 2M5 19l2-2m12 2l-2-2"/>',
+  sliders: '<path d="M4 7h10m4 0h2M4 12h4m4 0h8M4 17h12m4 0h0M16 5v4M10 10v4M18 15v4"/>',
+  binary: '<path d="M6 5v6M4 5h2M9 5h4v6H9V5zm2 8h4v6h-4v-6zM6 13v6M4 13h2"/>',
+  history: '<path d="M4 12a8 8 0 103-6.3M4 4v4h4M12 8v4l3 2"/>',
+  pin: '<path d="M12 21s7-6 7-11a7 7 0 00-14 0c0 5 7 11 7 11zm0-8a3 3 0 100-6 3 3 0 000 6z"/>',
+  gas: '<path d="M5 20V6a2 2 0 012-2h6a2 2 0 012 2v14H5zm10-9h2a2 2 0 012 2v4a1.5 1.5 0 003 0V9l-3-3M8 8h4"/>',
+  chip: '<path d="M7 7h10v10H7V7zm3 3h4v4h-4v-4zM4 9h3M4 15h3m10-6h3m-3 6h3M9 4v3m6-3v3M9 17v3m6-3v3"/>',
+  server: '<path d="M4 4h16v6H4V4zm0 10h16v6H4v-6zm3-7h.01M7 17h.01"/>',
+  info: '<path d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 7v5m0-8v.5"/>',
+  wave: '<path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>',
+};
+const ic = (n) => `<svg viewBox="0 0 24 24">${P[n] || ""}</svg>`;
+
+// детерминированный генератор — картинка одинаковая при каждой сборке
+function rng(seed) { let a = seed; return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+const GROUPS = ["#7ea7e0", "#f0b35c", "#6cc4a1", "#c59be8"];
+const NAMES = ["СКЗ № 12 «Северная»", "Узел учёта газа № 4", "СКЗ № 7 «Алексин»", "ПРГ «Заречье»", "СКЗ № 31 «Ока»", "Узел учёта газа № 9", "КП телемеханики № 3", "СКЗ № 18 «Упа»", "ПРГ «Щёкино»", "СКЗ № 22 «Южная»", "КП телемеханики № 8", "Узел учёта газа № 15", "СКЗ № 5 «Заокская»", "ПРГ «Тёплое»", "СКЗ № 27 «Венёв»", "КП телемеханики № 11", "Узел учёта газа № 21", "СКЗ № 14 «Ефремов»"];
+const ERRS = ["Нет связи", "Ниже нормы", "Вскрытие шкафа", "Перегрев", "Обрыв цепи", "Нет питания"];
+const NOTES = ["Плановый осмотр 14.03", "Замена датчика тока", "Под наблюдением", "Выезд бригады 21.03", "Калибровка 10.03", "—", "Проверка связи", "—"];
+const OBJ = (() => { const r = rng(5); return NAMES.map((name, i) => { const n = r() < 0.3 ? 0 : r() < 0.55 ? 1 : 2; const e = []; while (e.length < n) { const x = ERRS[Math.floor(r() * ERRS.length)]; if (!e.includes(x)) e.push(x); } return { id: 1046 + i * 7, name, g: Math.floor(r() * 4), e, note: NOTES[Math.floor(r() * NOTES.length)] }; }); })();
+const SEL = 2;
+
+const CH = [
+  ["Потенциал «труба — земля»", "В", -1.12, 0.12, "Защитный, ГОСТ 9.602"],
+  ["Ток защиты", "А", 12.4, 1.8, "Выход СКЗ"],
+  ["Напряжение на выходе", "В", 24.1, 1.2, "Выход СКЗ"],
+  ["Температура в шкафу", "°C", 28, 5, "Датчик ТС-1"],
+  ["Напряжение сети", "В", 228, 7, "Ввод 220 В"],
+  ["Ток утечки", "мА", 3.4, 1.1, "Датчик УТ-2"],
+  ["Сопротивление растеканию", "Ом", 2.8, 0.4, "Анодное заземление"],
+  ["Скорость коррозии", "мм/год", 0.02, 0.01, "Индикатор ИК-3"],
+  ["Давление на входе", "МПа", 1.18, 0.06, "Датчик ДД-1"],
+  ["Давление на выходе", "кПа", 2.9, 0.15, "Датчик ДД-2"],
+  ["Расход газа", "м³/ч", 840, 90, "Счётчик СГ-16"],
+  ["Температура газа", "°C", 6.4, 1.6, "Датчик ТС-2"],
+  ["Дверь шкафа", "", 0, 0, "Геркон"],
+  ["Наработка СКЗ", "ч", 18240, 0, "Счётчик моточасов"],
+  ["Уровень сигнала GSM", "дБм", -71, 6, "Модем"],
+  ["Напряжение АКБ", "В", 12.7, 0.3, "Резервное питание"],
+];
+const fmt = (v) => (Math.abs(v) >= 1000 ? Math.round(v).toLocaleString("ru-RU") : Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2));
+const time = (i, base = 44) => { const m = base - i * 3; const h = 12 + Math.floor(m / 60); const mm = ((m % 60) + 60) % 60; return `22.03.25 ${String(m < 0 ? 11 : h).padStart(2, "0")}:${String(mm).padStart(2, "0")}:${String((i * 17) % 60).padStart(2, "0")}`; };
+
+const rail = (on) => `<aside class="rail"><span class="logo">ТМ</span>${["list", "map", "dash", "chart", "bell", "users"].map((n, i) => `<span class="ic${on === i ? " on" : ""}">${ic(n)}</span>`).join("")}<span class="sep"></span>${["log", "layers", "shield", "file", "clock", "settings"].map((n, i) => `<span class="ic${on === i + 6 ? " on" : ""}">${ic(n)}</span>`).join("")}</aside>`;
+
+function objList(cols, rows, wide) {
+  const head = `<div class="tr head" style="grid-template-columns:${cols}"><span>ID</span><span>Имя</span><span>Информация</span><span>Комментарий</span></div>`;
+  const body = OBJ.slice(0, rows).map((o, i) => `<div class="tr${!wide && i === SEL ? " on" : ""}" style="grid-template-columns:${cols}"><i class="g" style="background:${GROUPS[o.g]}"></i><span>${o.id}</span><span>${o.name}</span><span class="tags">${o.e.length ? o.e.map((x) => `<span class="tag">${x}</span>`).join("") : `<span class="tag ok">В норме</span>`}</span><span>${o.note}</span></div>`).join("");
+  return `<div class="card table">${head}${body}</div>`;
+}
+const listHead = (w) => `
+  <h1>Список объектов</h1><p class="sub">Всего объектов: 527</p>
+  <div class="row mt"><span class="muted">Группировать по:</span><span class="pill on">Тип объекта ${ic("chev")}</span></div>
+  <div class="row mt"><span class="input" style="width:${w}px">${ic("search")}Поиск по имени или ID</span><span class="pill">${ic("filter")}Фильтр</span><span class="pill on">${ic("globe")}Глобально</span><span class="pill on">${ic("link")}Каналы</span></div>`;
+const pages = `<div class="pages"><span>Страница 3 из 30</span><span class="nums"><span>1</span><span>2</span><b>3</b><span>4</span><span>…</span><span>29</span><span>30</span></span><span class="nav"><span class="row">${ic("left")}Предыдущая</span><span class="row">Следующая${ic("right")}</span></span></div>`;
+
+const OBJ_TABS = [["dash", "Таблица каналов"], ["gauge", "Приборная панель"], ["scheme", "Мнемосхема"], ["image", "Мнемосхема (изображение)"], ["msg", "История комментариев"], ["alert", "Состояние"], ["box", "Оборудование"], ["bolt", "СКЗ"], ["pipe", "Защищаемые трубопроводы"], ["settings", "Настройки и сведения"], ["folder", "Файлы"]];
+const objHead = () => `<div class="card" style="padding:16px 20px"><div class="row"><span class="toggle">${ic("right")}</span><h1 style="font-size:28px;margin:0 6px">${OBJ[SEL].name}</h1><span class="pill on">${ic("dash")}Сведения</span><span class="pill" style="background:#f3f5f8">${ic("map")}Карта</span></div><div class="tabs">${OBJ_TABS.map(([n, t], i) => `<span class="pill${i === 0 ? " on" : ""}">${ic(n)}${t}</span>`).join("")}</div></div>`;
+
+function chanTable(rows, sel) {
+  const cols = "56px 1.75fr 0.9fr 1.65fr 0.75fr 1.25fr";
+  const r = rng(77);
+  const head = `<div class="tr head" style="grid-template-columns:${cols}"><span>ID</span><span>Название</span><span>Значение</span><span>Время последнего обновления</span><span>Состояние</span><span>Спецификация</span></div>`;
+  const body = CH.slice(0, rows).map((c, i) => { const v = c[2] + (r() - 0.5) * c[3]; const val = c[0] === "Дверь шкафа" ? "Закрыта" : `${fmt(v)} ${c[1]}`; const good = r() > 0.15; return `<div class="tr${i === sel ? " on" : ""}" style="grid-template-columns:${cols}"><span>${201 + i}</span><span>${c[0]}</span><span>${val}</span><span>${time(i)}</span><span class="${good ? "good" : "bad"}">${good ? "GOOD" : "BAD"}</span><span>${c[4]}</span></div>`; }).join("");
+  return `<div class="table">${head}${body}</div>`;
+}
+const chanCard = (rows, sel, grow) => `<div class="card" style="padding:18px 20px 6px;${grow ? "flex:1;min-height:0;overflow:hidden" : ""}"><p style="font-size:22px">Всего каналов: 122</p><div class="row" style="margin:12px 0 8px"><span class="input" style="width:340px;background:#f3f5f8">${ic("search")}Поиск по каналам</span><span class="pill" style="background:#f3f5f8">${ic("filter")}Фильтр</span></div>${chanTable(rows, sel)}</div>`;
+
+function chart() {
+  const r = rng(11); let v = -1.12; const d = Array.from({ length: 72 }, () => { v += (r() - 0.5) * 0.06 + (-1.12 - v) * 0.12; return v; });
+  const W = 1000, H = 300, min = -1.3, max = -0.94;
+  const y = (x) => 14 + ((max - x) / (max - min)) * (H - 44);
+  const x = (i) => 56 + (i / (d.length - 1)) * (W - 70);
+  const line = d.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(p).toFixed(1)}`).join(" ");
+  const ticks = [-0.95, -1.0, -1.05, -1.1, -1.15, -1.2, -1.25, -1.3];
+  const hours = ["18:00", "00:00", "06:00", "12:00", "18:00", "00:00", "06:00", "12:00"];
+  const bands = [1, 3, 5, 7].map((k) => `<rect class="band" x="${56 + (k / 8) * (W - 70)}" y="14" width="${(W - 70) / 8}" height="${H - 44}"/>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" style="width:100%;height:100%">${bands}${ticks.map((t) => `<line x1="56" x2="${W - 14}" y1="${y(t)}" y2="${y(t)}"/><text x="48" y="${y(t) + 4}" text-anchor="end">${t.toFixed(2)}</text>`).join("")}${hours.map((h, i) => `<text x="${56 + ((i + 0.5) / 8) * (W - 70)}" y="${H - 8}" text-anchor="middle">${h}</text>`).join("")}<path class="area" d="${line} L${x(d.length - 1)} ${H - 30} L${x(0)} ${H - 30} Z"/><path class="line" d="${line}"/></svg>`;
+}
+const graphCard = () => {
+  const r = rng(3);
+  const vals = Array.from({ length: 7 }, (_, i) => `<div class="tr${i === 1 ? " on" : ""}"><span class="${i === 1 ? "" : "good"}">${(-1.12 + (r() - 0.5) * 0.08).toFixed(3)} В</span><span>${time(i, 43)}</span></div>`).join("");
+  return `<div class="card" style="padding:18px 20px;flex:1.25;display:flex;flex-direction:column;min-height:0">
+    <div class="row"><h1 style="font-size:22px;margin-right:4px;white-space:nowrap">${CH[0][0]}</h1><span class="pill on">${ic("chart")}График и значения</span><span class="pill" style="background:#f3f5f8">${ic("alert")}Состояние</span><span class="pill" style="background:#f3f5f8">${ic("settings")}Настройки и сведения</span><span class="pill" style="background:#f3f5f8">${ic("bug")}Отладка</span></div>
+    <div class="row" style="margin-top:14px">${["refresh", "zoom", "dl", "pause", "chart"].map((n) => `<span class="ibtn">${ic(n)}</span>`).join("")}<span class="pill" style="background:#f3f5f8;margin-left:6px">Период: последние 2 суток ${ic("chev")}</span><span class="pill" style="background:#f3f5f8">Усреднение: 15 минут ${ic("chev")}</span><span class="muted" style="margin-left:auto">Значений: 585</span></div>
+    <div class="graph"><div class="vals table"><div class="tr head"><span>Значение</span><span>Время</span></div>${vals}</div><div class="chart">${chart()}</div></div></div>`;
+};
+
+const COLS_WIDE = "70px 1.6fr 2.2fr 1.6fr";
+const COLS_NARROW = "62px 1.55fr 1.7fr 1.25fr";
+
+const s1 = `<section class="screen">${rail(0)}<div class="main"><div class="col" style="flex:1">${listHead(520)}<div class="mt" style="flex:1;display:flex;flex-direction:column">${objList(COLS_WIDE, 15, true)}${pages}</div></div></div></section>`;
+const left = (rows) => `<div class="col" style="width:730px;flex-shrink:0">${listHead(300)}<div class="mt" style="flex:1;display:flex;flex-direction:column">${objList(COLS_NARROW, rows, false)}${pages}</div></div>`;
+const s2 = `<section class="screen">${rail(0)}<div class="main">${left(15)}<div class="col" style="flex:1;gap:14px">${objHead()}${chanCard(13, -1, true)}</div></div></section>`;
+const s3 = `<section class="screen">${rail(0)}<div class="main">${left(15)}<div class="col" style="flex:1;gap:14px">${objHead()}${chanCard(5, 0, false)}${graphCard()}</div></div></section>`;
+
+const SNAV = [["sliders", "Основные"], ["binary", "Настройки бинарного канала"], ["alert", "Нештатные ситуации"], ["history", "Устаревшие данные"], ["dash", "Приборная панель"], ["chart", "График"], ["pin", "Отображение на карте"], ["gas", "Отчёт по расходу газа"], ["chip", "Устройство"], ["server", "Получение значений сервером"], ["filter", "Фильтр активных значений"], ["info", "Общие сведения"], ["wave", "Датчик"]];
+const s4 = `<section class="screen is-tall">${rail(11)}<div class="snav"><h2>Канал: ${CH[0][0]}</h2><div class="row" style="margin:16px 0 14px"><span class="input" style="flex:1">${ic("search")}Поиск по настройкам</span></div>${SNAV.map(([n, t], i) => `<div class="item${i === 0 ? " on" : ""}">${ic(n)}${t}</div>`).join("")}</div>
+<div class="form">
+  <div class="card"><h3>Основные</h3><div class="row" style="gap:14px;align-items:flex-end"><div class="field" style="flex:1"><label>Название</label><span class="box">${CH[0][0]}</span></div><div class="field"><label>Тип</label><span class="pill on" style="height:38px">Аналоговый ${ic("chev")}</span></div></div></div>
+  <div class="card"><h3>Свойства</h3><div class="field"><label>Аварийная пиктограмма</label><div class="icons">${["bolt", "alert", "bell", "shield", "gauge", "pipe"].map((n, i) => `<span class="${i === 0 ? "on" : ""}">${ic(n)}</span>`).join("")}</div></div><div class="field"><label>Колонка для отображения значения в таблице объектов</label><span class="box">2 — Потенциал защиты ${ic("chev")}</span></div><div class="field"><label>Функциональное значение</label><span class="box">Среднее за период ${ic("chev")}</span></div></div>
+  <div class="card"><h3>Усреднение</h3><div class="field"><label>Предпочтительный способ усреднения при отображении аварийных значений в режиме усреднения</label><span class="box">Самое частое значение ${ic("chev")}</span></div></div>
+  <div class="card"><h3>Дополнительно</h3><div class="field"><label>Группа</label><span class="box">Катодная защита ${ic("chev")}</span><div class="list"><span class="on">Катодная защита</span><span>Датчики коррозии</span><span>Телемеханика</span><span>Электропитание</span></div></div><div class="check"><i></i>Скрытый канал</div></div>
+  <div class="card"><h3>Смещение</h3><div class="field"><label>Смещение значений для отображения на графиках, мин</label><span class="box">15</span></div><div class="check"><i class="on"></i>Заполнять пропуски по итогам смещения</div></div>
+  <div class="btns"><span class="btn">Сохранить изменения</span><span class="btn cancel">Отмена</span></div>
+</div></section>`;
+
+document.getElementById("root").innerHTML = s1 + s2 + s3 + s4;
+</script>
+</body>
+</html>

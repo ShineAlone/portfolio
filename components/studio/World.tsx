@@ -3,7 +3,6 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { ForumBoard } from "./ForumBoard";
 import { UniModel } from "./UniModel";
-import { UxCases } from "./UxCases";
 import { earnAch } from "./earn";
 import { isDriving, onDriveChange } from "./drive";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
@@ -791,7 +790,6 @@ function Projects({ selected }: { selected: string | null }) {
       </Frame>
       <Coffee selected={selected === "coffee"} />
       <ForumBoard selected={selected === "forum"} />
-      <UxCases selected={selected === "ux-cases"} />
       <Frame meta={frameById("merch")} selected={selected === "merch"} className="st-free st-prints">
         {PROJECTS.merch.map((src, i) => (
           <div
@@ -816,21 +814,20 @@ function Projects({ selected }: { selected: string | null }) {
 
 /* ---------- Контакты: финальная точка маршрута ---------- */
 
-// Та самая крутящаяся фигура из 16 кадров.
+/*
+ * Та самая крутящаяся фигура из 16 кадров. Все кадры лежат стопкой и уже декодированы,
+ * а показывает их CSS-анимация по очереди. Раньше кадры менял таймер через смену src:
+ * браузер каждый раз заново доставал картинку, и при нагрузке вращение подвисало.
+ */
+const SPIN_FRAMES = Array.from({ length: 16 }, (_, i) => `/images/scroll/frame-${String(i + 1).padStart(2, "0")}.webp`);
+
 export function SpinFigure({ className, ms = 75 }: { className?: string; ms?: number }) {
-  const [f, setF] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setF((v) => (v + 1) % 16), ms);
-    return () => clearInterval(id);
-  }, [ms]);
   return (
-    <img
-      className={className}
-      src={`/images/scroll/frame-${String(f + 1).padStart(2, "0")}.webp`}
-      alt=""
-      loading="lazy"
-      draggable={false}
-    />
+    <span className={`st-spin ${className ?? ""}`} style={{ "--spin": `${ms * 16}ms` } as React.CSSProperties} aria-hidden>
+      {SPIN_FRAMES.map((src, i) => (
+        <img key={src} src={src} alt="" draggable={false} style={{ "--i": i } as React.CSSProperties} />
+      ))}
+    </span>
   );
 }
 

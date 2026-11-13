@@ -115,8 +115,17 @@ export function SocialSphere({ selected, onSpin }: { selected: boolean; onSpin: 
     io.observe(el);
     const offDrive = onDriveChange(sync);
 
+    // Сфера крутится, только когда на неё смотрят: на экране она не меньше трети и не больше экрана.
+    // На общем плане она мелкая, а вплотную занимает весь экран — тогда перетаскивание двигает холст,
+    // и сферу не провернуть случайно.
+    const grabbable = () => {
+      const d = el.getBoundingClientRect().width * 0.8;
+      const side = Math.min(window.innerWidth, window.innerHeight);
+      return d >= side * 0.3 && d <= side * 1.1;
+    };
+
     const down = (e: PointerEvent) => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || !grabbable()) return;
       // перетаскивание крутит сферу, а не двигает холст
       e.stopPropagation();
       el.setPointerCapture(e.pointerId);

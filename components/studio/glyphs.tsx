@@ -1,8 +1,7 @@
 import type { AchievementId } from "./data";
 
-// Свои значки для достижений и экскурсии.
-const GLYPHS: Record<AchievementId | "tour", React.ReactNode> = {
-  tour: <path d="M8 5l11 7-11 7V5z" />,
+// Свои значки для достижений.
+const GLYPHS: Record<AchievementId, React.ReactNode> = {
   sticker: <path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.9l-5.3 2.5 1.2-6-4.5-4.1 6-.7z" />,
   react: <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.4a4.3 4.3 0 017.5 2.4C19.5 15.4 12 20 12 20z" />,
   route: (
@@ -46,7 +45,7 @@ const GLYPHS: Record<AchievementId | "tour", React.ReactNode> = {
   ),
 };
 
-export function Glyph({ id, size = 22 }: { id: AchievementId | "tour"; size?: number }) {
+export function Glyph({ id, size = 22 }: { id: AchievementId; size?: number }) {
   return (
     <svg
       width={size}

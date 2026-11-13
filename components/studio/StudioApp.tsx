@@ -38,8 +38,6 @@ const STORAGE_KEY = "ak-achievements-v2";
 const MAP_W = 172;
 // фары и стоп-сигналы стоят там, где они нарисованы у каждой машинки (доли ширины и высоты)
 const DRIVE_Z = 0.6;
-const DRIVE_MIN_Z = 0.15;
-const DRIVE_MAX_Z = 1.4;
 const LAMPS: Record<string, [number, number]> = { sport: [0.26, 0.11], pickup: [0.23, 0.08], bug: [0.36, 0.1] };
 
 type Solid = Rect & { id: string; frame: boolean };
@@ -170,7 +168,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   // слайд презентации HR-кейса: листается в кейсе и стрелками, пока камера на «Кейсах»
   const [slide, setSlide] = useState(0);
   const [spaceHeld, setSpaceHeld] = useState(false);
-  const [tour, setTour] = useState(-1);
   const [toast, setToast] = useState<Toast | null>(null);
   const [activeIsland, setActiveIsland] = useState("about");
   const [earned, setEarned] = useState<AchievementId[]>([]);
@@ -183,7 +180,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   const [cityOn, setCityOn] = useState(false);
   // масштаб камеры за рулём: колесо и +/− меняют его, не выходя из машины
   const driveZRef = useRef(0.6);
-  const zoomTouched = useRef(false);
   const [cityNotice, setCityNotice] = useState(false);
   const carElRef = useRef<HTMLDivElement>(null);
   const speedRef = useRef<HTMLSpanElement>(null);
@@ -202,8 +198,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
   const hitAt = useRef(new Map<string, number>());
 
   const introDone = intro >= 6;
-  const tourRef = useRef(tour);
-  tourRef.current = tour;
   const spaceRef = useRef(spaceHeld);
   spaceRef.current = spaceHeld;
   const activeRef = useRef(activeIsland);
@@ -297,11 +291,8 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
 
   const zoomCenter = useCallback(
     (nz: number) => {
-      if (drivingRef.current) {
-        driveZRef.current = clamp(nz, DRIVE_MIN_Z, DRIVE_MAX_Z);
-        zoomTouched.current = true;
-        return;
-      }
+      // за рулём масштаб зафиксирован: его смена заставляла браузер перерисовывать весь город и холст
+      if (drivingRef.current) return;
       const { w, h } = vpSize();
       const c = camera.get();
       const z = clamp(nz, MIN_Z, MAX_Z);
@@ -510,44 +501,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     return () => clearTimeout(t);
   }, [introDone, chatStep]);
 
-  /* ---------- экскурсия ---------- */
-
-  const tourStops = useMemo(
-    () => [
-      { rect: frameById(calm ? "about-calm" : "hero"), text: "Это я — продуктовый и коммуникационный дизайнер, в дизайне с 2021 года" },
-      { rect: islandById("plugins"), text: "Лаборатория: плагины, сервисы и гараж — возьми машинку и прокатись по сайту" },
-      { rect: frameById("social"), text: "Больше 2000 постов. Часть собрал в сферу — покрути её мышкой" },
-      { rect: islandById("wall"), text: "Ежемесячная рубрика обоев. Кликни по телефону — обои сменятся" },
-      { rect: islandFocus(islandById("cases")), text: "Кейсы: продукт целиком — экраны сотрудника и HR, презентация и даже аватары" },
-      { rect: islandById("proj"), text: "Лендинги целиком и айдентика «Кофе Культ»" },
-      { rect: islandById("contact"), text: "А здесь можно написать мне. Буду рад твоей задаче!" },
-    ],
-    [calm]
-  );
-
-  const stopTour = useCallback(() => {
-    if (tourRef.current < 0) return;
-    setTour(-1);
-    setAgent((a) => ({ ...a, visible: false, bubble: null }));
-  }, []);
-
-  useEffect(() => {
-    if (tour < 0) return;
-    if (tour >= tourStops.length) {
-      setAgent((a) => ({ ...a, bubble: "Это была экскурсия. Дальше — сам 🙂" }));
-      const t = setTimeout(() => {
-        setAgent((a) => ({ ...a, visible: false, bubble: null }));
-        setTour(-1);
-      }, 2600);
-      return () => clearTimeout(t);
-    }
-    const s = tourStops[tour];
-    flyTo(s.rect, 90, 0.9);
-    setAgent({ visible: true, x: s.rect.x + s.rect.w * 0.45, y: s.rect.y + 80, bubble: s.text });
-    const t = setTimeout(() => setTour((i) => i + 1), 4800);
-    return () => clearTimeout(t);
-  }, [tour, tourStops, flyTo]);
-
   /* ---------- интерактив работ ---------- */
 
   const toggleSpread = useCallback(() => {
@@ -583,7 +536,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     carState.current = { x: g.x + g.w / 2, y: g.y + g.h + 140, a: Math.PI, v: 0 };
     keysRef.current.clear();
     setSelected(null);
-    stopTour();
     // камерой во время езды управляет только цикл машинки — отдельный перелёт с ним спорил бы
     cancelAnimationFrame(animRef.current);
     setCityOn(true);
@@ -591,11 +543,10 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     // на узком экране отдаляемся сильнее, чтобы впереди было видно дорогу
     driveZRef.current = vpSize().w < 760 ? DRIVE_Z * 0.75 : DRIVE_Z;
     stickRef.current = { x: 0, y: 0, on: false };
-    zoomTouched.current = false;
     clearTimeout(noticeTimer.current);
     noticeTimer.current = setTimeout(() => setCityNotice(false), 4200);
     setDriving(true);
-  }, [stopDrive, stopTour, vpSize]);
+  }, [stopDrive, vpSize]);
 
   /* ---------- блоки, разбитые машинкой ---------- */
 
@@ -972,7 +923,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
       const cam = camera.get();
       const { w, h } = vpSize();
       const target = driveZRef.current;
-      const kz = 1 - Math.exp(-dt * (zoomTouched.current ? 7 : 4));
+      const kz = 1 - Math.exp(-dt * 4);
       // доводим масштаб точно до цели, иначе --z менялся бы на каждом кадре и пересчитывал стили
       const z = Math.abs(target - cam.z) < 0.002 ? target : cam.z + (target - cam.z) * kz;
       const kf = 1 - Math.exp(-dt * 16);
@@ -1022,15 +973,9 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const k = e.deltaMode === 1 ? 16 : 1;
-      // за рулём камера привязана к машинке, колесо только отдаляет и приближает
-      if (drivingRef.current) {
-        const d = clamp(e.deltaY * k, -60, 60);
-        driveZRef.current = clamp(driveZRef.current * Math.exp(-d * (e.ctrlKey ? 0.012 : 0.004)), DRIVE_MIN_Z, DRIVE_MAX_Z);
-        zoomTouched.current = true;
-        return;
-      }
+      // за рулём колесо ничего не делает: камера привязана к машинке, масштаб зафиксирован
+      if (drivingRef.current) return;
       cancelAnimationFrame(animRef.current);
-      stopTour();
       const r = v.getBoundingClientRect();
       if (e.ctrlKey || e.metaKey) {
         const d = clamp(e.deltaY * k, -60, 60);
@@ -1048,7 +993,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     };
     v.addEventListener("wheel", onWheel, { passive: false });
     return () => v.removeEventListener("wheel", onWheel);
-  }, [camera, clampCam, stopTour, zoomAt]);
+  }, [camera, clampCam, zoomAt]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -1059,7 +1004,9 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
           keysRef.current.add(e.code);
           return;
         }
-        if (e.code === "Escape") return stopDrive();
+        if (e.code === "Escape") stopDrive();
+        // остальные клавиши за рулём не работают — ни масштаб, ни переходы
+        return;
       }
       if (e.code === "Space") {
         e.preventDefault();
@@ -1075,7 +1022,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
       if (e.code === "Escape") {
         setSelected(null);
         setOpenAch(null);
-        stopTour();
       }
       if (e.code === "Equal" || e.code === "NumpadAdd") zoomCenter(camera.get().z * 1.3);
       if (e.code === "Minus" || e.code === "NumpadSubtract") zoomCenter(camera.get().z / 1.3);
@@ -1090,7 +1036,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [camera, onSlide, showAll, stopDrive, stopTour, zoomCenter]);
+  }, [camera, onSlide, showAll, stopDrive, zoomCenter]);
 
   /* ---------- мышь, тач, щипок ---------- */
 
@@ -1123,7 +1069,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     cancelAnimationFrame(animRef.current);
-    stopTour();
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
@@ -1158,12 +1103,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
 
     const p = pinch.current;
     if (drivingRef.current) {
-      // за рулём щипок только меняет масштаб, камера по-прежнему держит машинку
-      if (p && pointers.current.size >= 2) {
-        const [a, b] = [...pointers.current.values()];
-        driveZRef.current = clamp((p.cam.z * Math.hypot(a.x - b.x, a.y - b.y)) / p.dist, DRIVE_MIN_Z, DRIVE_MAX_Z);
-        zoomTouched.current = true;
-      }
+      // за рулём жесты не двигают и не масштабируют холст
       return;
     }
     if (p && pointers.current.size >= 2) {
@@ -1208,7 +1148,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
     const wy = (e.clientY - r.top) * s + WORLD.y;
     const { w, h } = vpSize();
     const z = Math.max(camera.get().z, 0.45);
-    stopTour();
     animateTo(clampCam({ z, x: w / 2 - wx * z, y: h / 2 - wy * z }), 800);
   };
 
@@ -1350,7 +1289,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
             className={`${activeIsland === i.id ? "is-active" : ""}${i.dark ? " is-dark" : ""}`}
             style={{ "--c": i.color } as React.CSSProperties}
             onClick={() => {
-              stopTour();
               flyTo(islandFocus(i), 50);
             }}
           >
@@ -1394,7 +1332,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
               }
               onClick={(e) => {
                 e.stopPropagation();
-                stopTour();
                 flyTo(islandFocus(i), 50);
               }}
             >
@@ -1439,7 +1376,6 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
                 type="button"
                 className="st-btn st-btn--small"
                 onClick={() => {
-                  stopTour();
                   flyTo(islandFocus(islandById(ach.island)), 50);
                   setOpenAch(null);
                 }}
@@ -1487,16 +1423,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
         </>
       )}
 
-      <div className="st-dock" role="toolbar" aria-label="Экскурсия и достижения">
-        <button
-          type="button"
-          className={`st-dock__tour${tour >= 0 ? " is-active" : ""}`}
-          onClick={() => (tour >= 0 ? stopTour() : setTour(0))}
-        >
-          <Glyph id="tour" size={18} />
-          {tour >= 0 ? "Стоп" : "Экскурсия"}
-        </button>
-        <span className="st-dock__sep" />
+      <div className="st-dock" role="toolbar" aria-label="Достижения">
         <span className="st-dock__caption">
           Достижения
           <b>
@@ -1534,7 +1461,7 @@ export function StudioApp({ onFeed, theme }: { onFeed?: () => void; theme?: "cal
             <span ref={speedRef}>0</span> км/ч
           </b>
           <span ref={surfRef} className="st-hud__surf" />
-          <span className="st-hud__keys">W/S — газ · A/D — поворот · колесо — масштаб · Esc — выйти</span>
+          <span className="st-hud__keys">W/S — газ · A/D — поворот · Esc — выйти</span>
           <button type="button" onClick={stopDrive}>
             Выйти из машины
           </button>

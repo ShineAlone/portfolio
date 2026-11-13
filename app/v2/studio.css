@@ -282,7 +282,6 @@
   opacity: 0;
 }
 
-.st-frame,
 /* плагины — главное в лаборатории: крупные карточки, текст читается без приближения */
 .stp--big {
   padding: 20px;
@@ -573,6 +572,7 @@
   font-family: inherit;
 }
 
+.st-frame,
 .st-slot {
   transition: opacity 0.45s, translate 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -3005,6 +3005,35 @@
   clip-path: inset(-700px -400px 0 -400px);
 }
 
+/* крутящаяся фигура: 16 кадров стопкой, виден один — его выбирает анимация */
+.st-spin {
+  position: relative;
+  display: block;
+}
+
+.st-spin img,
+.st-world .st-spin img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: none !important;
+  opacity: 0;
+  animation: st-spin-frame var(--spin) steps(1, end) infinite;
+  animation-delay: calc(var(--spin) * var(--i) / 16 - var(--spin));
+}
+
+@keyframes st-spin-frame {
+  0% {
+    opacity: 1;
+  }
+  6.25%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .st-world .stx-stage__me {
   position: absolute;
   left: 50%;
@@ -3449,36 +3478,6 @@
 
 .is-intro .st-map {
   transform: translateY(140%);
-}
-
-.st-dock__tour {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 16px 0 12px;
-  border-radius: 22px;
-  background: #fff !important;
-  color: #111 !important;
-  font-size: 14px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.st-dock__tour:hover {
-  transform: translateY(-2px);
-}
-
-.st-dock__tour.is-active {
-  background: var(--violet) !important;
-  color: #fff !important;
-}
-
-.st-dock__sep {
-  width: 1px;
-  height: 26px;
-  margin: 0 6px;
-  background: rgba(255, 255, 255, 0.15);
 }
 
 .st-dock__caption {
@@ -4536,6 +4535,30 @@
 .is-driving .st-chips {
   backdrop-filter: none;
   background: #fff;
+}
+
+/*
+ * За рулём страница не реагирует на курсор: обычная стрелка, без подсказок, наведений и кликов.
+ * Работают только «Выйти из машины» и джойстик на сенсорных экранах.
+ */
+.is-driving * {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.is-driving .st-viewport,
+.is-driving .st-hud button,
+.is-driving .st-joy,
+.is-driving .st-joy * {
+  pointer-events: auto !important;
+}
+
+.is-driving .st-hud button {
+  cursor: pointer !important;
+}
+
+.is-driving .st-cursor {
+  display: none;
 }
 
 /* приборная панель во время езды */

@@ -234,7 +234,7 @@ export const PROJECTS = {
     platforma: "/images/projects/platforma.webp",
     binghatti: "/images/projects/binghatti.webp",
     serviceSoft1: "/images/projects/service-soft-1.webp",
-    serviceSoft2: "/images/projects/service-soft-2.webp",
+    serviceSoft2: "/images/projects/service-soft-2-v2.webp",
     site1920: "/images/projects/site-1920.webp",
     androidCompact: "/images/projects/android-compact.webp",
   },

@@ -89,9 +89,11 @@ export type FrameMeta = Rect & {
 
 // Высоты лендингов посчитаны по пропорциям картинок, чтобы страницы были видны целиком.
 const SITES: [id: string, name: string, src: string, h: number][] = [
-  ["site-0", "Лендинг", PROJECTS.sites.tzVk, 794],
-  ["site-1", "Платформа", PROJECTS.sites.platforma, 624],
+  ["site-0", "Мини-приложение для ВКонтакте", PROJECTS.sites.tzVk, 794],
+  ["site-1", "Rent Sale — платформа коммерческой недвижимости", PROJECTS.sites.platforma, 624],
   ["site-2", "Binghatti Nova", PROJECTS.sites.binghatti, 768],
+  ["site-3", "Service Soft", PROJECTS.sites.serviceSoft1, 1066],
+  ["site-4", "Service Soft II", PROJECTS.sites.serviceSoft2, 1121],
 ];
 
 // Окна в «Проектах» расставлены с равным шагом по ширине острова.
@@ -349,18 +351,6 @@ export const FRAMES: FrameMeta[] = [
     ...proj(PROJ_X0, 2040, 1490, 330),
     r: 0,
     text: PROJECTS.description,
-  },
-  // два мини-кейса про сложные интерфейсы — на месте прежних скриншотов Service Soft
-  {
-    id: "ux-cases",
-    name: "Сложные интерфейсы",
-    ...rel("proj", 2180, 96),
-    w: 1260,
-    h: 1190,
-    r: 40,
-    text: "Два веб-сервиса мониторинга: промышленные объекты с телеметрией и суда на карте. Экраны на доске живые — их можно нажимать. Все названия и данные вымышленные.",
-    tags: ["UX/UI", "B2B-системы", "Сложные интерфейсы"],
-    tagColor: "#B8C7FF",
   },
   {
     id: "forum",
