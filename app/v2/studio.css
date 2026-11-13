@@ -3438,6 +3438,97 @@
   margin-top: 14px;
 }
 
+/* ---------- подсказки над доком: компактные, с «хвостиком» к доку ---------- */
+.st-pop.st-nudge {
+  width: 340px;
+  padding: 16px 16px 16px 18px;
+  border: 2px solid #111;
+  box-shadow: 5px 5px 0 #111, 0 30px 60px -24px rgba(0, 0, 0, 0.35);
+  animation: st-nudge-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.st-pop.st-nudge::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-right: 2px solid #111;
+  border-bottom: 2px solid #111;
+  background: #fff;
+  transform: rotate(45deg);
+}
+
+@keyframes st-nudge-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 24px) scale(0.92);
+  }
+}
+
+.st-pop.st-nudge p {
+  margin-top: 10px;
+  font-size: 13.5px;
+}
+
+.st-pop.st-nudge .st-pop__row {
+  margin-top: 12px;
+}
+
+.st-nudge__count {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 2px solid #111;
+  border-radius: 50%;
+  background: #fefe78;
+  font: 800 15px var(--display);
+}
+
+.st-nudge__avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid #111;
+  border-radius: 50%;
+  background: #c9a8ff;
+}
+
+.st-app .st-nudge__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.st-nudge__online {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 3px;
+  border-radius: 50%;
+  background: #1fbf4b;
+  vertical-align: 1px;
+}
+
+.st-nudge--contact {
+  background: #fefe78 !important;
+}
+
+.st-pop.st-nudge--contact::after {
+  background: #fefe78;
+}
+
+.st-nudge--contact p,
+.st-nudge--contact .st-pop__head small {
+  color: #333;
+}
+
 /* окно награды за все достижения — по центру экрана, поверх затемнения */
 .st-win-backdrop {
   position: fixed;

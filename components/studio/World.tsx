@@ -125,8 +125,12 @@ function Greeting({
               <defs>
                 <path id="sthg-ring" d="M100 100m-74 0a74 74 0 1 1 148 0a74 74 0 1 1 -148 0" />
               </defs>
+              {/* Текст ровно на одну окружность (2π·74 ≈ 465): длинная фраза не помещалась,
+                  хвост обрезался и налезал на начало. textLength растягивает буквы равномерно по кругу. */}
               <text>
-                <textPath href="#sthg-ring">открыт для сотрудничества • пиши в telegram •</textPath>
+                <textPath href="#sthg-ring" textLength={462} lengthAdjust="spacing">
+                  открыт для сотрудничества •
+                </textPath>
               </text>
             </svg>
           </span>

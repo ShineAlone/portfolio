@@ -36,6 +36,8 @@ import { addParticle, drawFx, makeCrack, shatter, type Mark, type Particle } fro
 const DRIVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 // новый ключ обнуляет прогресс у всех, кто заходил раньше
 const STORAGE_KEY = "ak-achievements-v2";
+// какие подсказки над доком посетитель уже видел (?nudges — показать заново, для проверки)
+const NUDGE_KEY = "ak-nudges-v1";
 const MAP_W = 172;
 // фары и стоп-сигналы стоят там, где они нарисованы у каждой машинки (доли ширины и высоты)
 const DRIVE_Z = 0.6;
@@ -413,6 +415,58 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
   );
   const earnRef = useRef(earn);
   earnRef.current = earn;
+
+  /*
+   * Ненавязчивые подсказки над доком: через 15 с — зачем нужны достижения, через 30 с — контакт.
+   * Каждая показывается один раз на браузер (помним в localStorage), сама скрывается через 20 с,
+   * ждёт, пока посетитель не за рулём и не смотрит карточку достижения или финальное окно.
+   */
+  const [nudge, setNudge] = useState<"ach" | "contact" | null>(null);
+  const nudgeBusy = useRef(false);
+  nudgeBusy.current = driving || !!openAch || celebrate;
+  useEffect(() => {
+    if (calm) return;
+    const read = (): Record<string, number> => {
+      try {
+        return JSON.parse(localStorage.getItem(NUDGE_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    };
+    const mark = (k: string) => {
+      try {
+        localStorage.setItem(NUDGE_KEY, JSON.stringify({ ...read(), [k]: Date.now() }));
+      } catch {
+        // без хранилища подсказка просто покажется и в следующий раз
+      }
+    };
+    const params = new URLSearchParams(window.location.search);
+    const fresh = params.has("nudges");
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    const show = (k: "ach" | "contact") => {
+      if (!fresh && read()[k]) return;
+      if (k === "ach" && earnedRef.current.length >= ACHIEVEMENTS.length) return;
+      // посетитель занят — ждём и пробуем снова
+      if (nudgeBusy.current || document.hidden) {
+        timers.push(setTimeout(() => show(k), 3000));
+        return;
+      }
+      mark(k);
+      setNudge(k);
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setNudge((n) => (n === k ? null : n)), 20000);
+    };
+    timers.push(setTimeout(() => show("ach"), 15000), setTimeout(() => show("contact"), 30000));
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(hideTimer);
+    };
+  }, [calm]);
+  // открыли карточку достижения или сели за руль — подсказка уступает место
+  useEffect(() => {
+    if (openAch || driving || celebrate) setNudge(null);
+  }, [openAch, driving, celebrate]);
 
   // достижения из глубины холста (реакция в чате, маршрут, сцена форума) приходят событием
   useEffect(() => {
@@ -1523,6 +1577,69 @@ export function StudioApp({ theme }: { theme?: "calm" } = {}) {
             </button>
           </div>
         </div>
+
+        {/* ---------- подсказки над доком ---------- */}
+        {nudge === "ach" && !ach && !celebrate && (
+          <div className="st-pop st-nudge" role="status">
+            <div className="st-pop__head">
+              <span className="st-nudge__count">{ACHIEVEMENTS.length}</span>
+              <div>
+                <small>достижения · {earned.length} из {ACHIEVEMENTS.length}</small>
+                <b>На холсте спрятаны достижения</b>
+              </div>
+              <button type="button" className="st-pop__close" onClick={() => setNudge(null)} aria-label="Закрыть">
+                ✕
+              </button>
+            </div>
+            <p>
+              Исследуй сайт: листай кейсы, крути сферу, прокатись на машинке. Собери все — и получишь секретное слово со
+              скидкой {SECRET_DISCOUNT} на проект.
+            </p>
+            <div className="st-pop__row">
+              <button
+                type="button"
+                className="st-btn st-btn--small"
+                onClick={() => {
+                  setNudge(null);
+                  setOpenAch(ACHIEVEMENTS.find((a) => !earned.includes(a.id))?.id ?? null);
+                }}
+              >
+                С чего начать
+              </button>
+            </div>
+          </div>
+        )}
+
+        {nudge === "contact" && !ach && !celebrate && (
+          <div className="st-pop st-nudge st-nudge--contact" role="status">
+            <div className="st-pop__head">
+              <span className="st-nudge__avatar">
+                <img src="/images/photo-480.webp" alt="" draggable={false} />
+              </span>
+              <div>
+                <small>
+                  <i className="st-nudge__online" /> Арсений · на связи
+                </small>
+                <b>Есть задача? Давай обсудим</b>
+              </div>
+              <button type="button" className="st-pop__close" onClick={() => setNudge(null)} aria-label="Закрыть">
+                ✕
+              </button>
+            </div>
+            <p>Расскажи о проекте в Telegram — отвечу и предложу, как его сделать.</p>
+            <div className="st-pop__row">
+              <a
+                className="st-btn st-btn--small"
+                href={LINKS.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setNudge(null)}
+              >
+                Написать в Telegram ↗
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* ---------- достижения ---------- */}
         {ach && !celebrate && (
