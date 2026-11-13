@@ -65,7 +65,7 @@
 }
 
 /* пока картинка грузится, на её месте светлая заглушка, а не пустота */
-.st-world img:not(.is-loaded) {
+.st-app .st-world img:not(.is-loaded) {
   background-color: rgba(17, 17, 17, 0.07);
 }
 
@@ -3461,6 +3461,8 @@
   align-items: center;
   gap: 6px;
   padding: 6px;
+  /* слева подпись «Достижения» — ей нужен отступ от края, как у значков справа */
+  padding-left: 22px;
   border-radius: 28px;
   background: #111;
   color: #fff;
@@ -4548,12 +4550,14 @@
 
 .is-driving .st-viewport,
 .is-driving .st-hud button,
+.is-driving .st-ruin__btn,
 .is-driving .st-joy,
 .is-driving .st-joy * {
   pointer-events: auto !important;
 }
 
-.is-driving .st-hud button {
+.is-driving .st-hud button,
+.is-driving .st-ruin__btn {
   cursor: pointer !important;
 }
 
@@ -4835,8 +4839,8 @@
   object-fit: cover;
   border-radius: 20px;
   pointer-events: none;
-  box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.45);
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s, box-shadow 0.35s;
+  /* без тени: в 3D-повороте она ложилась на плоскость поста и выглядела сломанной */
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s;
 }
 
 /* пост под курсором выдвигается из сферы навстречу */
@@ -4845,8 +4849,7 @@
 }
 
 .st-ball:not(.is-drag) .st-ball__tile:hover img {
-  transform: translateZ(110px) scale(1.22);
-  box-shadow: 0 40px 60px -20px rgba(0, 0, 0, 0.55);
+  transform: translateZ(90px) scale(1.15);
 }
 
 /* дальняя сторона видна сквозь просветы, но приглушена и не ловит курсор */

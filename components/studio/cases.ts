@@ -30,7 +30,7 @@ export const HR_BOARDS = [
   { id: "hr", h: 1200 },
   { id: "avatar", h: 1160 },
   { id: "rewards", h: 700 },
-  { id: "system", h: 900 },
+  { id: "system", h: 990 },
   { id: "outro", h: 1450 },
 ] as const;
 export type HrBoardId = (typeof HR_BOARDS)[number]["id"];
