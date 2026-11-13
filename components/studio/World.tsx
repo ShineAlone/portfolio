@@ -3,6 +3,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { ForumBoard } from "./ForumBoard";
 import { UniModel } from "./UniModel";
+import { UxCases } from "./UxCases";
 import { earnAch } from "./earn";
 import { isDriving, onDriveChange } from "./drive";
 import { EDUCATION, HERO, LINKS, PROJECTS, STATS, TOOLS, WORK } from "@/lib/content";
@@ -790,6 +791,7 @@ function Projects({ selected }: { selected: string | null }) {
       </Frame>
       <Coffee selected={selected === "coffee"} />
       <ForumBoard selected={selected === "forum"} />
+      <UxCases selected={selected === "ux-cases"} />
       <Frame meta={frameById("merch")} selected={selected === "merch"} className="st-free st-prints">
         {PROJECTS.merch.map((src, i) => (
           <div

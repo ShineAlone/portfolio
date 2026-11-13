@@ -5,6 +5,7 @@ import "./v2/studio.css";
 import "./v2/mobile.css";
 import "./v2/case.css";
 import "./v2/tour.css";
+import "./v2/ux.css";
 
 // Главная — холст-портфолио. Прежняя версия сайта осталась по адресу /old.
 
